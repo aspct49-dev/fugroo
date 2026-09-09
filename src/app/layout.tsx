@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Oxanium, Outfit } from 'next/font/google';
 
 import { LoginButton } from '@/components/LoginButton';
+import { requireAdmin } from '@/lib/admin';
 import { Shell } from '@/components/Shell';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TOTAL_PRIZE_POOL } from '@/lib/partners';
@@ -10,6 +11,7 @@ import './globals.css';
 import './home.css';
 import './leaderboard.css';
 import './bonuses.css';
+import './hunts.css';
 
 /* Two families, and each has a reason. Oxanium is angular and hexagonal, so
    it carries the hex motif of the artwork into the type and sets every
@@ -94,7 +96,9 @@ function structuredData() {
   };
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { admin } = await requireAdmin();
+
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body>
@@ -104,7 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           // input to escape here.
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
         />
-        <Shell totalPot={TOTAL_PRIZE_POOL} account={<LoginButton />}>
+        <Shell totalPot={TOTAL_PRIZE_POOL} account={<LoginButton />} isAdmin={admin}>
           {children}
           <SiteFooter />
         </Shell>

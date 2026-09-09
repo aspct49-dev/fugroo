@@ -1,0 +1,349 @@
+/* ===========================================================================
+   FUGROO — bonus hunts and the admin panel
+
+   The board is the public face; the panel is the thing that fills it. They
+   deliberately share the hunt component, so what an admin sees while editing
+   is exactly what a viewer gets.
+   =========================================================================== */
+
+/* -------------------------------------------------------------- hunt board */
+
+.hunt {
+  border-radius: 22px;
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.hunt-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--edge);
+}
+.hunt-name { margin: 6px 0 0; font-size: clamp(20px, 2.6vw, 28px); }
+
+.hunt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hunt-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* Only a hunt actually being opened gets the live treatment — a pulsing dot on
+   a settled hunt would be claiming something that is not happening. */
+.hunt-status[data-status='opening'] { color: var(--cyan); }
+.hunt-status[data-status='opening']::before { animation: pulse 2s var(--ease) infinite; }
+.hunt-status[data-status='settled'] { color: var(--dim); }
+
+.hunt-start { text-align: right; }
+.hunt-k {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hunt-start b {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2.2vw, 26px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.hunt-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.hunt-stat {
+  padding: 15px 17px;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: rgba(3, 5, 18, 0.5);
+}
+.hunt-v {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.4vw, 27px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text);
+}
+.hunt-of { font-size: 0.6em; font-weight: 700; color: var(--dim); }
+
+/*
+ * The running multiple against break-even is the whole question, so it is the
+ * only tile that carries colour — green when the hunt is beating what it needs
+ * and red when it is not. Everything around it stays neutral so this reads
+ * first.
+ */
+.hunt-stat-key { border-color: var(--edge-lit); }
+.hunt-stat-key[data-beating='true'] {
+  border-color: rgba(47, 230, 167, 0.5);
+  background: rgba(47, 230, 167, 0.08);
+}
+.hunt-stat-key[data-beating='true'] .hunt-v { color: var(--hue-teal); }
+.hunt-stat-key[data-beating='false'] {
+  border-color: rgba(255, 106, 106, 0.4);
+  background: rgba(255, 106, 106, 0.07);
+}
+.hunt-stat-key[data-beating='false'] .hunt-v { color: #ff8a8a; }
+
+.hunt-result {
+  margin: 18px 0 0;
+  padding: 14px 18px;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: rgba(3, 5, 18, 0.5);
+  color: var(--muted);
+  font-size: 15px;
+}
+.hunt-result b { font-family: var(--font-display); font-size: 17px; }
+.hunt-result[data-up='true'] b { color: var(--hue-teal); }
+.hunt-result[data-up='false'] b { color: #ff8a8a; }
+
+/* --------------------------------------------------------------- the table */
+
+.hunt-table { margin-top: 22px; }
+
+.hunt-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 110px 130px 88px;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: rgba(19, 26, 69, 0.4);
+}
+.hunt-row + .hunt-row { margin-top: 5px; }
+.hunt-row:nth-child(even) { background: rgba(11, 16, 48, 0.5); }
+
+.hunt-row-head {
+  min-height: 32px;
+  background: none !important;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hunt-row-head span:nth-child(n + 3) { text-align: right; }
+
+/* An unopened bonus is the normal state during a hunt, so it is dimmed rather
+   than marked — there is nothing wrong with it. */
+.hunt-row[data-open='true'] { opacity: 0.6; }
+
+.hunt-n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+.hunt-game {
+  font-weight: 600;
+  font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hunt-bet,
+.hunt-pay,
+.hunt-x {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.hunt-bet { color: var(--muted); font-size: 14px; }
+.hunt-pay { color: var(--text); font-size: 15px; }
+.hunt-x { color: var(--muted); font-size: 15px; }
+/* A bonus that beat the break-even multiple carried the hunt; one that paid
+   nothing is worth seeing at a glance too. */
+.hunt-x[data-big='true'] { color: var(--hue-teal); }
+.hunt-x[data-zero='true'] { color: #ff8a8a; }
+
+.hunt-none,
+.hunt-empty { color: var(--muted); }
+.hunt-none { margin: 22px 0 0; font-size: 14.5px; }
+
+/* ------------------------------------------------------------- past hunts */
+
+.hunt-history { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+.hunt-past {
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+}
+.hunt-past-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hunt-past-head h3 { font-size: 16px; }
+.hunt-past-date { font-size: 12.5px; color: var(--dim); }
+
+.hunt-past-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+.hunt-past-grid b {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hunt-past[data-up='true'] .hunt-profit { color: var(--hue-teal); }
+.hunt-past[data-up='false'] .hunt-profit { color: #ff8a8a; }
+
+/* ------------------------------------------------------------ admin panel */
+
+.admin-head { margin-bottom: 22px; }
+
+.admin-panel {
+  padding: clamp(18px, 2.6vw, 26px);
+  margin-bottom: 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--edge);
+  background: var(--hull);
+}
+.admin-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-actions form { margin: 0; }
+/* The stage the hunt is actually in, marked on the control that sets it. */
+.admin-actions .btn[data-active='true'] {
+  border-color: var(--cyan-deep);
+  background: var(--cyan-quiet);
+  color: var(--text);
+}
+
+.admin-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.field { display: grid; gap: 6px; flex: 1 1 180px; min-width: 0; }
+.field span {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.field input,
+.admin-bonus-pay input {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--edge);
+  background: var(--void);
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: border-color 0.18s var(--ease);
+}
+.field input:focus,
+.admin-bonus-pay input:focus { border-color: var(--cyan-deep); }
+.field input::placeholder,
+.admin-bonus-pay input::placeholder { color: var(--dim); }
+
+.admin-list { display: grid; gap: 6px; margin-top: 18px; }
+
+.admin-bonus {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(19, 26, 69, 0.4);
+}
+.admin-bonus form { margin: 0; }
+.admin-bonus-n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+  min-width: 20px;
+}
+.admin-bonus-game { flex: 1 1 140px; font-weight: 600; font-size: 14.5px; min-width: 0; }
+.admin-bonus-bet {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 14px;
+}
+.admin-bonus-pay { display: flex; gap: 8px; }
+.admin-bonus-pay input { width: 120px; min-height: 38px; }
+
+/* Destructive, so it is the one control on the row that is not styled to
+   invite a click. */
+.admin-drop {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--edge);
+  background: none;
+  color: var(--dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+.admin-drop:hover { color: #ff8a8a; border-color: rgba(255, 106, 106, 0.5); }
+
+/* The admin entry sits apart from the rest of the nav. */
+.nav-item[data-admin] { color: var(--violet-hot); }
+.nav-item[data-admin]:hover { background: var(--violet-quiet); }
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 860px) {
+  .hunt-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 720px) {
+  /* Bet and payout drop under the game name; the multiple stays, because it is
+     the number anyone is actually reading down the column for. */
+  .hunt-row-head { display: none; }
+  .hunt-row {
+    grid-template-columns: 34px minmax(0, 1fr) 74px;
+    gap: 2px 12px;
+    padding: 12px 14px;
+  }
+  .hunt-n { grid-row: 1 / span 2; }
+  .hunt-game { grid-column: 2; grid-row: 1; }
+  .hunt-bet { grid-column: 2; grid-row: 2; text-align: left; font-size: 12.5px; color: var(--dim); }
+  .hunt-pay { grid-column: 3; grid-row: 1; font-size: 13.5px; }
+  .hunt-x { grid-column: 3; grid-row: 2; }
+  .hunt-past-grid { grid-template-columns: 1fr 1fr; }
+}

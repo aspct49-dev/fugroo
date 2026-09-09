@@ -43,10 +43,12 @@ const NAV = [
 export function Shell({
   totalPot,
   account,
+  isAdmin = false,
   children,
 }: {
   totalPot: number;
   account: React.ReactNode;
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -90,18 +92,25 @@ export function Shell({
       <div className="shell-grid">
         <aside className="sidebar" data-open={open} id="sidebar">
           <nav className="nav">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="nav-item"
-                data-active={pathname === item.href}
-                aria-current={pathname === item.href ? 'page' : undefined}
-              >
-                {item.label}
-                {item.showPot && <span className="nav-badge">{formatMoney(totalPot)}</span>}
-              </Link>
-            ))}
+            {/* Hiding this is a courtesy, not a control — /admin re-checks the
+                session itself, and so does every action on it. */}
+            {(isAdmin ? [...NAV, { href: '/admin', label: 'Admin', admin: true }] : NAV).map(
+              (item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="nav-item"
+                  data-admin={'admin' in item || undefined}
+                  data-active={pathname === item.href}
+                  aria-current={pathname === item.href ? 'page' : undefined}
+                >
+                  {item.label}
+                  {'showPot' in item && item.showPot && (
+                    <span className="nav-badge">{formatMoney(totalPot)}</span>
+                  )}
+                </Link>
+              ),
+            )}
           </nav>
 
           <div className="side-divider" />
