@@ -22,14 +22,25 @@ import { SOCIAL_LINKS } from './socials';
  * advertises, so this grows as the sections land rather than ahead of them.
  */
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  /** Shows the combined prize pool beside the entry. */
+  showPot?: boolean;
+  /** Marks a section that exists but is not running yet. */
+  soon?: boolean;
+  /** Only rendered for admins; the page enforces it regardless. */
+  admin?: boolean;
+}
+
+const NAV: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/leaderboard', label: 'Leaderboard', showPot: true },
   { href: '/bonuses', label: 'Bonus offers' },
   { href: '/milestones', label: 'Wager milestones' },
-  { href: '/tournaments', label: 'Tournaments' },
+  { href: '/tournaments', label: 'Tournaments', soon: true },
   { href: '/bonus-hunts', label: 'Bonus hunts' },
-  { href: '/giveaways', label: 'Giveaways', soon: true },
+  { href: '/giveaways', label: 'Giveaways' },
   { href: '/guess-the-balance', label: 'Guess the balance' },
   { href: '/how-it-works', label: 'How it works' },
 ];
@@ -100,15 +111,13 @@ export function Shell({
                   key={item.href}
                   href={item.href}
                   className="nav-item"
-                  data-admin={'admin' in item || undefined}
+                  data-admin={item.admin || undefined}
                   data-active={pathname === item.href}
                   aria-current={pathname === item.href ? 'page' : undefined}
                 >
                   {item.label}
-                  {'showPot' in item && item.showPot && (
-                    <span className="nav-badge">{formatMoney(totalPot)}</span>
-                  )}
-                  {'soon' in item && item.soon && <span className="nav-soon">Soon</span>}
+                  {item.showPot && <span className="nav-badge">{formatMoney(totalPot)}</span>}
+                  {item.soon && <span className="nav-soon">Soon</span>}
                 </Link>
               ),
             )}

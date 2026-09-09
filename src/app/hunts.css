@@ -533,3 +533,165 @@
   .gtb-row .hunt-bet { grid-column: 3; grid-row: 1; font-size: 13.5px; }
   .gtb-row .hunt-pay { grid-column: 3; grid-row: 2; font-size: 12.5px; color: var(--dim); }
 }
+
+/* --------------------------------------------------------- giveaway */
+
+.give {
+  border-radius: 22px;
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+  padding: clamp(20px, 3vw, 30px);
+}
+.give-key {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 9px;
+  background: var(--cyan-quiet);
+  border: 1px solid var(--cyan-deep);
+  color: var(--cyan);
+}
+
+/* Two ways into the same round, side by side, because someone reading the site
+   should not have to open Kick to take part. */
+.give-ways { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 22px; }
+.give-way {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--edge);
+  background: rgba(3, 5, 18, 0.5);
+}
+.give-way b { display: block; font-size: 15px; color: var(--text); }
+.give-way > span:last-child > span { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; }
+.give-way > span:last-child > span a { color: var(--cyan); text-decoration: underline; }
+.give-way form { margin-top: 12px; }
+.give-way-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--hull-2);
+  border: 1px solid var(--edge);
+  color: var(--brand);
+  font-size: 19px;
+}
+.give-way-icon svg { width: 20px; height: 20px; }
+
+.give-gate {
+  margin: 18px 0 0;
+  padding: 13px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: rgba(3, 5, 18, 0.5);
+  color: var(--muted);
+  font-size: 14px;
+}
+.give-gate b { color: var(--cyan); }
+.give-gate a { color: var(--cyan); text-decoration: underline; }
+
+.give-entries { margin-top: 26px; }
+.give-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.give-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--edge);
+  background: var(--hull-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.give-chip em { font-style: normal; font-size: 11.5px; color: var(--dim); }
+/* The winner is the only chip that needs marking. */
+.give-chip[data-win='true'] {
+  border-color: var(--rank-1);
+  background: var(--rank-1-quiet);
+  color: var(--rank-1);
+}
+
+.admin-count {
+  margin-left: 8px;
+  font-family: var(--font-display);
+  font-size: 0.7em;
+  color: var(--dim);
+}
+.admin-winner {
+  margin: 16px 0 0;
+  padding: 13px 16px;
+  border-radius: var(--r);
+  border: 1px solid rgba(255, 196, 77, 0.4);
+  background: var(--rank-1-quiet);
+  color: var(--muted);
+  font-size: 14.5px;
+}
+.admin-winner b { color: var(--rank-1); font-family: var(--font-display); }
+
+/* A checkbox is not a text field, so it does not get the field's stacked
+   label — it sits beside the thing it toggles. */
+.field-check { flex-direction: row; align-items: center; gap: 9px; flex: 0 0 auto; }
+.field-check input { width: 18px; height: 18px; min-height: 0; accent-color: var(--cyan); }
+.field-check label { font-size: 14px; color: var(--muted); cursor: pointer; }
+
+/* ------------------------------------------------------------- account */
+
+.acct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.acct-card {
+  padding: clamp(20px, 2.6vw, 28px);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+}
+.acct-who { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+.acct-who b { display: block; font-size: 16px; }
+.acct-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--cyan-quiet);
+  border: 1px solid var(--edge-lit);
+}
+.acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.acct-sub { display: block; margin-top: 2px; color: var(--dim); font-size: 13px; }
+
+.acct-linked {
+  margin-top: 16px;
+  padding: 15px 17px;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: rgba(3, 5, 18, 0.5);
+}
+.acct-linked b { font-family: var(--font-display); font-size: 18px; color: var(--text); }
+.acct-state { display: block; margin-top: 6px; font-size: 13.5px; }
+.acct-ok { color: var(--hue-teal); }
+.acct-warn { color: var(--rank-1); }
+.acct-linked[data-ok='true'] { border-color: rgba(47, 230, 167, 0.4); }
+
+.acct-note { margin: 14px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.acct-note b { color: var(--cyan); }
+
+.acct-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.acct-link:hover { color: var(--cyan); }
+.acct-link svg { width: 13px; height: 13px; }
+
+@media (max-width: 720px) {
+  .give-ways { grid-template-columns: 1fr; }
+}

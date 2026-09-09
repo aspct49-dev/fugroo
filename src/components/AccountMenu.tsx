@@ -59,6 +59,9 @@ export function AccountMenu({ name, image }: { name: string; image: string | nul
 
       {open && (
         <div className="account-menu" role="menu">
+          <a className="account-menu-item" href="/profile" role="menuitem">
+            My account
+          </a>
           <form action="/api/auth/signout" method="post">
             <button className="account-menu-item" type="submit" role="menuitem">
               Sign out

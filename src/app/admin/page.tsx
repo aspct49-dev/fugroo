@@ -2,10 +2,21 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
+import { AdminGiveaway } from '@/components/AdminGiveaway';
 import { AdminGuess } from '@/components/AdminGuess';
 import { HuntBoard } from '@/components/HuntBoard';
 import { requireAdmin } from '@/lib/admin';
 import { formatMoney } from '@/lib/format';
+import {
+  clearMisses,
+  closeGiveaway,
+  connect,
+  disconnect,
+  giveawayState,
+  openGiveaway,
+  reset as resetGiveaway,
+  roll,
+} from '@/lib/giveaway';
 import {
   activeGame,
   createGame,
@@ -52,6 +63,7 @@ export default async function AdminPage() {
   if (!admin) redirect('/');
 
   const [hunts, games, game] = await Promise.all([listHunts(), listGames(), activeGame()]);
+  const give = giveawayState();
   const current = hunts.find((h) => h.status !== 'settled') ?? hunts[0];
 
   async function create(form: FormData) {
@@ -157,6 +169,66 @@ export default async function AdminPage() {
     revalidatePath('/guess-the-balance');
   }
 
+  /* ------------------------------------------------------------ giveaway */
+
+  async function gConnect(form: FormData) {
+    'use server';
+    await guard();
+    await connect(String(form.get('channel') ?? ''));
+    revalidatePath('/admin');
+  }
+
+  async function gDisconnect() {
+    'use server';
+    await guard();
+    disconnect();
+    revalidatePath('/admin');
+    revalidatePath('/giveaways');
+  }
+
+  async function gOpen(form: FormData) {
+    'use server';
+    await guard();
+    const min = Number(form.get('minWagered') || 0);
+    await openGiveaway(String(form.get('keyword') ?? '!enter'), {
+      requireCode: form.get('requireCode') === 'on',
+      minWagered: Number.isFinite(min) && min > 0 ? min : 0,
+    });
+    revalidatePath('/admin');
+    revalidatePath('/giveaways');
+  }
+
+  async function gClose() {
+    'use server';
+    await guard();
+    closeGiveaway();
+    revalidatePath('/admin');
+    revalidatePath('/giveaways');
+  }
+
+  async function gRoll() {
+    'use server';
+    await guard();
+    roll();
+    revalidatePath('/admin');
+    revalidatePath('/giveaways');
+  }
+
+  async function gReset() {
+    'use server';
+    await guard();
+    resetGiveaway();
+    revalidatePath('/admin');
+    revalidatePath('/giveaways');
+  }
+
+  async function gClearMisses() {
+    'use server';
+    await guard();
+    clearMisses();
+    revalidatePath('/admin');
+  }
+
   return (
     <section className="section wrap">
       <header className="admin-head">
@@ -167,6 +239,19 @@ export default async function AdminPage() {
           </p>
         </div>
       </header>
+
+      <h2 className="admin-group">Kick giveaway</h2>
+
+      <AdminGiveaway
+        g={give}
+        onConnect={gConnect}
+        onDisconnect={gDisconnect}
+        onOpen={gOpen}
+        onClose={gClose}
+        onRoll={gRoll}
+        onReset={gReset}
+        onClearMisses={gClearMisses}
+      />
 
       <h2 className="admin-group">Guess the balance</h2>
 
