@@ -258,32 +258,31 @@
 }
 
 /*
- * A contour wash across each card, tinted by its own hue.
+ * The wash across each card, in its own hue. Defined once in globals.css.
  *
- * The source is a grey plate with white lines. Laying that over the card as an
- * image would grey the navy out; baked into alpha instead, it becomes a mask —
- * so what shows through is the hue, and each card gets its own.
+ * Overscanned well past the card and rotated per position, because the lobes
+ * have to run off every edge — one that stops inside the card reads as a
+ * shape someone drew on it rather than as light behind it.
  */
 .rack-card::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -25%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.14;
-  background-color: var(--hue);
-  -webkit-mask: url("/contour.webp") center / 150% auto no-repeat;
-          mask: url("/contour.webp") center / 150% auto no-repeat;
+  opacity: 0.16;
+  background: var(--wash);
   transition: opacity 0.32s var(--ease);
 }
 .rack-card:hover::before,
-.rack-card:focus-visible::before { opacity: 0.22; }
+.rack-card:focus-visible::before { opacity: 0.24; }
 
-/* Each card samples a different part of the plate, so a row of them does not
-   read as the same tile repeated. */
-.rack-card:nth-child(2)::before { mask-position: 22% 70%; -webkit-mask-position: 22% 70%; }
-.rack-card:nth-child(3)::before { mask-position: 78% 28%; -webkit-mask-position: 78% 28%; }
-.rack-card:nth-child(4)::before { mask-position: 40% 12%; -webkit-mask-position: 40% 12%; }
+/* Rotation rather than a different set of gradients: a row of cards should
+   not read as the same picture repeated, and turning the layer changes every
+   silhouette at once. */
+.rack-card:nth-child(2)::before { transform: rotate(132deg); }
+.rack-card:nth-child(3)::before { transform: rotate(214deg); }
+.rack-card:nth-child(4)::before { transform: rotate(58deg); }
 
 /* A pool the object sits in, so it does not float in a void. */
 .rack-card::after {

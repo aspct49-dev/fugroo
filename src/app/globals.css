@@ -73,6 +73,41 @@
 
 * { box-sizing: border-box; }
 
+/*
+ * The wash behind a card: three overlapping soft lobes in the card's own hue,
+ * drifting off every edge so none of them reads as a shape placed on the card.
+ * It replaced a contour plate, which at card size looked like a texture laid
+ * over the navy rather than light moving behind it.
+ *
+ * Each lobe holds solid to about 40% of its radius before falling away over a
+ * short run, which is what gives a soft but readable edge — a plain two-stop
+ * radial has no edge at all and reads as fog. Where two overlap the tone
+ * doubles, and that is the whole trick: the silhouette comes from the overlaps,
+ * not from any one shape.
+ *
+ * The lobes are mostly white with the hue mixed in rather than the hue itself.
+ * Pure hue sat at the same colour as the bloom already behind the art and
+ * disappeared into it; lifting the ground instead reads as a surface catching
+ * light, and still tells the cards apart.
+ *
+ * It is declared here, on the two things that carry a hue, and NOT on :root —
+ * that was the first attempt and it silently produced nothing. A custom
+ * property has its var() references substituted on the element it is declared
+ * on, so `var(--hue)` inside a :root declaration resolves against :root, which
+ * has no --hue; the whole value goes invalid and `background: var(--wash)`
+ * computes to `none`. Declared here it resolves against the card, which is
+ * where --hue actually lives.
+ */
+.rack-card,
+.offer {
+  --wash-ink: color-mix(in srgb, var(--hue) 38%, #d8e6ff);
+  --wash:
+    radial-gradient(52% 44% at 76% 6%, var(--wash-ink) 0% 42%, transparent 62%),
+    radial-gradient(60% 48% at 6% 90%, var(--wash-ink) 0% 38%, transparent 60%),
+    radial-gradient(40% 56% at 104% 68%, var(--wash-ink) 0% 34%, transparent 58%);
+}
+
+
 html, body {
   margin: 0;
   padding: 0;

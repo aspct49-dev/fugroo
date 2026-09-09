@@ -92,19 +92,17 @@
 }
 .offer:hover { border-color: color-mix(in srgb, var(--hue) 45%, var(--edge)); }
 
-/* The same contour wash the cards carry, so the page reads as one surface. */
+/* The same wash the home cards carry, so the page reads as one surface. */
 .offer::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -25%;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.1;
-  background-color: var(--hue);
-  -webkit-mask: url("/contour.webp") center / 180% auto no-repeat;
-          mask: url("/contour.webp") center / 180% auto no-repeat;
+  opacity: 0.13;
+  background: var(--wash);
 }
-.offer:nth-child(2)::before { mask-position: 70% 30%; -webkit-mask-position: 70% 30%; }
+.offer:nth-child(2)::before { transform: rotate(158deg); }
 
 .offer-head {
   display: flex;
