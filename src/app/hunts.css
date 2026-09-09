@@ -321,6 +321,15 @@
 }
 .admin-drop:hover { color: #ff8a8a; border-color: rgba(255, 106, 106, 0.5); }
 
+/* The same control as `.admin-drop`, worded rather than an ×. It sits beside
+   the status buttons on the round header, where a bare × next to "Close
+   entries" reads as dismissing the panel rather than destroying the round. */
+.btn-drop {
+  color: #ff8a8a;
+  border-color: rgba(255, 106, 106, 0.32);
+}
+.btn-drop:hover { border-color: rgba(255, 106, 106, 0.6); }
+
 /* The admin entry sits apart from the rest of the nav. */
 .nav-item[data-admin] { color: var(--violet-hot); }
 .nav-item[data-admin]:hover { background: var(--violet-quiet); }

@@ -1,3 +1,4 @@
+import { ConfirmSubmit } from '@/components/ConfirmSubmit';
 import { formatMoney } from '@/lib/format';
 import { rankGuesses, type Game } from '@/lib/guesses';
 
@@ -60,6 +61,10 @@ export function AdminGuess({
             Open
           </button>
         </form>
+        <p className="admin-note">
+          Opening a round closes any round still taking guesses — the public page shows one at a
+          time, so two open at once would mean one nobody can reach.
+        </p>
       </div>
 
       {game && (
@@ -80,6 +85,22 @@ export function AdminGuess({
                   </button>
                 </form>
               ))}
+
+              {/* Here as well as in the list below, because the list only
+                  appears once there is more than one round — and the round
+                  most likely to need deleting is the one just opened by
+                  mistake, when it is the only one there is. */}
+              <form action={onDelete}>
+                <input type="hidden" name="gameId" value={game.id} />
+                <ConfirmSubmit
+                  className="btn btn-quiet btn-sm btn-drop"
+                  message={`Delete “${game.name}”? Its ${game.guesses.length} ${
+                    game.guesses.length === 1 ? 'guess' : 'guesses'
+                  } go with it, and this cannot be undone.`}
+                >
+                  Delete round
+                </ConfirmSubmit>
+              </form>
             </div>
           </div>
 
@@ -139,9 +160,15 @@ export function AdminGuess({
                 <span className="admin-bonus-bet">{g.status}</span>
                 <form action={onDelete}>
                   <input type="hidden" name="gameId" value={g.id} />
-                  <button className="admin-drop" type="submit" aria-label={`Delete ${g.name}`}>
+                  <ConfirmSubmit
+                    className="admin-drop"
+                    aria-label={`Delete ${g.name}`}
+                    message={`Delete “${g.name}”? Its ${g.guesses.length} ${
+                      g.guesses.length === 1 ? 'guess' : 'guesses'
+                    } go with it, and this cannot be undone.`}
+                  >
                     ×
-                  </button>
+                  </ConfirmSubmit>
                 </form>
               </div>
             ))}

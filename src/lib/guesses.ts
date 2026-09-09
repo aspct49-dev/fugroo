@@ -91,6 +91,17 @@ export async function activeGame(): Promise<Game | undefined> {
 
 /* ----------------------------------------------------------------- writes */
 
+/**
+ * Opens a round, and closes whatever was still taking guesses.
+ *
+ * The public page shows exactly one round — `activeGame()`, the newest that
+ * has not been drawn — so a second open round is not a second round, it is a
+ * round nobody can reach that still says "Entries open" in the panel. Closing
+ * the old one makes the list say what is actually true.
+ *
+ * Closed rather than deleted: its guesses are still worth having, and the
+ * round can still be drawn afterwards from the All rounds list.
+ */
 export async function createGame(
   name: string,
   startBalance: number,
@@ -98,6 +109,9 @@ export async function createGame(
   huntId: string | null,
 ): Promise<void> {
   await mutate((s) => {
+    for (const g of s.games) {
+      if (g.status === 'open') g.status = 'closed';
+    }
     s.games.unshift({
       id: randomUUID(),
       name,

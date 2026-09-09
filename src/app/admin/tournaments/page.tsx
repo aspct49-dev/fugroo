@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 
 import { AdminTournament } from '@/components/AdminTournament';
+import { ConfirmSubmit } from '@/components/ConfirmSubmit';
 import { assertAdmin } from '@/lib/admin';
 import { BRACKET_SIZES, normaliseBracket, type Match } from '@/lib/bracket';
 import {
@@ -203,9 +204,13 @@ export default async function AdminTournamentsPage({
                   </span>
                   <form action={remove}>
                     <input type="hidden" name="id" value={t.id} />
-                    <button className="admin-drop" type="submit" aria-label={`Delete ${t.name}`}>
+                    <ConfirmSubmit
+                      className="admin-drop"
+                      aria-label={`Delete ${t.name}`}
+                      message={`Delete “${t.name}”? The bracket and every result in it go with it, and this cannot be undone.`}
+                    >
                       ×
-                    </button>
+                    </ConfirmSubmit>
                   </form>
                 </div>
               );
