@@ -25,7 +25,7 @@ export function Placeholder({ id, body }: { id: string; body: string }) {
         </div>
 
         <div className="hold-copy">
-          <span className="hold-tag">Not open yet</span>
+          <span className="hold-tag">Coming soon</span>
           <h1 className="h-page">{section.label}</h1>
           <p className="lede" style={{ marginTop: 14 }}>
             {body}

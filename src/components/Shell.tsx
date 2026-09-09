@@ -29,7 +29,7 @@ const NAV = [
   { href: '/milestones', label: 'Wager milestones' },
   { href: '/tournaments', label: 'Tournaments' },
   { href: '/bonus-hunts', label: 'Bonus hunts' },
-  { href: '/giveaways', label: 'Giveaways' },
+  { href: '/giveaways', label: 'Giveaways', soon: true },
   { href: '/guess-the-balance', label: 'Guess the balance' },
   { href: '/how-it-works', label: 'How it works' },
 ];
@@ -108,6 +108,7 @@ export function Shell({
                   {'showPot' in item && item.showPot && (
                     <span className="nav-badge">{formatMoney(totalPot)}</span>
                   )}
+                  {'soon' in item && item.soon && <span className="nav-soon">Soon</span>}
                 </Link>
               ),
             )}
