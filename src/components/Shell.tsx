@@ -7,11 +7,18 @@ import { usePathname } from 'next/navigation';
 import { PRIMARY_PARTNER, SOCIALS } from '@/lib/partners';
 import { formatMoney } from '@/lib/format';
 import { SOCIAL_LINKS } from './socials';
+import { LoginButton } from './LoginButton';
 
 /**
- * Sidebar on desktop, drawer below 1024px.
+ * A full-width bar across the top, and the nav in a rail beneath it — sidebar
+ * on desktop, drawer below 1024px.
  *
- * Every entry leads to something. A nav that lists nine destinations and
+ * The wordmark lives in the bar rather than at the head of the rail, so it
+ * stays put when the rail slides away on a phone, and the account control has
+ * somewhere to sit opposite it. That pairing is the reason for the bar: a mark
+ * on one end and who you are on the other.
+ *
+ * Every nav entry leads to something. A nav that lists nine destinations and
  * renders "nothing here yet" on six of them costs more than the features it
  * advertises, so this grows as the sections land rather than ahead of them.
  */
@@ -36,19 +43,39 @@ export function Shell({ totalPot, children }: { totalPot: number; children: Reac
 
   return (
     <div className="shell">
+      <header className="topbar">
+        <button
+          className="burger"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
+          aria-controls="sidebar"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        <Link href="/" className="brand" aria-label="Fugroo home">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand wordmark */}
+          <img className="brand-wordmark" src="/wordmark.webp" alt="Fugroo" />
+        </Link>
+
+        <div className="topbar-end">
+          <a
+            className="btn btn-secondary btn-sm topbar-play"
+            href={PRIMARY_PARTNER.signupUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Play on {PRIMARY_PARTNER.name}
+          </a>
+          <LoginButton />
+        </div>
+      </header>
+
       <div className="shell-grid">
         <aside className="sidebar" data-open={open} id="sidebar">
-          <Link href="/" className="brand" aria-label="Fugroo home">
-            {/* eslint-disable-next-line @next/next/no-img-element -- brand wordmark */}
-            <img
-              className="brand-wordmark"
-              src="/wordmark.webp"
-              alt="Fugroo"
-              width={168}
-              height={55}
-            />
-          </Link>
-
           <nav className="nav">
             {NAV.map((item) => (
               <Link
@@ -98,34 +125,7 @@ export function Shell({ totalPot, children }: { totalPot: number; children: Reac
 
         {open && <div className="scrim" onClick={() => setOpen(false)} aria-hidden />}
 
-        <div className="main">
-          <header className="topbar">
-            <button
-              className="burger"
-              onClick={() => setOpen((v) => !v)}
-              aria-label={open ? 'Close menu' : 'Open menu'}
-              aria-expanded={open}
-              aria-controls="sidebar"
-            >
-              <span />
-              <span />
-              <span />
-            </button>
-            <Link href="/" className="brand" style={{ padding: 0, flex: 1 }} aria-label="Fugroo home">
-              {/* eslint-disable-next-line @next/next/no-img-element -- brand wordmark */}
-              <img className="brand-wordmark" src="/wordmark.webp" alt="Fugroo" height={30} />
-            </Link>
-            <a
-              className="btn btn-primary btn-sm"
-              href={PRIMARY_PARTNER.signupUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Play
-            </a>
-          </header>
-          {children}
-        </div>
+        <div className="main">{children}</div>
       </div>
     </div>
   );

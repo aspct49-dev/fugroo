@@ -59,6 +59,7 @@
   --r-lg: 18px;
 
   --sidebar-w: 244px;
+  --topbar-h: 62px;
   --gutter: 24px;
 
   --font-display: var(--font-oxanium), "Arial Narrow", system-ui, sans-serif;
@@ -143,29 +144,30 @@ h1, h2, h3, h4 {
 
 .shell-grid { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
 
+/* Sits under the bar, and is exactly that much shorter — so the rail scrolls
+   its own overflow rather than pushing the page down. */
 .sidebar {
   position: sticky;
-  top: 0;
+  top: var(--topbar-h);
   align-self: start;
-  height: 100vh;
+  height: calc(100vh - var(--topbar-h));
   background: linear-gradient(180deg, var(--hull) 0%, var(--void) 100%);
   border-right: 1px solid var(--edge);
   display: flex;
   flex-direction: column;
-  padding: 18px 0;
+  padding: 16px 0;
   overflow-y: auto;
 }
 
-.brand { display: flex; align-items: center; padding: 6px 18px 24px; }
+.brand { display: flex; align-items: center; }
 /* The wordmark is the logo — there is no lockup of mark plus set type, so
    nothing here has to agree with a typeface it was never drawn against. */
 .brand-wordmark {
-  width: 168px;
-  height: auto;
+  width: auto;
+  height: 32px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 12px rgba(34, 211, 255, 0.28));
+  filter: drop-shadow(0 3px 12px rgba(34, 211, 255, 0.3));
 }
-.topbar .brand-wordmark { width: auto; height: 30px; }
 
 .nav { display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
 
@@ -249,23 +251,71 @@ h1, h2, h3, h4 {
 .main { min-width: 0; display: flex; flex-direction: column; }
 
 .topbar {
-  display: none;
-  position: sticky; top: 0; z-index: 60;
-  align-items: center; gap: 12px;
-  padding: 10px 16px;
-  background: rgba(11, 16, 48, 0.88);
-  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--topbar-h);
+  padding: 0 clamp(14px, 2vw, 22px);
+  background: rgba(9, 13, 40, 0.9);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--edge);
 }
+.topbar-end { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+/* The burger only earns its place once the rail is a drawer. */
 .burger {
-  width: 44px; height: 44px;
+  display: none;
+  width: 40px; height: 40px;
   background: none;
   border: 1px solid var(--edge);
   border-radius: var(--r-sm);
-  display: grid; place-content: center; gap: 5px;
+  place-content: center;
+  gap: 5px;
   cursor: pointer;
 }
 .burger span { display: block; width: 16px; height: 1.5px; background: var(--muted); border-radius: 1px; }
+
+/* ------------------------------------------------------------ login */
+
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: linear-gradient(180deg, #7d88f7 0%, #5865f2 54%, #414db8 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.4),
+    0 3px 0 #33409a,
+    0 8px 20px -10px rgba(88, 101, 242, 0.6);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.14s var(--ease), transform 0.08s var(--ease), box-shadow 0.08s var(--ease);
+}
+.login-btn svg { font-size: 17px; flex: none; }
+.login-btn:hover:not(:disabled) { filter: brightness(1.07); }
+.login-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 0 0 #33409a;
+}
+/* Says it is not ready rather than looking live and doing nothing. */
+.login-btn:disabled {
+  background: var(--hull-2);
+  border-color: var(--edge);
+  box-shadow: none;
+  color: var(--dim);
+  cursor: not-allowed;
+}
 
 .scrim { position: fixed; inset: 0; background: rgba(2, 4, 14, 0.72); z-index: 70; }
 
@@ -542,12 +592,30 @@ h1, h2, h3, h4 {
 @media (max-width: 1024px) {
   .shell-grid { grid-template-columns: 1fr; }
   .sidebar {
-    position: fixed; z-index: 80; left: 0; top: 0; width: 278px;
-    transform: translateX(-100%); transition: transform 0.24s var(--ease);
+    position: fixed;
+    z-index: 80;
+    left: 0;
+    top: var(--topbar-h);
+    width: 278px;
+    height: calc(100vh - var(--topbar-h));
+    transform: translateX(-100%);
+    transition: transform 0.24s var(--ease);
   }
   .sidebar[data-open='true'] { transform: none; }
-  .topbar { display: flex; }
+  .burger { display: grid; }
+  /* The bar has to hold a mark, a burger and an account control at this width;
+     the operator link is the one of the four that is repeated further down
+     every page. */
+  .topbar-play { display: none; }
+  .scrim { top: var(--topbar-h); }
   .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 560px) {
+  /* Just the icon — the word is the first thing that can go. */
+  .login-btn { padding: 0 13px; }
+  .login-btn-label { display: none; }
+  .brand-wordmark { height: 26px; }
 }
 
 @media (max-width: 720px) {
