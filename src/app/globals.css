@@ -85,6 +85,12 @@
  * only way to get a boundary that wanders, which is what makes the shape look
  * like a shape and not like a clip.
  *
+ * Every path is anchored to an edge or a corner and reaches no more than about
+ * a third of the way in: one down the right side, one in the bottom-left
+ * corner, one small on the bottom edge. The middle of the card belongs to the
+ * object and the light behind it, and a shape crossing the centre competes
+ * with both — which is what the first drawing did.
+ *
  * It is a mask, not an image, so the fill is `--wash-ink` and each card tints
  * its own. `preserveAspectRatio="none"` lets one drawing stretch to any card —
  * an abstract blob has no proportions to protect — and stretching means no
@@ -100,7 +106,7 @@
 .rack-card,
 .offer {
   --wash-ink: color-mix(in srgb, var(--hue) 38%, #d8e6ff);
-  --wash: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%2080%22%20preserveAspectRatio=%22none%22%3E%3Cpath%20fill=%22%23fff%22%20d=%22M0%200h100c-6%2010-2%2020-16%2027-15%208-10%2020-27%2025-13%204-19%2016-33%2018-9%201-17%204-24%2010V0Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%2046c-9%204-19%206-21%2016-2%208%204%2013%206%2018h15Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M62%2080c-4-6-1-12%206-14%208-2%2013%204%2012%2014Z%22/%3E%3C/svg%3E");
+  --wash: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%2080%22%20preserveAspectRatio=%22none%22%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%200H70C76%2012%2070%2022%2082%2030%2090%2035%2097%2036%20100%2046Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M0%2080V52C8%2058%206%2066%2016%2072%2022%2075%2024%2077%2026%2080Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%2066C94%2068%2090%2074%2092%2080h8Z%22/%3E%3C/svg%3E");
 }
 
 
