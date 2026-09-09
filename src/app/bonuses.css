@@ -364,3 +364,20 @@
   .rank-stats { grid-template-columns: 1fr; gap: 10px; }
   .rank-ladder { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
+
+/* Discord's own colour on the claim button, the way each brand strip carries
+   its platform's — the ticket lives over there, not here. */
+.claim-discord {
+  background: linear-gradient(180deg, #7d88f7 0%, #5865f2 52%, #414db8 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
+    0 4px 0 #33409a,
+    0 10px 26px -10px rgba(88, 101, 242, 0.6);
+}
+.claim-discord:active {
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.32), 0 1px 0 #33409a;
+}
+.claim-discord svg { font-size: 19px; }

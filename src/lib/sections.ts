@@ -27,7 +27,7 @@ export const FEATURE_CARDS: SectionCard[] = [
     label: 'Wager milestones',
     href: '/milestones',
     hue: 'var(--hue-violet)',
-    blurb: 'Rewards that unlock as your lifetime wagered climbs.',
+    blurb: 'We pay out every rank you climb. Claimed in the Discord.',
   },
 ];
 

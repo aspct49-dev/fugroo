@@ -125,12 +125,15 @@ export const JOIN_STEPS = [
 ] as const;
 
 /**
- * Roobet's rank-up rewards, in ladder order.
+ * Rank-up rewards, in ladder order.
  *
- * Climbing a rank is what pays; the wagering is only how you climb. The
- * emblems are the operator's own art with the baked-in name and amount cropped
- * off, so those are set here as data — they belong in type that stays sharp
- * and can be corrected without a new bitmap.
+ * The split matters and the page states it plainly: the *rank* is Roobet's —
+ * they set the thresholds and decide when one is reached — but the *reward* is
+ * ours, paid out on claim. Nothing here comes from Roobet's balance.
+ *
+ * The emblems are the operator's own art with the baked-in name and amount
+ * cropped off, so those are set here as data — they belong in type that stays
+ * sharp and can be corrected without a new bitmap.
  *
  * PLACEHOLDER: six of Roobet's ranks are covered. The rest of the ladder is
  * added by appending to this array, and the page counts and totals itself.
@@ -158,6 +161,29 @@ export const RANK_REWARD_TOTAL = RANK_REWARDS.reduce((sum, r) => sum + r.reward,
 /** The biggest single rank-up. Taken as a maximum rather than as the last
  *  entry, so appending a rank out of order cannot make the page lie. */
 export const RANK_REWARD_TOP = Math.max(...RANK_REWARDS.map((r) => r.reward));
+
+/**
+ * Claiming a rank reward. Three steps, and the middle one is the whole point:
+ * these are paid by us, so there is nothing automatic about it — someone has
+ * to ask, and a Discord ticket is where that happens.
+ */
+export const CLAIM_STEPS = [
+  {
+    n: 1,
+    title: 'Reach a rank',
+    body: `Play on ${PARTNERS.roobet.name} under code ${PARTNERS.roobet.code}. Roobet promotes you as your lifetime wagered climbs.`,
+  },
+  {
+    n: 2,
+    title: 'Open a ticket',
+    body: 'Open a ticket in the Discord with your Roobet username and the rank you have hit.',
+  },
+  {
+    n: 3,
+    title: 'Get paid',
+    body: 'Once the rank checks out against the affiliate stats, the reward is sent straight to you.',
+  },
+] as const;
 
 export const SOCIALS = {
   kick: 'https://kick.com/fugroo',

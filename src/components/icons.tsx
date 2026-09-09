@@ -103,3 +103,23 @@ export function TagIcon({ className }: Props) {
     </svg>
   );
 }
+
+/** The last step of a claim: it has been paid. */
+export function PaidIcon({ className }: Props) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 3 3 5-6" />
+    </svg>
+  );
+}

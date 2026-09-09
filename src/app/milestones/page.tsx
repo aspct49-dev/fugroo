@@ -1,17 +1,24 @@
 import type { Metadata } from 'next';
 
+import { FaDiscord } from 'react-icons/fa';
+
 import { BrandStrips } from '@/components/BrandStrips';
 import { CopyCode } from '@/components/CopyCode';
 import { PageBanner } from '@/components/PageBanner';
-import { ExternalIcon } from '@/components/icons';
+import { ExternalIcon, PaidIcon, TrophyIcon } from '@/components/icons';
 import { formatMoney } from '@/lib/format';
 import {
+  CLAIM_STEPS,
   PRIMARY_PARTNER,
   RANK_REWARDS,
   RANK_REWARD_TOP,
   RANK_REWARD_TOTAL,
+  SOCIALS,
   TIER_HUE,
 } from '@/lib/partners';
+import { SITE } from '@/lib/site';
+
+const CLAIM_ICON = [TrophyIcon, FaDiscord, PaidIcon];
 
 export const metadata: Metadata = {
   title: 'Wager milestones',
@@ -29,8 +36,9 @@ export default function MilestonesPage() {
           <h2 className="h-section">Every rank you climb pays out</h2>
           <p className="lede">
             {PRIMARY_PARTNER.name} ranks you on how much you have wagered over the life of the
-            account. Each rank you reach releases a reward, and they stack — these are paid on top
-            of the monthly leaderboard, not instead of it.
+            account. Every rank you reach earns a reward from us — paid by {SITE.name}, not by{' '}
+            {PRIMARY_PARTNER.name} — and they stack on top of the monthly leaderboard rather than
+            replacing it.
           </p>
         </div>
 
@@ -76,16 +84,55 @@ export default function MilestonesPage() {
         </p>
       </section>
 
+      <section className="section wrap">
+        <div className="join-head">
+          <h2 className="h-section">Claiming a reward</h2>
+          <p>
+            These are paid by {SITE.name}, so nothing lands automatically — open a ticket and it
+            gets sent.
+          </p>
+        </div>
+
+        {/* Ordered, because the steps only work in sequence. */}
+        <ol className="join-steps">
+          {CLAIM_STEPS.map((step, i) => {
+            const Icon = CLAIM_ICON[i];
+            return (
+              <li className="join-step" key={step.n}>
+                <p className="join-step-tag">
+                  <Icon />
+                  Step {step.n}
+                </p>
+                <h3>{step.title}</h3>
+                <p className="join-step-body">{step.body}</p>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="join-actions">
+          <a
+            className="btn btn-primary claim-discord"
+            href={SOCIALS.discord}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <FaDiscord />
+            Open a ticket in Discord
+          </a>
+        </div>
+      </section>
+
       <BrandStrips only="partner" />
 
       <section className="section wrap">
         <div className="rank-note card">
           <h2 className="h-section">How the rank is worked out</h2>
           <p className="lede" style={{ marginTop: 12 }}>
-            The rank is {PRIMARY_PARTNER.name}&rsquo;s, not ours — they set the thresholds, decide
-            when a rank is reached and pay the reward. Wagers count toward it by the house edge of
-            the game, the same weighting the leaderboard uses, so a low-edge game moves you up more
-            slowly than a slot for the same stake.
+            The rank is {PRIMARY_PARTNER.name}&rsquo;s — they set the thresholds and decide when one
+            is reached. The reward attached to it is ours. Wagers count toward the rank by the house
+            edge of the game, the same weighting the leaderboard uses, so a low-edge game moves you
+            up more slowly than a slot for the same stake.
           </p>
           <div style={{ marginTop: 18 }}>
             <div className="kv">
@@ -93,12 +140,20 @@ export default function MilestonesPage() {
               <b>Registered under {PRIMARY_PARTNER.code}</b>
             </div>
             <div className="kv">
-              <span>Measured on</span>
+              <span>Rank measured on</span>
               <b>Lifetime {PRIMARY_PARTNER.metricLabel.toLowerCase()}</b>
             </div>
             <div className="kv">
-              <span>Paid by</span>
-              <b>{PRIMARY_PARTNER.name}, direct to your balance</b>
+              <span>Rank awarded by</span>
+              <b>{PRIMARY_PARTNER.name}</b>
+            </div>
+            <div className="kv">
+              <span>Reward paid by</span>
+              <b>{SITE.name}</b>
+            </div>
+            <div className="kv">
+              <span>Claimed</span>
+              <b>By ticket in the Discord</b>
             </div>
             <div className="kv">
               <span>Stacks with</span>
