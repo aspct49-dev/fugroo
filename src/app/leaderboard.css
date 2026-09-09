@@ -1,0 +1,278 @@
+/* ===========================================================================
+   FUGROO — leaderboard page
+
+   The promo section on the home page shows the top three. This is the whole
+   board: every paying seat, the period, and what is left of it.
+   =========================================================================== */
+
+.lb-head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(34px, 5vw, 62px) 0 clamp(28px, 3.6vw, 44px);
+  text-align: center;
+}
+.lb-head::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(54% 70% at 50% 0%, rgba(34, 211, 255, 0.2) 0%, transparent 66%),
+    radial-gradient(46% 56% at 84% 96%, rgba(123, 63, 255, 0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Whose board this is, stated before anything else — the operator's own mark,
+   at the size it is legible and no larger. */
+.lb-partner {
+  height: clamp(22px, 2.4vw, 30px);
+  width: auto;
+  margin: 0 auto clamp(16px, 2.2vw, 26px);
+  opacity: 0.95;
+}
+
+/* One headline, not a figure stacked on a caption. The amount is the reason
+   anyone is reading it, so it carries the light and the rest of the line
+   carries the meaning. */
+.lb-headline {
+  margin: 0 auto;
+  max-width: 16ch;
+  font-size: clamp(30px, 5.4vw, 62px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.lb-amount {
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(178deg, var(--cyan-hot) 0%, var(--cyan) 48%, #0f92c4 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 20px rgba(34, 211, 255, 0.4));
+}
+
+.lb-lede {
+  margin: clamp(12px, 1.6vw, 18px) auto 0;
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: clamp(14px, 1.4vw, 16px);
+}
+.lb-lede b { color: var(--cyan); font-weight: 600; }
+
+.lb-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: clamp(18px, 2.4vw, 26px);
+}
+.lb-actions .btn svg { width: 16px; height: 16px; }
+
+/* --------------------------------------------------------------- podium */
+
+/* Wider than the promo's, and the cards scale into it on their own — every
+   size inside a podium card is a percentage of the card's own width. */
+.lb-podium {
+  max-width: 800px;
+  margin: clamp(34px, 4.6vw, 58px) auto 0;
+}
+
+/* ------------------------------------------------------------- countdown */
+
+.cd { text-align: center; margin-top: clamp(30px, 4.4vw, 52px); }
+.cd-label {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.cd-cells { display: flex; justify-content: center; gap: 10px; }
+
+/* Hexagonal cells, cut with clip-path rather than loaded as an SVG per cell.
+   The 0.866 ratio is a regular hexagon's width against its height. */
+.cd-cell {
+  position: relative;
+  width: 62px;
+  aspect-ratio: 0.866;
+  display: grid;
+  place-content: center;
+  padding: 1.5px;
+  background: linear-gradient(180deg, var(--edge-lit) 0%, var(--edge) 100%);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.cd-cell-face {
+  position: absolute;
+  inset: 1.5px;
+  display: grid;
+  place-content: center;
+  background: linear-gradient(180deg, #111a46 0%, #070c26 100%);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.cd-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  text-align: center;
+}
+.cd-unit {
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------- standings */
+
+.board { margin-top: 0; }
+
+
+.board-head,
+.board-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 150px 110px;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+}
+
+.board-head {
+  height: 34px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+.board-head span:nth-child(3),
+.board-head span:nth-child(4) { text-align: right; }
+
+/* Alternating fills rather than rules: at ten rows a striped table is read
+   across more reliably than a ruled one, and it needs no borders at all. */
+.board-row {
+  min-height: 62px;
+  border-radius: 10px;
+  background: rgba(19, 26, 69, 0.42);
+  transition: background 0.18s var(--ease);
+}
+.board-row:nth-child(even) { background: rgba(11, 16, 48, 0.5); }
+.board-row + .board-row { margin-top: 6px; }
+.board-row:hover { background: var(--hull-2); }
+
+/* The paying three are marked with their podium colour on the rail and the
+   rank, so the table and the podium agree without repeating the artwork. */
+.board-row[data-rank='1'] { background: var(--rank-1-quiet); box-shadow: inset 3px 0 0 var(--rank-1); }
+.board-row[data-rank='2'] { background: var(--rank-2-quiet); box-shadow: inset 3px 0 0 var(--rank-2); }
+.board-row[data-rank='3'] { background: var(--rank-3-quiet); box-shadow: inset 3px 0 0 var(--rank-3); }
+
+.board-rank {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+.board-row[data-rank='1'] .board-rank { color: var(--rank-1); }
+.board-row[data-rank='2'] .board-rank { color: var(--rank-2); }
+.board-row[data-rank='3'] .board-rank { color: var(--rank-3); }
+
+.board-player { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.board-avatar {
+  width: 32px; height: 32px; flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--edge-lit);
+  background: radial-gradient(circle at 50% 34%, #16204f 0%, #070c26 100%);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.board-avatar-mark {
+  width: 66%;
+  height: 66%;
+  background: var(--dim);
+  -webkit-mask: url("/roo-mark.webp") center / contain no-repeat;
+          mask: url("/roo-mark.webp") center / contain no-repeat;
+}
+.board-row[data-rank='1'] .board-avatar-mark { background: var(--rank-1); }
+.board-row[data-rank='2'] .board-avatar-mark { background: var(--rank-2); }
+.board-row[data-rank='3'] .board-avatar-mark { background: var(--rank-3); }
+.board-name {
+  font-weight: 600;
+  font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-game { font-size: 12.5px; color: var(--dim); }
+
+.board-wagered {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: right;
+}
+.board-prize {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  text-align: right;
+}
+.board-prize .sym { color: var(--cyan); }
+
+.board-row[data-open='true'] .board-name { color: var(--dim); font-weight: 500; }
+.board-row[data-open='true'] .board-prize { color: var(--muted); }
+.board-row[data-open='true'] .board-prize .sym { color: var(--dim); }
+
+/* ----------------------------------------------------------------- stats */
+
+.board-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 26px;
+}
+.stat { padding: 18px 20px; border: 1px solid var(--edge); border-radius: var(--r); background: var(--hull); }
+.stat-v {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-k { display: block; margin-top: 8px; font-size: 12.5px; color: var(--dim); }
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 720px) {
+  .cd-cell { width: 54px; }
+  .cd-num { font-size: 19px; }
+
+  /* Rank, player and prize are what a phone reader scans for; the wagered
+     column moves under the prize rather than off the page. */
+  .board-head { display: none; }
+  .board-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 13px 16px;
+    min-height: 0;
+  }
+  .board-rank { grid-row: 1 / span 2; }
+  .board-player { grid-column: 2; grid-row: 1 / span 2; }
+  .board-wagered { grid-column: 3; grid-row: 1; font-size: 12.5px; color: var(--dim); }
+  .board-prize { grid-column: 3; grid-row: 2; font-size: 17px; }
+
+  .board-stats { grid-template-columns: 1fr; gap: 10px; }
+}

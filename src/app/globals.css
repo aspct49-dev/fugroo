@@ -1,0 +1,558 @@
+/* ===========================================================================
+   FUGROO — design system
+
+   The colour comes from the logo and the artwork: cyan light on a navy hull,
+   violet as the second light. Everything is lit from a source rather than
+   filled with a flat tint, which is what the illustration set already does.
+
+   Two families do all the work. Oxanium is angular and hexagonal, so it
+   carries the hex motif into the type and sets every figure. Outfit is
+   geometric and quiet, and handles everything a person actually reads.
+   =========================================================================== */
+
+:root {
+  /* Hull — the navy the artwork sits on, sampled from the vault plate. */
+  --void: #05071a;
+  --hull: #0b1030;
+  --hull-2: #131a45;
+  --edge: #1e2a63;
+  --edge-lit: #2f3f8c;
+
+  /* Text. All three clear 4.5:1 on --void and --hull. */
+  --text: #eaf2ff;
+  --muted: #9aabd6;
+  --dim: #7b8cba;
+
+  /* The two lights. */
+  --cyan: #22d3ff;
+  --cyan-hot: #7bebff;
+  --cyan-deep: #0b7fa8;
+  --violet: #7b3fff;
+  --violet-hot: #a67cff;
+
+  /* Cyan and violet already composited over --void, for opaque fills that
+     sit on top of the fixed background layer. */
+  --cyan-quiet: #07203a;
+  --violet-quiet: #140f3a;
+
+  /* Rank accents. Metal, because first, second and third are the one place
+     where the convention carries meaning the palette cannot — nobody has to
+     be told what gold means. Each is warmed off the pure metal so it sits on
+     navy, and each has a companion already composited over --void, for the
+     opaque row fills on the standings table. */
+  --rank-1: #ffc44d;
+  --rank-1-quiet: #201a10;
+  --rank-2: #c9d4e4;
+  --rank-2-quiet: #151920;
+  --rank-3: #e08544;
+  --rank-3-quiet: #1d1310;
+
+  /* Card hues. Five, all neon-on-navy — a system, not a swatch book. */
+  --hue-cyan: #22d3ff;
+  --hue-violet: #7b3fff;
+  --hue-blue: #3b82f6;
+  --hue-teal: #2fe6a7;
+  --hue-amber: #ffa23d;
+
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 18px;
+
+  --sidebar-w: 244px;
+  --gutter: 24px;
+
+  --font-display: var(--font-oxanium), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-outfit), system-ui, -apple-system, sans-serif;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--void);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Hex mesh over the whole page, drawn rather than loaded — one repeating SVG
+   tile costs nothing and stays sharp at any density. Fixed, so it reads as a
+   surface the content sits on rather than as something scrolling with it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96' viewBox='0 0 56 96'%3E%3Cg fill='none' stroke='%2322d3ff' stroke-opacity='.055'%3E%3Cpath d='M28 0L56 16v32L28 64 0 48V16z'/%3E%3Cpath d='M28 48L56 64v32L28 112 0 96V64z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* The hero carries its own artwork, so the mesh is pulled back behind it. */
+body:has(.hero)::before { opacity: 0.28; }
+
+.shell { position: relative; z-index: 1; }
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+img { display: block; max-width: 100%; }
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* -------------------------------------------------------------- typography */
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.h-page { font-size: clamp(32px, 4.4vw, 46px); }
+.h-section { font-size: clamp(22px, 2.6vw, 30px); }
+
+/* Figures get the display face too: Oxanium's tabular figures are the reason
+   it is here, and a third family for numbers would earn nothing. */
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.lede { color: var(--muted); font-size: 16.5px; max-width: 66ch; }
+
+/* -------------------------------------------------------------- app shell */
+
+.shell-grid { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--hull) 0%, var(--void) 100%);
+  border-right: 1px solid var(--edge);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 0;
+  overflow-y: auto;
+}
+
+.brand { display: flex; align-items: center; padding: 6px 18px 24px; }
+/* The wordmark is the logo — there is no lockup of mark plus set type, so
+   nothing here has to agree with a typeface it was never drawn against. */
+.brand-wordmark {
+  width: 168px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 12px rgba(34, 211, 255, 0.28));
+}
+.topbar .brand-wordmark { width: auto; height: 30px; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+.nav-item:hover { background: var(--hull-2); color: var(--text); }
+.nav-item[data-active='true'] {
+  background: var(--cyan-quiet);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--cyan);
+}
+
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--cyan);
+  color: #03121c;
+}
+
+.side-divider { height: 1px; background: var(--edge); margin: 16px 16px 0; }
+.side-foot { padding: 18px 12px 22px; display: grid; gap: 9px; }
+
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--edge);
+  background: var(--hull);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease), background 0.18s var(--ease);
+}
+.side-link svg { font-size: 17px; color: var(--brand); flex: none; }
+.side-link:hover { color: var(--text); border-color: var(--edge-lit); background: var(--hull-2); }
+
+.side-link-brand { justify-content: center; padding: 0 12px; }
+.side-link-brand img { height: 20px; width: auto; object-fit: contain; opacity: 0.92; }
+.side-link-brand:hover img { opacity: 1; }
+
+.live-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--edge);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dim);
+  transition: border-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.live-chip:hover { border-color: var(--edge-lit); color: var(--muted); }
+.live-chip[data-live='true'] { border-color: rgba(34, 211, 255, 0.45); color: var(--cyan); }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.live-chip[data-live='true'] .live-dot { animation: pulse 2s var(--ease) infinite; }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.main { min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  display: none;
+  position: sticky; top: 0; z-index: 60;
+  align-items: center; gap: 12px;
+  padding: 10px 16px;
+  background: rgba(11, 16, 48, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--edge);
+}
+.burger {
+  width: 44px; height: 44px;
+  background: none;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  display: grid; place-content: center; gap: 5px;
+  cursor: pointer;
+}
+.burger span { display: block; width: 16px; height: 1.5px; background: var(--muted); border-radius: 1px; }
+
+.scrim { position: fixed; inset: 0; background: rgba(2, 4, 14, 0.72); z-index: 70; }
+
+/* -------------------------------------------------------------- buttons */
+
+/* Lit slabs, not glossy pills: a hairline top highlight, a solid darker lip
+   below the face, and a press that drops the face onto the lip. The lip is a
+   darker version of the button's own colour — a black lip vanishes on a navy
+   page, which is what makes this treatment fail elsewhere. */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 26px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    filter 0.14s var(--ease),
+    transform 0.08s var(--ease),
+    box-shadow 0.08s var(--ease),
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+.btn:hover { filter: brightness(1.08); }
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--cyan-hot) 0%, var(--cyan) 52%, #12a8d4 100%);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #04141f;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+    0 4px 0 var(--cyan-deep),
+    0 10px 26px -8px rgba(34, 211, 255, 0.5);
+}
+.btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.4), 0 1px 0 var(--cyan-deep);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, var(--hull-2) 0%, #0e1436 100%);
+  border-color: var(--edge-lit);
+  color: var(--text);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.1), 0 4px 0 #070b22;
+}
+.btn-secondary:hover { border-color: var(--cyan-deep); }
+.btn-secondary:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.08), 0 1px 0 #070b22;
+}
+
+/* Flat on purpose. Three raised levels in one row is a toy shop. */
+.btn-quiet {
+  background: none;
+  border-color: var(--edge);
+  color: var(--muted);
+  box-shadow: none;
+}
+.btn-quiet:hover { color: var(--text); border-color: var(--edge-lit); filter: none; }
+.btn-quiet:active { transform: translateY(1px); }
+
+.btn-sm { min-height: 40px; padding: 0 18px; font-size: 13.5px; border-radius: 8px; }
+.btn-block { width: 100%; }
+
+/* -------------------------------------------------------------- layout */
+
+.wrap { width: 100%; max-width: 1160px; margin: 0 auto; padding-inline: var(--gutter); }
+
+.section { padding-block: 22px; }
+/* The first block on a page still needs room to breathe under the hero. */
+.section:first-child { padding-top: clamp(30px, 4vw, 46px); }
+.section-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.section-head p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.card {
+  background: var(--hull);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  padding: 24px;
+}
+
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+/* -------------------------------------------------------------- code chip */
+
+.code-copy {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 0 18px;
+  background: linear-gradient(180deg, var(--hull-2) 0%, #0d1332 100%);
+  border: 1px solid var(--edge-lit);
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.1);
+  transition: border-color 0.18s var(--ease), filter 0.18s var(--ease), transform 0.12s var(--ease);
+}
+.code-copy:hover { border-color: var(--cyan-deep); filter: brightness(1.07); }
+.code-copy:active { transform: translateY(1px); }
+.code-copy-key {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.code-copy-val {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--cyan);
+}
+.code-copy-state { font-size: 11px; color: var(--dim); min-width: 36px; text-align: right; }
+
+/* -------------------------------------------------------------- misc */
+
+.kv {
+  display: flex; justify-content: space-between; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--edge); font-size: 14.5px;
+}
+.kv:last-child { border-bottom: 0; }
+.kv span { color: var(--dim); }
+.kv b { font-weight: 600; text-align: right; }
+
+.notice {
+  display: flex; gap: 10px;
+  padding: 13px 15px;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: var(--hull);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.notice-mark { color: var(--cyan); flex: none; font-weight: 700; }
+
+.pending {
+  display: inline-block;
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  padding: 4px 9px;
+  margin-top: 14px;
+}
+
+/* -------------------------------------------------------------- steps */
+
+.step-n {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+}
+
+/* ------------------------------------------------------- section on hold */
+
+/* A section that is designed but not running yet. It borrows the card's own
+   hue and artwork so the page reads as the same place the card promised,
+   rather than as a generic empty state. */
+.hold {
+  --hue: var(--cyan);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+  gap: 32px;
+  align-items: center;
+  padding: clamp(28px, 4vw, 52px);
+  border-radius: 22px;
+  border: 1px solid var(--edge);
+  background: linear-gradient(152deg, #0d1338 0%, #070b24 58%, #05071a 100%);
+}
+.hold-bloom {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(52% 76% at 82% 50%, var(--hue) 0%, transparent 70%);
+  opacity: 0.2;
+}
+.hold-copy { order: -1; }
+.hold-art { display: grid; place-items: center; }
+.hold-art img {
+  width: min(300px, 100%);
+  animation: rack-bob 5.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 14px 30px rgba(2, 4, 14, 0.6));
+}
+.hold-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 11px;
+  margin-bottom: 14px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--hue) 40%, var(--edge));
+  background: rgba(8, 12, 38, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--hue) 76%, var(--text));
+}
+
+@media (max-width: 860px) {
+  .hold { grid-template-columns: 1fr; }
+  .hold-art img { width: min(200px, 60%); }
+}
+
+/* -------------------------------------------------------------- footer */
+
+.footer {
+  margin-top: auto;
+  padding-block: 44px 28px;
+  background: var(--hull);
+  border-top: 1px solid var(--edge);
+}
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 34px; }
+.footer h4 {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.footer nav a { display: block; color: var(--muted); font-size: 14px; padding: 5px 0; }
+.footer nav a:hover { color: var(--cyan); }
+.footer-note { color: var(--dim); font-size: 13.5px; max-width: 46ch; margin-top: 12px; }
+
+.footer-legal {
+  margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--edge);
+  display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  color: var(--dim); font-size: 13px;
+}
+.age {
+  display: inline-grid; place-items: center; width: 30px; height: 30px;
+  border-radius: 50%; border: 1px solid var(--edge-lit);
+  font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--muted); flex: none;
+}
+
+/* -------------------------------------------------------------- prose */
+
+.prose { max-width: 70ch; }
+.prose h2 { font-size: 21px; margin: 36px 0 10px; }
+.prose h2:first-child { margin-top: 0; }
+.prose p, .prose li { color: var(--muted); font-size: 15.5px; }
+.prose li { margin-bottom: 6px; }
+.prose strong { color: var(--text); font-weight: 600; }
+.prose a { color: var(--cyan); text-decoration: underline; text-underline-offset: 2px; }
+
+/* -------------------------------------------------------------- motion */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@media (max-width: 1024px) {
+  .shell-grid { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; z-index: 80; left: 0; top: 0; width: 278px;
+    transform: translateX(-100%); transition: transform 0.24s var(--ease);
+  }
+  .sidebar[data-open='true'] { transform: none; }
+  .topbar { display: flex; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 720px) {
+  :root { --gutter: 16px; }
+  .section { padding-block: 36px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+}

@@ -1,0 +1,1245 @@
+/* ===========================================================================
+   FUGROO — home page
+
+   Three set pieces: the vault hero, the section card rack, and the
+   leaderboard promo. The promo is drawn entirely in CSS — no banner artwork —
+   so the prize figure and the standings inside it stay live text.
+   =========================================================================== */
+
+/* ============================================================ 1. THE HERO */
+
+/*
+ * The hero is the scene and nothing else. It owns the whole first screen and
+ * runs to the divider — no strapline, no button band. Every site in this
+ * category puts a slab of copy under the artwork, and it pushes the one
+ * interesting thing on the page off the fold.
+ *
+ * Four depth planes, back to front: the room, the mascot under his wordmark,
+ * the two aces turning past him, and the rail that crops him at the chest and
+ * closes the frame.
+ *
+ * Two rows: the stage takes whatever height is left and the rail takes exactly
+ * what it needs, which is what lets the scene grow into a tall screen and hold
+ * its shape on a short one without a single height media query.
+ */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  /* Fills the viewport, but stops short of absurd on a very tall monitor. */
+  min-height: min(88vh, 840px);
+  border-bottom: 1px solid var(--edge);
+}
+
+.hero-vault {
+  position: absolute;
+  inset: -4% -4% 14%;
+  z-index: -3;
+  background: url("/hero-vault.webp") center 42% / cover no-repeat;
+  animation: vault-drift 34s var(--ease) infinite alternate;
+}
+
+/* Deepens the corners and lifts the centre, so the mascot reads as standing
+   in the light rather than pasted onto a photograph of a room. */
+.hero-vault-shade {
+  position: absolute;
+  inset: 0 0 14%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 40% at 50% 56%, rgba(34, 211, 255, 0.26) 0%, transparent 72%),
+    radial-gradient(108% 72% at 50% 44%, transparent 22%, rgba(5, 7, 26, 0.9) 78%),
+    linear-gradient(180deg, rgba(5, 7, 26, 0.84) 0%, transparent 22%);
+}
+
+@keyframes vault-drift {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to   { transform: scale(1.11) translate3d(0, -1.4%, 0); }
+}
+
+/* ---------------------------------------------------------------- stage */
+
+/* Bottom-aligned: the mascot stands on the rail, and the wordmark sits on his
+   head. Extra height on a tall screen opens up above the wordmark, which is
+   where empty room belongs. */
+.hero-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 0;
+  padding-top: clamp(12px, 2vh, 30px);
+}
+
+/* Above him, not across him. The wordmark is the loudest thing in the frame,
+   and sitting it on his chest buried the cards in his hand — the one detail
+   that says what this site is about. */
+.hero-mark {
+  position: relative;
+  z-index: 4;
+  width: clamp(320px, 54vw, 900px);
+  /* Overlaps the crown of his cap by a hair, so the two read as one lockup
+     rather than as a logo parked above a picture. */
+  margin: 0 0 clamp(-72px, -5.6vw, -24px);
+  animation: mark-in 0.9s var(--ease-out) 0.12s both;
+}
+.hero-mark img {
+  width: 100%;
+  filter: drop-shadow(0 6px 26px rgba(5, 7, 26, 0.9))
+          drop-shadow(0 0 34px rgba(34, 211, 255, 0.42));
+}
+
+@keyframes mark-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+.hero-mascot {
+  position: relative;
+  z-index: 2;
+  width: clamp(300px, 39vw, 560px);
+  animation: mascot-in 1s var(--ease-out) 0.28s both;
+}
+.hero-mascot img {
+  width: 100%;
+  /* A cyan cast under him rather than a black one: the light in this room
+     comes from the seams in the walls, so a neutral shadow would read as
+     pasted on. */
+  filter: drop-shadow(0 10px 30px rgba(2, 4, 14, 0.85))
+          drop-shadow(0 0 44px rgba(34, 211, 255, 0.24));
+}
+
+@keyframes mascot-in {
+  from { opacity: 0; transform: translateY(34px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------ aces */
+
+.hero-props { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+.prop {
+  position: absolute;
+  width: var(--w);
+  animation: prop-float var(--dur) ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+}
+.prop[data-side='left'] { left: clamp(10px, 5vw, 120px); }
+.prop[data-side='right'] { right: clamp(10px, 5vw, 120px); }
+
+.prop img {
+  width: 100%;
+  filter: drop-shadow(0 10px 24px rgba(2, 4, 14, 0.7));
+  animation: prop-turn calc(var(--dur) * 1.7) ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+}
+/* Mirrored, so the pair reads as two cards on a table rather than as one card
+   and its reflection. */
+.prop[data-side='right'] img { scale: -1 1; }
+
+@keyframes prop-float {
+  from { transform: translateY(12px); }
+  to   { transform: translateY(-18px); }
+}
+@keyframes prop-turn {
+  from { rotate: -8deg; }
+  to   { rotate: 8deg; }
+}
+
+/* ------------------------------------------------------------ rail + deck */
+
+/*
+ * The rail is the horizon. Only its lit edge is artwork — the tall dark body
+ * this kind of asset usually carries has been cropped off and continues as a
+ * gradient on the deck, so the two are one surface and the buttons land on
+ * flat ground instead of on a glowing bar.
+ */
+.hero-rail {
+  position: relative;
+  z-index: 4;
+  left: 50%;
+  width: min(1760px, 128%);
+  margin-top: clamp(-130px, -8vw, -70px);
+  margin-bottom: -1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: rail-in 0.85s var(--ease-out) 0.4s both;
+}
+.hero-rail img { width: 100%; }
+
+@keyframes rail-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(30px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ==================================================== 2. THE CARD RACK */
+
+/*
+ * One hue per destination, carried by the label bar, the bloom behind the art
+ * and the lit border. The hue is the card's identity — it is how someone finds
+ * Giveaways again without reading — so it is set per card in the markup and
+ * everything here reads it from --hue.
+ *
+ * All the motion is CSS, and it is built in two registers:
+ *
+ *   at rest   the object breathes, the bloom swells very slightly, and three
+ *             gems drift behind it, all on long cycles at low amplitude
+ *   on hover  the bloom opens, the object lifts and takes the hue's glow, the
+ *             gems brighten and rise, and one band of light crosses the plate
+ *
+ * --beat scales every ambient duration per card, so a row of them drifts out
+ * of phase rather than pulsing together — which is the difference between a
+ * rack that feels alive and one that reads as a screensaver.
+ */
+
+.rack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* The standing offers: two across, and wider than they are tall, so they read
+   as billboards rather than as two more tiles in the same set. */
+.rack[data-wide="true"] {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+.rack[data-wide="true"] .rack-card { aspect-ratio: 16 / 9; }
+.rack[data-wide="true"] .rack-media { inset: 8% 7%; }
+
+.rack-card {
+  --hue: var(--cyan);
+  --beat: 1;
+  /* The burst throws its particles in `cqw`, a share of this card's width, so
+     the spread stays proportional at every breakpoint. */
+  container-type: inline-size;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: block;
+  aspect-ratio: 5 / 4;
+  border-radius: 16px;
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+  transition:
+    border-color 0.28s var(--ease),
+    transform 0.34s var(--ease-out),
+    box-shadow 0.34s var(--ease);
+}
+.rack-card:hover,
+.rack-card:focus-visible {
+  border-color: color-mix(in srgb, var(--hue) 58%, transparent);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--hue) 70%, transparent);
+}
+
+/* The bloom is the card's light source. It swells on its own and opens on
+   hover, which is what makes the art read as lit rather than as a sticker. */
+.rack-bloom {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(66% 56% at 50% 62%, var(--hue) 0%, transparent 72%);
+  opacity: 0.2;
+  animation: rack-breathe calc(9s * var(--beat)) ease-in-out infinite alternate;
+  transition: opacity 0.32s var(--ease), transform 0.5s var(--ease-out);
+}
+.rack-card:hover .rack-bloom,
+.rack-card:focus-visible .rack-bloom { opacity: 0.44; transform: scale(1.18); }
+
+@keyframes rack-breathe {
+  from { opacity: 0.16; }
+  to   { opacity: 0.26; }
+}
+
+/*
+ * A contour wash across each card, tinted by its own hue.
+ *
+ * The source is a grey plate with white lines. Laying that over the card as an
+ * image would grey the navy out; baked into alpha instead, it becomes a mask —
+ * so what shows through is the hue, and each card gets its own.
+ */
+.rack-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-color: var(--hue);
+  -webkit-mask: url("/contour.webp") center / 150% auto no-repeat;
+          mask: url("/contour.webp") center / 150% auto no-repeat;
+  transition: opacity 0.32s var(--ease);
+}
+.rack-card:hover::before,
+.rack-card:focus-visible::before { opacity: 0.22; }
+
+/* Each card samples a different part of the plate, so a row of them does not
+   read as the same tile repeated. */
+.rack-card:nth-child(2)::before { mask-position: 22% 70%; -webkit-mask-position: 22% 70%; }
+.rack-card:nth-child(3)::before { mask-position: 78% 28%; -webkit-mask-position: 78% 28%; }
+.rack-card:nth-child(4)::before { mask-position: 40% 12%; -webkit-mask-position: 40% 12%; }
+
+/* A pool the object sits in, so it does not float in a void. */
+.rack-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 13%;
+  z-index: 1;
+  width: 56%;
+  height: 14px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(2, 4, 14, 0.72), transparent);
+  pointer-events: none;
+}
+
+/* Gems drifting behind the object, tinted to the card's hue rather than left
+   cyan, so they belong to this card and not to the site in general. */
+.rack-gem {
+  position: absolute;
+  z-index: 1;
+  opacity: 0.32;
+  pointer-events: none;
+  animation: rack-gem-drift calc(11s * var(--beat)) ease-in-out infinite alternate;
+  transition: opacity 0.34s var(--ease);
+}
+.rack-gem img {
+  width: 100%;
+  height: auto;
+  /* The gem keeps its own blue and only borrows the card's hue as a glow.
+     Desaturating it to match each card turned it grey, which is the one thing
+     a gem must not be. */
+  filter: drop-shadow(0 0 9px var(--hue)) drop-shadow(0 2px 6px rgba(2, 4, 14, 0.7));
+}
+.rack-card:hover .rack-gem,
+.rack-card:focus-visible .rack-gem { opacity: 0.85; }
+
+@keyframes rack-gem-drift {
+  from { transform: translate3d(0, 8px, 0) rotate(-18deg); }
+  to   { transform: translate3d(5px, -12px, 0) rotate(18deg); }
+}
+
+/* ------------------------------------------------------------------ burst */
+
+/*
+ * Particles thrown out from under the object at the moment it pops.
+ *
+ * They sit at z-index 1, below the media slot, so they read as coming from
+ * behind it. Each is parked at the centre at zero scale and zero opacity, so
+ * nothing is visible until hover applies the animation — and when the pointer
+ * leaves, the animation is simply removed and they vanish where they are.
+ * That is the right exit for a burst: sparks do not fly backwards.
+ */
+.rack-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.rack-particle {
+  position: absolute;
+  aspect-ratio: 1;
+  opacity: 0;
+  /* Mixed toward white rather than filled with the raw hue. At this size on a
+     navy card the hue itself is a dark speck — blue #3B82F6 in particular
+     disappeared completely. The glow underneath carries the colour; the
+     particle carries the light. */
+  background: color-mix(in srgb, var(--hue) 45%, #fff);
+  box-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 16px var(--hue),
+    0 0 30px color-mix(in srgb, var(--hue) 70%, transparent);
+  /* A rhombus — the same faceted shape the artwork is built from. */
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  transform: translate3d(0, 0, 0) scale(0.2);
+}
+/* Every third one is a round white glint, so the burst is a mix of shapes
+   rather than ten copies of one. */
+.rack-particle:nth-child(3n) {
+  background: #fff;
+  clip-path: none;
+  border-radius: 50%;
+}
+
+.rack-card:hover .rack-particle,
+.rack-card:focus-visible .rack-particle {
+  animation: rack-burst 900ms var(--ease-out) both;
+}
+
+/*
+ * The throw starts a third of the way out, not at dead centre.
+ *
+ * The artwork fills most of the card and sits above these, so a particle
+ * launched from the middle spends its whole bright phase hidden and only
+ * emerges once it has already faded — which is what the first two passes did.
+ * Starting at 34% of the travel means each particle appears from just behind
+ * the object's silhouette and is clear of it by the time it reaches full
+ * opacity, which is what "bursting from behind" actually looks like.
+ */
+@keyframes rack-burst {
+  0% {
+    opacity: 0;
+    transform: translate3d(calc(var(--x) * 0.34), calc(var(--y) * 0.34), 0) scale(0.4) rotate(0deg);
+  }
+  16% {
+    opacity: 1;
+    transform: translate3d(calc(var(--x) * 0.62), calc(var(--y) * 0.62), 0) scale(1.25) rotate(calc(var(--r) * 0.35));
+  }
+  60% {
+    opacity: 0.9;
+    transform: translate3d(calc(var(--x) * 0.9), calc(var(--y) * 0.9), 0) scale(0.95) rotate(calc(var(--r) * 0.75));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--x), var(--y), 0) scale(0.45) rotate(var(--r));
+  }
+}
+
+.rack-label {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 11px 0 8px;
+  border-radius: 7px;
+  border: 1px solid var(--edge);
+  background: rgba(8, 12, 38, 0.82);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.rack-label::before {
+  content: "";
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--hue);
+  box-shadow: 0 0 8px var(--hue);
+  transition: height 0.28s var(--ease-out);
+}
+.rack-card:hover .rack-label::before { height: 16px; }
+
+/*
+ * The media slot. Whatever sits inside — a still, a looping video, a Rive
+ * canvas — fills the same box, so swapping one for another is a change of
+ * child element and nothing else.
+ *
+ * The inset is symmetric top-to-bottom. It was 18% over 16%, which sat the
+ * artwork a few pixels high in its own box; on a rack of five that reads as
+ * five cards that do not quite line up.
+ *
+ * Every card's art is a 1000x1000 canvas with the object centred inside a
+ * common 840px square, so `contain` here gives all of them the same footprint
+ * — without that, a wide object like the crossed swords fits to the box width
+ * and a tall one like the chest fits to its height, and the two come out
+ * visibly different sizes.
+ */
+.rack-media {
+  position: absolute;
+  inset: 20% 16%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+.rack-media > * {
+  width: 100%;
+  height: 100%;
+}
+.rack-media video { object-fit: contain; }
+
+/* ---------------------------------------------------------- drift and pop */
+
+/* The wrapper drifts, always. */
+.rack-art-wrap {
+  display: grid;
+  place-items: center;
+  animation: rack-bob calc(5.5s * var(--beat)) ease-in-out infinite alternate;
+}
+
+@keyframes rack-bob {
+  from { transform: translateY(4px); }
+  to   { transform: translateY(-6px); }
+}
+
+/*
+ * The object pops, and it is a transition rather than an animation on purpose:
+ * a back-out curve overshoots on the way in without a keyframe, and the same
+ * declaration carries it back to rest when the pointer leaves. An animation
+ * would have to be torn off on mouse-out, and the object would snap.
+ */
+.rack-art {
+  display: grid;
+  place-items: center;
+  transition:
+    transform 440ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 360ms var(--ease),
+    opacity 300ms var(--ease);
+  filter: drop-shadow(0 8px 18px rgba(2, 4, 14, 0.55));
+}
+.rack-card:hover .rack-art,
+.rack-card:focus-visible .rack-art {
+  transform: scale(1.16) translateY(-6px);
+  filter: drop-shadow(0 16px 28px rgba(2, 4, 14, 0.72))
+          drop-shadow(0 0 26px color-mix(in srgb, var(--hue) 60%, transparent));
+}
+
+/* One band of light, crossing on hover. Parked off the left edge at rest, so
+   nothing animates until someone asks for it. */
+.rack-sheen {
+  position: absolute;
+  inset: -40% -60%;
+  z-index: 5;
+  pointer-events: none;
+  transform: translateX(-120%) rotate(18deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--hue) 16%, transparent) 42%,
+    rgba(255, 255, 255, 0.13) 50%,
+    color-mix(in srgb, var(--hue) 16%, transparent) 58%,
+    transparent 100%
+  );
+}
+.rack-card:hover .rack-sheen,
+.rack-card:focus-visible .rack-sheen { animation: rack-sweep 0.85s var(--ease-out); }
+
+@keyframes rack-sweep {
+  from { transform: translateX(-120%) rotate(18deg); }
+  to   { transform: translateX(120%) rotate(18deg); }
+}
+
+/* A second layer above the still: the motion pass. Idle at zero opacity and
+   crossfaded in on hover, so the still is what loads and an animation file
+   costs nothing until someone asks for it. */
+.rack-motion {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+.rack-card:hover .rack-motion,
+.rack-card:focus-visible .rack-motion { opacity: 1; }
+
+/* Hover is decoration here, never the only way to reach anything: the card is
+   a link and the label states the destination. On touch the still stands and
+   no motion file is ever fetched. */
+@media (hover: none) {
+  .rack-motion { display: none; }
+}
+
+/* -------------------------------------------------------------- drawn art */
+
+/*
+ * The artwork is inline SVG, so the pieces are addressable and each card can
+ * animate the thing it is actually about: the arrow strikes the target, the
+ * lid lifts off the box, the blades scissor and clash.
+ *
+ * The palette is set here rather than in the markup so the whole rack can be
+ * retoned from one place. Bodies are neutral steel and the hue rides on the
+ * accents and the gems — an object painted in the card's own hue, on a card
+ * that is already that hue, has nothing to stand against.
+ */
+.art {
+  --a-lift: #7b8aa4;
+  --a-mid: #4d5a73;
+  --a-lo: #333d52;
+  --a-edge: #1d2536;
+
+  --gem-lift: color-mix(in srgb, var(--hue) 25%, #ffffff);
+  --gem-lo: color-mix(in srgb, var(--hue) 62%, #05070f);
+
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Every animated node turns about its own centre. Without fill-box, SVG
+   transforms resolve against the viewBox origin and each part swings from the
+   top-left corner of the canvas. */
+.art [class*='art-'] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The gems orbiting each object drift on their own, always — it is the one
+   piece of motion that runs without a pointer, and it keeps a rack of five
+   from looking switched off. */
+.art-orb { animation: art-orbit calc(9s * var(--beat, 1)) ease-in-out infinite alternate; }
+.art-orb-2 { animation-delay: -2.2s; }
+.art-orb-3 { animation-delay: -4.4s; }
+.art-orb-4 { animation-delay: -6.6s; }
+
+@keyframes art-orbit {
+  from { transform: translate(-3px, 5px) rotate(-5deg); }
+  to   { transform: translate(3px, -7px) rotate(5deg); }
+}
+
+.art-sparks { animation: art-twinkle calc(4s * var(--beat, 1)) ease-in-out infinite; }
+@keyframes art-twinkle {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+/* ------------------------------------------------------- bonus hunts */
+
+/* Parked up and to the right, out past the frame. */
+.art-arrow {
+  transform: translate(58px, -58px);
+  opacity: 0;
+}
+.rack-card:hover .art-arrow,
+.rack-card:focus-visible .art-arrow,
+.hold:hover .art-arrow { animation: art-strike 1.5s ease-out infinite; }
+
+@keyframes art-strike {
+  0%   { opacity: 0; transform: translate(58px, -58px); }
+  8%   { opacity: 1; }
+  /* Fast in, then it stops dead — an arrow does not decelerate into a board. */
+  30%  { opacity: 1; transform: translate(0, 0); }
+  34%  { transform: translate(-3px, 3px); }
+  38%  { transform: translate(0, 0); }
+  88%  { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+
+.rack-card:hover .art-rings,
+.rack-card:focus-visible .art-rings,
+.hold:hover .art-rings { animation: art-thud 1.5s ease-out infinite; }
+
+@keyframes art-thud {
+  0%, 28%   { transform: scale(1); }
+  33%       { transform: scale(0.94, 1.06); }
+  40%       { transform: scale(1.03, 0.97); }
+  48%, 100% { transform: scale(1); }
+}
+
+.art-ripple { opacity: 0; }
+.rack-card:hover .art-ripple,
+.rack-card:focus-visible .art-ripple,
+.hold:hover .art-ripple { animation: art-ripple 1.5s ease-out infinite; }
+
+@keyframes art-ripple {
+  0%, 29% { opacity: 0; transform: scale(0.3); }
+  32%     { opacity: 0.9; transform: scale(0.5); }
+  60%     { opacity: 0; transform: scale(3.2); }
+  100%    { opacity: 0; transform: scale(3.2); }
+}
+
+/* ------------------------------------------------------- tournaments */
+
+/* Crossed at rest — the drawing holds two upright blades and the cross is
+   made here, so one shape serves both. */
+.art-blade-l { transform: rotate(-30deg); }
+.art-blade-r { transform: rotate(30deg); }
+
+.rack-card:hover .art-blade-l,
+.rack-card:focus-visible .art-blade-l,
+.hold:hover .art-blade-l { animation: art-scissor-l 1.6s ease-in-out infinite; }
+.rack-card:hover .art-blade-r,
+.rack-card:focus-visible .art-blade-r,
+.hold:hover .art-blade-r { animation: art-scissor-r 1.6s ease-in-out infinite; }
+
+@keyframes art-scissor-l {
+  0%, 100% { transform: rotate(-30deg); }
+  40%      { transform: rotate(-52deg); }
+  /* Past the resting angle on the way back, so they meet with force. */
+  62%      { transform: rotate(-24deg); }
+  74%      { transform: rotate(-31deg); }
+}
+@keyframes art-scissor-r {
+  0%, 100% { transform: rotate(30deg); }
+  40%      { transform: rotate(52deg); }
+  62%      { transform: rotate(24deg); }
+  74%      { transform: rotate(31deg); }
+}
+
+.art-clash { opacity: 0; }
+.rack-card:hover .art-clash,
+.rack-card:focus-visible .art-clash,
+.hold:hover .art-clash { animation: art-clash 1.6s ease-out infinite; }
+
+@keyframes art-clash {
+  0%, 58% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  63%     { opacity: 1; transform: scale(1) rotate(15deg); }
+  74%     { opacity: 0; transform: scale(1.5) rotate(30deg); }
+  100%    { opacity: 0; transform: scale(1.5) rotate(30deg); }
+}
+
+/* ------------------------------------------------------ bonus offers */
+
+.rack-card:hover .art-lid-flat,
+.rack-card:focus-visible .art-lid-flat,
+.hold:hover .art-lid-flat { animation: art-pop-lid 1.9s ease-out infinite; }
+
+@keyframes art-pop-lid {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  16%      { transform: translateY(-20px) rotate(-4deg); }
+  40%      { transform: translateY(-5px) rotate(2deg); }
+  56%      { transform: translateY(0) rotate(0deg); }
+}
+
+/* The bow leaves with the lid and lands a beat later, which is what sells the
+   lid as a thing with weight rather than a rectangle sliding up. */
+.rack-card:hover .art-bow,
+.rack-card:focus-visible .art-bow,
+.hold:hover .art-bow { animation: art-pop-bow 1.9s ease-out infinite; }
+
+@keyframes art-pop-bow {
+  0%, 100% { transform: translateY(0) scale(1); }
+  16%      { transform: translateY(-28px) scale(1.08); }
+  44%      { transform: translateY(-7px) scale(0.97); }
+  62%      { transform: translateY(0) scale(1); }
+}
+
+/* The gems scatter outward as it opens. */
+.rack-card:hover .art-orb,
+.rack-card:focus-visible .art-orb,
+.hold:hover .art-orb { animation: art-orb-out 1.9s ease-out infinite; }
+.rack-card:hover .art-orb-2,
+.hold:hover .art-orb-2 { animation-delay: 0.06s; }
+.rack-card:hover .art-orb-3,
+.hold:hover .art-orb-3 { animation-delay: 0.12s; }
+.rack-card:hover .art-orb-4,
+.hold:hover .art-orb-4 { animation-delay: 0.18s; }
+
+@keyframes art-orb-out {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  22%      { transform: translate(0, -10px) rotate(-8deg) scale(1.16); }
+  56%      { transform: translate(0, 2px) rotate(4deg) scale(0.98); }
+}
+
+/* -------------------------------------------------- wager milestones */
+
+/* Left to right, one stone at a time — the point of a milestone ladder is the
+   order you climb it in. */
+.rack-card:hover .art-tier,
+.rack-card:focus-visible .art-tier,
+.hold:hover .art-tier { animation: art-light 2.2s ease-out infinite; }
+.art-tier-2 { animation-delay: 0.1s !important; }
+.art-tier-3 { animation-delay: 0.2s !important; }
+.art-tier-4 { animation-delay: 0.3s !important; }
+.art-tier-5 { animation-delay: 0.4s !important; }
+
+@keyframes art-light {
+  0%, 100% { transform: translateY(0) scale(1); filter: none; }
+  12%      { transform: translateY(-12px) scale(1.12); filter: brightness(1.5); }
+  34%      { transform: translateY(0) scale(1); filter: brightness(1.08); }
+}
+
+/* --------------------------------------------------------- giveaways */
+
+/* The stub tears away from the card and springs back. */
+.rack-card:hover .art-stub,
+.rack-card:focus-visible .art-stub,
+.hold:hover .art-stub { animation: art-tear 1.9s ease-out infinite; }
+
+@keyframes art-tear {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20%      { transform: translate(-16px, -6px) rotate(-9deg); }
+  46%      { transform: translate(-4px, 0) rotate(2deg); }
+  62%      { transform: translate(0, 0) rotate(0deg); }
+}
+
+.rack-card:hover .art-card,
+.rack-card:focus-visible .art-card,
+.hold:hover .art-card { animation: art-tilt 1.9s ease-in-out infinite; }
+
+@keyframes art-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  22%      { transform: rotate(3deg); }
+  60%      { transform: rotate(-1deg); }
+}
+
+/* ================================================== 2b. THE BRAND STRIPS */
+
+/*
+ * Mark on the left, one line of copy in the middle, the way in on the right.
+ * Each call to action carries its own platform's colour — the button belongs
+ * to Kick or to Roobet, not to us — which is what keeps cyan reserved for the
+ * things this site actually owns.
+ */
+
+.strip-list { display: grid; gap: 12px; }
+
+.strip {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 18px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  background: linear-gradient(160deg, var(--hull) 0%, #080d28 100%);
+  transition: border-color 0.2s var(--ease);
+}
+.strip:hover { border-color: var(--edge-lit); }
+
+.strip-mark {
+  display: grid;
+  place-items: center;
+  font-size: 46px;
+  line-height: 1;
+  color: var(--brand);
+}
+.strip-mark-img img { max-height: 26px; max-width: 128px; width: auto; object-fit: contain; }
+
+/* Block, not flex: as a flex container every text node and every <b> becomes a
+   separate flex item, so the sentence breaks into stacked fragments the moment
+   it has to wrap. */
+.strip-msg {
+  display: block;
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r);
+  background: var(--void);
+  color: var(--muted);
+  font-size: 14.5px;
+  text-align: center;
+}
+.strip-msg b { color: var(--brand); font-weight: 700; }
+
+.strip-dot {
+  display: inline-block;
+  vertical-align: middle;
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 9px;
+  background: var(--brand);
+  animation: pulse 2s var(--ease) infinite;
+}
+
+/* Same construction as .btn — face gradient, hard top highlight and a solid
+   lip below, in a darker shade of the platform's own colour. */
+.strip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 26px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--brand) 0%, var(--brand) 58%, var(--brand-deep) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #07121b;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+    0 4px 0 var(--brand-deep),
+    0 9px 18px -6px rgba(2, 4, 14, 0.7);
+  transition: filter 0.14s var(--ease), transform 0.08s var(--ease), box-shadow 0.08s var(--ease);
+}
+.strip-btn:hover { filter: brightness(1.07); }
+.strip-btn:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 1px 0 var(--brand-deep);
+}
+
+/* ============================================ 3. THE LEADERBOARD PROMO */
+
+/*
+ * Drawn, not photographed. The plate, the two blooms, the hex wash and the
+ * podium are all CSS, which is what keeps the prize figure and the three
+ * names inside it live text rather than baked into a banner.
+ */
+
+.promo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--edge);
+  background:
+    radial-gradient(78% 120% at 88% 42%, rgba(34, 211, 255, 0.18) 0%, transparent 62%),
+    radial-gradient(62% 100% at 6% 96%, rgba(123, 63, 255, 0.22) 0%, transparent 66%),
+    linear-gradient(152deg, #0d1338 0%, #070b24 52%, #05071a 100%);
+  box-shadow: 0 30px 70px -34px rgba(2, 4, 14, 0.9);
+}
+
+/* Hex wash, denser than the page mesh, fading out to the left so the
+   headline sits on clean ground. */
+.promo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.42;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='72' viewBox='0 0 42 72'%3E%3Cg fill='none' stroke='%2322d3ff' stroke-opacity='.16'%3E%3Cpath d='M21 0L42 12v24L21 48 0 36V12z'/%3E%3Cpath d='M21 36L42 48v24L21 84 0 72V48z'/%3E%3C/g%3E%3C/svg%3E");
+  mask-image: linear-gradient(90deg, transparent 12%, #000 62%);
+}
+
+/* One hairline of light along the top edge, the way the rail and the frame
+   are lit. It is what stops the plate reading as a flat rectangle. */
+.promo::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, rgba(123, 219, 255, 0.6) 42%, transparent);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------ plate drift */
+
+/* Pinned to the corners and the margins. The middle belongs to the prize
+   figure on one side and the podium on the other, and decoration that crosses
+   either of them stops being decoration. */
+.promo-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.promo-gem {
+  position: absolute;
+  animation: gem-drift var(--d, 24s) ease-in-out infinite alternate;
+}
+.promo-gem img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 14px rgba(2, 4, 14, 0.6))
+          drop-shadow(0 0 12px rgba(34, 211, 255, 0.45));
+}
+
+@keyframes gem-drift {
+  from { transform: translate3d(0, 12px, 0) rotate(-16deg); }
+  to   { transform: translate3d(8px, -16px, 0) rotate(16deg); }
+}
+
+.promo-spark {
+  position: absolute;
+  aspect-ratio: 1;
+  fill: var(--cyan-hot);
+  filter: drop-shadow(0 0 6px var(--cyan));
+  animation: spark-twinkle 4s ease-in-out infinite;
+}
+/* Every third one takes the violet light instead, so the plate is lit by the
+   same two sources as the rest of the site. */
+.promo-spark:nth-of-type(3n) { fill: var(--violet-hot); filter: drop-shadow(0 0 6px var(--violet)); }
+
+@keyframes spark-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.6); }
+  50%      { opacity: 0.95; transform: scale(1); }
+}
+
+.promo-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+  padding: clamp(28px, 3.6vw, 46px);
+}
+
+.promo-copy { min-width: 0; }
+
+/* The wordmark, at the size it reads as a signature on the plate rather than
+   as a second headline competing with the figure below it. */
+.promo-mark {
+  width: clamp(140px, 15vw, 210px);
+  height: auto;
+  margin: 0 0 clamp(16px, 2.2vw, 26px);
+  filter: drop-shadow(0 4px 16px rgba(34, 211, 255, 0.3));
+}
+
+.promo-label {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.promo-pot {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(52px, 7vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  /* background-clip paints inside the line box, so a 1.0 line-height shears
+     the ascenders off. The extra room is why this is a block. */
+  padding-bottom: 0.08em;
+  background: linear-gradient(178deg, var(--cyan-hot) 0%, var(--cyan) 46%, #0f92c4 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 18px rgba(34, 211, 255, 0.35));
+  margin-bottom: clamp(16px, 2.2vw, 26px);
+}
+
+/* ------------------------------------------------------------- podium */
+
+/*
+ * Proportions from the SpinVerse Figma frame, held as ratios of the card's own
+ * width (227.039px there) rather than copied as the absolute pixels a fixed
+ * 1920px canvas uses:
+ *
+ *   card width 227.039 → 100cqi   avatar  117.046 → 51.5cqi
+ *   badge       99.071 →  44cqi   name     27.709 → 12.2cqi
+ *   amount      24.511 → 10.8cqi  metric   13.651 →  6cqi
+ *
+ * `cqi` is a percentage of one card's own width, which is what lets the same
+ * component be the small card in the home promo and the large one on the
+ * leaderboard with no second ruleset and no breakpoint.
+ *
+ * Two departures from the source, both to close the row up:
+ *
+ *   1. The prize is inside the card under a hairline, not on a bar hanging
+ *      beneath it. Three trailing slabs put four horizontal edges across the
+ *      row, and every one of them read as a line that was not carrying
+ *      information.
+ *   2. Second and third sit level. Figma staggers them by 5.5px, which reads
+ *      as a mistake rather than a decision — a podium has two steps.
+ */
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Near-touching. The rank colour on each plate already separates them, so a
+     wide gutter was doing nothing but pushing them apart. */
+  gap: clamp(6px, 0.8vw, 12px);
+  /* Bottom-aligned, so the three cards end on one line whatever they contain.
+     First place is raised by being taller, not by being pushed up — which is
+     the only version of this that stays correct when a name wraps. */
+  align-items: end;
+}
+
+.pod {
+  position: relative;
+  container-type: inline-size;
+}
+
+/*
+ * First place is raised by being taller, and the grid's `align-items: end`
+ * does the rest.
+ *
+ * The earlier version dropped the other two with `margin-top: 8cqi`, which was
+ * silently wrong: `cqi` on the element that *establishes* the container
+ * resolves against the next container out, and there was none — so it fell
+ * back to the viewport and pushed them down by 8% of the window instead of 8%
+ * of a card. The row ran downhill at every width, and worse at wide ones.
+ */
+.pod[data-place='1'] { z-index: 2; }
+.pod[data-place='1'] .pod-face { padding-top: 12cqi; padding-bottom: 13cqi; }
+
+.pod-badge {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqi;
+  width: 44cqi;
+  min-width: 84px;
+  height: clamp(21px, 8.5cqi, 29px);
+  margin: 0 auto;
+  border-radius: 2.4cqi;
+  background: var(--rank);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.4);
+  font-family: var(--font-display);
+  font-size: clamp(10px, 4.6cqi, 13px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #04121e;
+  white-space: nowrap;
+}
+.pod-badge svg { width: clamp(11px, 5.4cqi, 15px); height: auto; flex: none; }
+
+/* Angular plate: the top-left and bottom-right corners are cut, echoing the
+   hexagons in the artwork. The border is the parent showing through a 1.5px
+   inset, because a real border would be clipped away with the corners. */
+.pod-card {
+  position: relative;
+  z-index: 1;
+  margin-top: -4cqi;
+  padding: 1.5px;
+  background: linear-gradient(180deg, var(--rank) 0%, color-mix(in srgb, var(--rank) 24%, var(--edge)) 74%);
+  clip-path: polygon(8cqi 0, 100% 0, 100% calc(100% - 8cqi), calc(100% - 8cqi) 100%, 0 100%, 0 8cqi);
+}
+.pod-face {
+  position: relative;
+  overflow: hidden;
+  padding: 7cqi 5cqi 8cqi;
+  text-align: center;
+  background: linear-gradient(180deg, #18234f 0%, #0b1132 62%, #080d28 100%);
+  clip-path: polygon(8cqi 0, 100% 0, 100% calc(100% - 8cqi), calc(100% - 8cqi) 100%, 0 100%, 0 8cqi);
+}
+
+/* The haze each card sits in — a radial in the rank's own colour, replacing
+   the glow bitmap this pattern ships with in the source file. */
+.pod-face::before {
+  content: "";
+  position: absolute;
+  inset: -26% 0 auto;
+  height: 80%;
+  background: radial-gradient(56% 60% at 50% 48%, var(--rank) 0%, transparent 70%);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.pod-avatar {
+  position: relative;
+  width: 51.5cqi;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 34%, #16204f 0%, #070c26 100%);
+  border: 2px solid var(--rank);
+  box-shadow:
+    0 0 0 5px rgba(5, 7, 26, 0.9),
+    0 0 30px -4px var(--rank),
+    inset 0 2px 14px rgba(2, 4, 14, 0.8);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+/* A real player photo fills the socket; the fallback mark does not. */
+.pod-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* The operator mark, used as an alpha mask and filled with the rank colour
+   rather than rendered in its own gold — one more hue on a palette of five
+   would be the thing that made this read as a stock template. */
+.pod-avatar-mark {
+  width: 74%;
+  height: 74%;
+  background: var(--rank);
+  opacity: 0.92;
+  -webkit-mask: url("/roo-mark.webp") center / contain no-repeat;
+          mask: url("/roo-mark.webp") center / contain no-repeat;
+}
+
+/* An open seat is the ordinary case at this community size, so it is stated
+   quietly rather than dressed up as a mystery. */
+.pod[data-open='true'] .pod-avatar { border-style: dashed; box-shadow: none; opacity: 0.55; }
+.pod[data-open='true'] .pod-name { color: var(--dim); font-weight: 500; }
+
+.pod-name {
+  position: relative;
+  margin: 3.5cqi 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(14px, 11.5cqi, 28px);
+  font-weight: 700;
+  line-height: 1.12;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pod-metric {
+  position: relative;
+  margin: 5cqi 0 0;
+  font-size: clamp(9px, 5.4cqi, 13px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.pod-wagered {
+  position: relative;
+  margin: 0.6cqi 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 10.8cqi, 26px);
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.pod-wagered .sym { color: var(--muted); margin-right: 1px; }
+
+/* The one rule inside the card, and it earns its place: it separates what the
+   player did from what the player gets. */
+.pod-rule {
+  position: relative;
+  height: 1px;
+  margin: 6cqi 6% 0;
+  background: linear-gradient(90deg, transparent, var(--edge-lit), transparent);
+}
+
+.pod-prize {
+  position: relative;
+  margin: 0.6cqi 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(16px, 12cqi, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--rank);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--rank) 50%, transparent);
+}
+.pod[data-open='true'] .pod-prize { opacity: 0.72; }
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 1180px) {
+  .rack { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 860px) {
+  .strip { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 14px; }
+  .strip-msg { width: 100%; }
+  .strip-btn { width: 100%; }
+}
+
+@media (max-width: 1024px) {
+  .promo-inner { grid-template-columns: 1fr; }
+  .promo-sub { max-width: 46ch; }
+}
+
+@media (max-width: 720px) {
+  .hero { min-height: min(88vh, 720px); }
+  .hero-mascot { width: 76vw; }
+  .hero-mark { width: 70vw; margin-bottom: -7vw; }
+  /* The aces would sit on top of him at this width, so they drop back into
+     the room. Held clear of the edges — a card sliced by the viewport reads
+     as a rendering fault rather than as a card. */
+  .prop { opacity: 0.7; width: 19vw; }
+  .prop[data-side='left'] { left: 3vw; top: 14% !important; }
+  .prop[data-side='right'] { right: 3vw; top: 26% !important; }
+  .hero-rail { width: 176%; margin-top: -11vw; }
+
+
+  .rack { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  /* One across for the billboards — at half a phone's width the artwork in a
+     16:9 card is too small to be worth showing. */
+  .rack[data-wide='true'] { grid-template-columns: 1fr; }
+  .rack-label { font-size: 10.5px; height: 24px; }
+
+  /* Three columns of podium below ~640px puts the names on two lines each.
+     First place goes full width and the other two share the row under it. */
+  /* Three columns at this width puts every name on two lines. First place
+     goes full width and the other two share the row under it. */
+  .podium { grid-template-columns: repeat(2, 1fr); align-items: stretch; }
+  .pod[data-place='1'] { order: -1; grid-column: 1 / -1; }
+  .pod[data-place='1'] .pod-face { padding-top: 7cqi; padding-bottom: 8cqi; }
+}
