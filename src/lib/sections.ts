@@ -41,11 +41,11 @@ export const SECTION_CARDS: SectionCard[] = [
     blurb: 'Head-to-head events run on stream.',
   },
   {
-    id: 'bonus-hunts',
-    label: 'Bonus hunts',
-    href: '/bonus-hunts',
+    id: 'guess-the-balance',
+    label: 'Guess the balance',
+    href: '/guess-the-balance',
     hue: 'var(--hue-blue)',
-    blurb: 'Live hunt boards and results.',
+    blurb: 'Call the final balance. Closest guess takes it.',
   },
   {
     id: 'giveaways',

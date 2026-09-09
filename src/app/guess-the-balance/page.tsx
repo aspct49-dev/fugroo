@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Guess the balance',
-  description: 'Call the final balance of the bonus hunt. Closest guess wins.',
+  description: 'Call the final balance of the hunt running on stream. Closest guess wins.',
   alternates: { canonical: '/guess-the-balance' },
 };
 
@@ -56,8 +56,8 @@ export default async function GuessPage() {
           <div className="hunt-empty card">
             <h2 className="h-section">No round open</h2>
             <p className="lede" style={{ marginTop: 12 }}>
-              When a bonus hunt goes up, a round opens here. Call the balance it finishes on — the
-              closest guess takes it.
+              When a hunt is opened on stream, a round goes up here. Call the balance it finishes
+              on — the closest guess takes it.
             </p>
           </div>
         ) : (

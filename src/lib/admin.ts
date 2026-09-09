@@ -44,3 +44,16 @@ export async function requireAdmin() {
     admin: isAdminIdentity(user.discordId, user.name),
   };
 }
+
+/**
+ * Throws unless the caller is an admin.
+ *
+ * The line every server action starts with. It was a local helper in the panel
+ * page while there was one page; now that each tool has its own route it lives
+ * here, so there is one definition of the check rather than four copies that
+ * could drift apart.
+ */
+export async function assertAdmin(): Promise<void> {
+  const { admin } = await requireAdmin();
+  if (!admin) throw new Error('Forbidden');
+}

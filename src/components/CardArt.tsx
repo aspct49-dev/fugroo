@@ -404,7 +404,7 @@ const ART: Record<string, () => React.JSX.Element> = {
   bonuses: GiftArt,
   milestones: TiersArt,
   tournaments: SwordsArt,
-  'bonus-hunts': TargetArt,
+  'guess-the-balance': TargetArt,
   giveaways: TicketArt,
 };
 

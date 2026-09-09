@@ -180,16 +180,40 @@ export function closeGiveaway(): void {
 }
 
 /**
+ * An unbiased index in [0, max).
+ *
+ * `random % max` is the obvious version and it is skewed: 2^32 does not divide
+ * evenly by the entry count, so the first `2^32 % max` indices come up slightly
+ * more often than the rest. At 24 entrants the bias is far too small to notice
+ * and it is still, straightforwardly, not a fair draw. Rejecting the values
+ * that fall in the short final block removes it, and costs one extra draw
+ * roughly never.
+ */
+function unbiasedIndex(max: number): number {
+  if (max <= 1) return 0;
+  const limit = Math.floor(0xffffffff / max) * max;
+  const buf = new Uint32Array(1);
+  do {
+    crypto.getRandomValues(buf);
+  } while (buf[0] >= limit);
+  return buf[0] % max;
+}
+
+/**
  * Picks the winner.
  *
  * `crypto.getRandomValues` rather than `Math.random`, because this decides who
- * gets money and the difference costs nothing.
+ * gets money and the difference costs nothing — and drawn through
+ * `unbiasedIndex`, for the same reason.
+ *
+ * The winner is chosen here, on the server, and returned. The admin panel's
+ * spinner animates *towards* the name it is given; it does not pick one. An
+ * animation that chose the winner would put the draw in a browser, where the
+ * person running the giveaway could reload until they liked the result.
  */
 export function roll(): Entry | null {
   if (state.entries.length === 0) return null;
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  const winner = state.entries[buf[0] % state.entries.length];
+  const winner = state.entries[unbiasedIndex(state.entries.length)];
   state.winner = winner;
   state.drawnAt = Date.now();
   state.open = false;

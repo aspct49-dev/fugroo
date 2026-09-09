@@ -12,6 +12,7 @@ import './home.css';
 import './leaderboard.css';
 import './bonuses.css';
 import './hunts.css';
+import './tournaments.css';
 
 /* Two families, and each has a reason. Oxanium is angular and hexagonal, so
    it carries the hex motif of the artwork into the type and sets every

@@ -33,13 +33,25 @@ interface NavItem {
   admin?: boolean;
 }
 
+/**
+ * Whether a nav entry is the page being viewed.
+ *
+ * An exact match everywhere except the admin panel, which gained sub-routes
+ * when it was split into one page per tool — `/admin/giveaway` still has to
+ * light the Admin entry, or the only lit item disappears the moment you use it.
+ * Home is exact by necessity: every path starts with "/".
+ */
+function isCurrent(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 const NAV: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/leaderboard', label: 'Leaderboard', showPot: true },
   { href: '/bonuses', label: 'Bonus offers' },
   { href: '/milestones', label: 'Wager milestones' },
-  { href: '/tournaments', label: 'Tournaments', soon: true },
-  { href: '/bonus-hunts', label: 'Bonus hunts' },
+  { href: '/tournaments', label: 'Tournaments' },
   { href: '/giveaways', label: 'Giveaways' },
   { href: '/guess-the-balance', label: 'Guess the balance' },
   { href: '/how-it-works', label: 'How it works' },
@@ -112,8 +124,8 @@ export function Shell({
                   href={item.href}
                   className="nav-item"
                   data-admin={item.admin || undefined}
-                  data-active={pathname === item.href}
-                  aria-current={pathname === item.href ? 'page' : undefined}
+                  data-active={isCurrent(pathname, item.href)}
+                  aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
                 >
                   {item.label}
                   {item.showPot && <span className="nav-badge">{formatMoney(totalPot)}</span>}

@@ -1,20 +1,20 @@
 import { formatMoney } from '@/lib/format';
 import { rankGuesses, type Game } from '@/lib/guesses';
-import { huntStats, type Hunt } from '@/lib/hunts';
 
 /**
  * Running a guess-the-balance round.
  *
- * Three moves in order: open it against a hunt, close entries, then draw. The
- * draw is the only one that carries a figure, and where the round was opened
- * against a hunt the field is pre-filled with what that hunt has actually
- * returned — the number is already known, so making someone read it off
- * another page and retype it is just an opportunity to fat-finger it.
+ * Three moves in order: open the round, close entries, then draw. The draw is
+ * the only one that carries a figure.
+ *
+ * It used to be opened *against* a bonus hunt, so the final balance could be
+ * pre-filled from what that hunt had returned. Bonus hunts were retired as a
+ * section, so the figure is typed in — which is what it always was for a round
+ * that had no hunt linked to it.
  */
 export function AdminGuess({
   game,
   games,
-  hunts,
   onCreate,
   onStatus,
   onDraw,
@@ -22,14 +22,11 @@ export function AdminGuess({
 }: {
   game: Game | undefined;
   games: Game[];
-  hunts: Hunt[];
   onCreate: (form: FormData) => Promise<void>;
   onStatus: (form: FormData) => Promise<void>;
   onDraw: (form: FormData) => Promise<void>;
   onDelete: (form: FormData) => Promise<void>;
 }) {
-  const linked = game?.huntId ? hunts.find((h) => h.id === game.huntId) : undefined;
-  const suggested = linked ? huntStats(linked).returned : undefined;
   /*
    * One shape for the list, whether the round has been drawn or not. Mapping
    * over `ranked.length ? ranked : game.guesses` produced a union of two array
@@ -49,7 +46,7 @@ export function AdminGuess({
         <form action={onCreate} className="admin-form">
           <label className="field">
             <span>Name</span>
-            <input name="name" placeholder="Friday night hunt" required />
+            <input name="name" placeholder="Friday night round" required />
           </label>
           <label className="field">
             <span>Start balance</span>
@@ -58,17 +55,6 @@ export function AdminGuess({
           <label className="field">
             <span>Bonuses</span>
             <input name="numBonuses" type="number" min="0" step="1" placeholder="7" />
-          </label>
-          <label className="field">
-            <span>Link to hunt</span>
-            <select name="huntId" defaultValue="">
-              <option value="">None</option>
-              {hunts.map((h) => (
-                <option value={h.id} key={h.id}>
-                  {h.name}
-                </option>
-              ))}
-            </select>
           </label>
           <button className="btn btn-primary btn-sm" type="submit">
             Open
@@ -107,17 +93,14 @@ export function AdminGuess({
           <form action={onDraw} className="admin-form">
             <input type="hidden" name="gameId" value={game.id} />
             <label className="field">
-              <span>
-                Final balance
-                {suggested !== undefined && <> · hunt returned {formatMoney(suggested)}</>}
-              </span>
+              <span>Final balance</span>
               <input
                 name="finalBalance"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="2500.00"
-                defaultValue={game.finalBalance ?? suggested ?? ''}
+                defaultValue={game.finalBalance ?? ''}
                 required
               />
             </label>

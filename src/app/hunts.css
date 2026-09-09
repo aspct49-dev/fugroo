@@ -695,3 +695,360 @@
 @media (max-width: 720px) {
   .give-ways { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Giveaway spinner
+
+   A reel of entrant cards that runs past a centre marker and decelerates onto
+   the winner. The winner is decided on the server before any of this starts —
+   the animation is presentation, and `lib/giveaway.ts` says so at length.
+   ========================================================================== */
+
+.give-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.give-sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.give-conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.give-conn::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.give-conn[data-on='true'] {
+  color: var(--hue-teal);
+}
+
+.give-conn[data-on='true']::before {
+  background: var(--hue-teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue-teal) 22%, transparent);
+}
+
+/* Setup rail beside the stage. It collapses to one column before the reel
+   gets too narrow to read, which is around a tablet. */
+/*
+ * The rail is the taller column, so the stage stretches to meet it rather than
+ * sitting as a short box with a void underneath — which is what "oddly spaced"
+ * looked like. `minmax(0, …)` on both tracks because a reel is far wider than
+ * its column and would otherwise blow the grid out instead of scrolling.
+ */
+.give-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
+.give-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--hull);
+  padding: 18px;
+}
+
+/* Buttons live in their own one-field forms so each posts a different action.
+   Without this every one of them carries a form's margin as well as its own. */
+.give-setup form {
+  margin: 0;
+}
+
+.give-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.give-legend {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.give-legend-sub {
+  margin-top: 6px;
+}
+
+.give-hint {
+  margin: -2px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.give-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.give-check input {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  accent-color: var(--cyan);
+}
+
+.give-check b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.give-check em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.give-wide {
+  width: 100%;
+  justify-content: center;
+}
+
+/* The rail is a column of full-width controls, so the 48px default button
+   height stacks into a lot of rail. These are dense controls, not calls to
+   action on a landing page. */
+.give-setup .btn {
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.give-stop {
+  color: #ff8a8a;
+  border-color: rgba(255, 106, 106, 0.35);
+}
+
+.give-stop:hover {
+  border-color: rgba(255, 106, 106, 0.6);
+}
+
+.give-sep {
+  height: 1px;
+  background: var(--edge);
+  margin: 4px 0;
+}
+
+.give-spin {
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Spin is the one thing on this rail anyone is looking at while a stream is
+   running, so it is the one control allowed to be big. */
+.give-setup .give-spin {
+  min-height: 52px;
+  font-size: 15px;
+}
+
+/* ------------------------------------------------------------- the stage */
+
+.give-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 240px;
+  padding: 24px 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--hull);
+  overflow: hidden;
+}
+
+.give-stage-empty,
+.give-stage-note {
+  margin: 0;
+  text-align: center;
+  color: var(--dim);
+  font-size: 13.5px;
+}
+
+.give-stage-note {
+  margin-top: 16px;
+  min-height: 1.2em;
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 11.5px;
+}
+
+/* The marker the winner lands under. Drawn over the reel, hence the z-index. */
+.give-marker {
+  position: absolute;
+  top: 22px;
+  bottom: 58px;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  z-index: 2;
+  background: linear-gradient(180deg, transparent, var(--cyan), transparent);
+  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--cyan) 45%, transparent);
+  pointer-events: none;
+}
+
+/* Masked at both ends so cards fade out rather than being sliced off — the
+   reel should look like it continues past the frame, because it does. */
+.give-reel-window {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.give-reel {
+  display: flex;
+  will-change: transform;
+  transition-property: transform;
+  /* A long, flat tail: fast at the start, and the last second barely creeps.
+     That deceleration is the whole reason a spin reads as a draw. */
+  transition-timing-function: cubic-bezier(0.12, 0.78, 0.12, 1);
+}
+
+.give-reel-card {
+  flex: 0 0 auto;
+  width: 150px;
+  margin-right: 10px;
+  padding: 14px 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r);
+  background: var(--hull-2);
+  text-align: center;
+  transition:
+    border-color 0.3s var(--ease),
+    background 0.3s var(--ease);
+}
+
+.give-reel-face {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 1px solid var(--edge-lit);
+  background: var(--void);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.give-reel-name {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.give-reel-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The landed card. Only lit once the reel has stopped, so nothing marks the
+   winner while it is still travelling past. */
+.give-reel-card[data-lit] {
+  border-color: var(--cyan);
+  background: var(--cyan-quiet);
+}
+
+.give-reel-card[data-lit] .give-reel-face {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.give-reel-card[data-lit] .give-reel-name {
+  color: var(--cyan);
+}
+
+/* ------------------------------------------------------------ the winner */
+
+.give-winner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 40%, var(--edge));
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--cyan-quiet), var(--hull));
+}
+
+.give-winner span {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.give-winner b {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--cyan);
+}
+
+.give-winner i {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The result must still arrive, so the reel is placed rather than flown —
+     `transitionend` still fires, which is what ends the spin. */
+  .give-reel {
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .give-grid {
+    grid-template-columns: 1fr;
+  }
+}
