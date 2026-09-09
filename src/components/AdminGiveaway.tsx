@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { SiKick } from 'react-icons/si';
 
-import { formatMoney } from '@/lib/format';
 import type { Entry, Gates, Miss } from '@/lib/giveaway';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 
@@ -44,6 +44,11 @@ export interface GiveawayView {
   entryCount: number;
   missCount: number;
   gates: Gates;
+  /* Added for the channel bar and the winner's chat history. */
+  slug: string;
+  live: boolean;
+  avatar: string | null;
+  winnerMessages: { text: string; at: number }[];
 }
 
 /* ------------------------------------------------------------- the reel */
@@ -234,37 +239,86 @@ export function AdminGiveaway({
     void refresh();
   };
 
+  const [editingChannel, setEditingChannel] = useState(false);
+
   return (
     <>
-      <header className="give-head">
-        <div>
-          <h2 className="h-section">Giveaway spinner</h2>
-          <p className="give-sub">Collect entries from Kick chat and spin a winner</p>
-        </div>
-        <span className="give-conn" data-on={g.connected}>
-          {g.connected ? `Connected · chatroom ${g.chatroomId}` : 'Disconnected'}
-        </span>
-      </header>
+      {/*
+       * The channel bar. Which chat we are reading is the first thing to be
+       * sure of before a giveaway, so it states it plainly and only turns into
+       * an editor when asked — a text field sitting open invites an edit
+       * nobody meant to make mid-stream.
+       */}
+      <div className="give-bar">
+        {editingChannel ? (
+          <form
+            action={async (fd) => {
+              await onConnect(fd);
+              setEditingChannel(false);
+              void refresh();
+            }}
+            className="give-bar-edit"
+          >
+            <span className="give-bar-mark" aria-hidden>
+              <SiKick />
+            </span>
+            <input name="channel" defaultValue={g.channel} placeholder="fugroo" autoFocus />
+            <button className="btn btn-primary btn-sm" type="submit">
+              Connect
+            </button>
+            <button
+              className="btn btn-quiet btn-sm"
+              type="button"
+              onClick={() => setEditingChannel(false)}
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <>
+            <span className="give-bar-mark" aria-hidden>
+              <SiKick />
+            </span>
+            <p className="give-bar-url">
+              kick.com/<b>{g.slug || g.channel}</b>
+            </p>
 
-      <div className="give-grid">
-        {/* ------------------------------------------------------- setup */}
-        <div className="give-setup">
-          <h3 className="give-legend">Setup</h3>
+            <span className="give-bar-end">
+              {/* Two different facts, and conflating them is how you end up
+                  wondering why nothing is arriving: whether the streamer is
+                  live, and whether we are reading their chat. */}
+              <span className="give-pill" data-on={g.live || undefined}>
+                {g.live ? 'Live' : 'Offline'}
+              </span>
+              {!g.connected && <span className="give-pill give-pill-warn">Not reading chat</span>}
+              <button
+                className="give-bar-btn"
+                type="button"
+                onClick={() => setEditingChannel(true)}
+              >
+                &larr; Change channel
+              </button>
+            </span>
+          </>
+        )}
+      </div>
+
+      <div className="give-layout">
+        {/* ----------------------------------------------------- controls */}
+        <aside className="give-controls">
+          <h3 className="give-legend">Controls</h3>
 
           <form action={onOpen} className="give-form">
             <label className="field">
               <span>Entry keyword</span>
               <input name="keyword" defaultValue={g.keyword} placeholder="!enter" />
             </label>
-            <p className="give-hint">Viewers type this in Kick chat to enter.</p>
-
-            <h4 className="give-legend give-legend-sub">Entry requirements</h4>
 
             <label className="give-check">
               <input type="checkbox" name="requireCode" defaultChecked={g.gates.requireCode} />
               <span>
                 <b>Under code {PRIMARY_PARTNER.code}</b>
-                <em>Their linked {PRIMARY_PARTNER.name} name must be under the affiliate code.</em>
+                <em>Checked against the affiliate list as each message arrives.</em>
               </span>
             </label>
 
@@ -279,28 +333,23 @@ export function AdminGiveaway({
                 placeholder="0"
               />
             </label>
-            <p className="give-hint">
-              Entrants link their {PRIMARY_PARTNER.name} name on the Profile page first. Opening a
-              round applies these settings and clears the current entries.
-            </p>
 
-            <button className="btn btn-primary btn-sm give-wide" type="submit">
+            <button className="give-btn give-btn-go" type="submit">
               {g.open ? 'Restart collecting' : 'Start collecting'}
             </button>
           </form>
 
           {g.open && (
             <form action={act(onClose)}>
-              <button className="btn btn-quiet btn-sm give-wide give-stop" type="submit">
+              <button className="give-btn give-btn-stop" type="submit">
+                <span className="give-btn-glyph" aria-hidden />
                 Stop collecting
               </button>
             </form>
           )}
 
-          <div className="give-sep" />
-
           <button
-            className="btn btn-secondary give-wide give-spin"
+            className="give-btn give-btn-spin"
             type="button"
             onClick={() => void spin()}
             disabled={spinning || g.entries.length === 0}
@@ -311,87 +360,127 @@ export function AdminGiveaway({
           </button>
 
           <form action={act(onReset)}>
-            <button className="btn btn-quiet btn-sm give-wide" type="submit" disabled={spinning}>
+            <button className="give-btn give-btn-quiet" type="submit" disabled={spinning}>
               Clear all
             </button>
           </form>
-        </div>
+        </aside>
 
-        {/* ----------------------------------------------------- the reel */}
-        <div className="give-stage" ref={stageRef}>
-          {strip.length > 0 ? (
-            <>
-              <span className="give-marker" aria-hidden />
-              <div className="give-reel-window">
-                <div
-                  className="give-reel"
-                  data-gliding={gliding || undefined}
-                  style={{
-                    transform: `translate3d(${x}px,0,0)`,
-                    transitionDuration: gliding ? `${SPIN_MS}ms` : '0ms',
-                  }}
-                  onTransitionEnd={onGlideEnd}
-                >
-                  {strip.map((entry, i) => (
-                    <ReelCard
-                      key={`${entry.userId}-${i}`}
-                      entry={entry}
-                      lit={!spinning && i === RUNWAY}
-                    />
-                  ))}
+        {/* --------------------------------------------------- reel + winner */}
+        <div className="give-main">
+          <div className="give-stage" ref={stageRef}>
+            {strip.length > 0 ? (
+              <>
+                <span className="give-marker give-marker-top" aria-hidden />
+                <span className="give-marker give-marker-bottom" aria-hidden />
+                <div className="give-reel-window">
+                  <div
+                    className="give-reel"
+                    data-gliding={gliding || undefined}
+                    style={{
+                      transform: `translate3d(${x}px,0,0)`,
+                      transitionDuration: gliding ? `${SPIN_MS}ms` : '0ms',
+                    }}
+                    onTransitionEnd={onGlideEnd}
+                  >
+                    {strip.map((entry, i) => (
+                      <ReelCard
+                        key={`${entry.userId}-${i}`}
+                        entry={entry}
+                        lit={!spinning && i === RUNWAY}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <p className="give-stage-note" aria-live="polite">
-                {spinning ? 'Spinning…' : shownWinner ? `${shownWinner.username} wins` : ''}
+              </>
+            ) : (
+              <p className="give-stage-empty">
+                {g.entryCount > 0
+                  ? 'Press Spin to draw a winner'
+                  : `Waiting for “${g.keyword}” in chat…`}
               </p>
-            </>
-          ) : (
-            <p className="give-stage-empty">
-              {g.entryCount > 0 ? 'Press Spin to draw a winner' : 'Add entries and press Spin'}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {shownWinner && (
-        <div className="give-winner">
-          <span>Winner</span>
-          <b>{shownWinner.username}</b>
-          {shownWinner.roobet && (
-            <i>
-              {shownWinner.roobet} on {PRIMARY_PARTNER.name}
-            </i>
-          )}
-        </div>
-      )}
-
-      {/* ------------------------------------------------------ entries */}
-      <div className="admin-panel">
-        <div className="admin-panel-head">
-          <h2 className="h-section">
-            Entries <span className="admin-count">{g.entryCount}</span>
-          </h2>
-          <span className="give-conn" data-on={g.open}>
-            {g.open ? 'Collecting' : 'Not collecting'}
-          </span>
-        </div>
-        {g.entries.length ? (
-          <div className="give-list">
-            {g.entries.map((e) => (
-              <span className="give-chip" key={e.userId} data-win={shownWinner?.userId === e.userId}>
-                {e.username}
-                {e.roobet && <em>{e.roobet}</em>}
-              </span>
-            ))}
+            )}
           </div>
-        ) : (
-          <p className="admin-note">Nobody yet.</p>
-        )}
+
+          {shownWinner && (
+            <div className="give-winner">
+              <span className="give-winner-face" aria-hidden>
+                {initial(shownWinner.username)}
+              </span>
+              <span className="give-winner-body">
+                <span className="give-winner-tag">Winner</span>
+                <b>{shownWinner.username}</b>
+                {shownWinner.roobet && (
+                  <i>
+                    {shownWinner.roobet} on {PRIMARY_PARTNER.name}
+                  </i>
+                )}
+              </span>
+              <a
+                className="give-bar-btn"
+                href={`https://kick.com/${shownWinner.username}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View profile ↗
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* ------------------------------------------------------- entries */}
+        <div className="give-panel">
+          <div className="give-panel-head">
+            <h3>Entries</h3>
+            <span className="give-panel-count" data-on={g.entryCount > 0 || undefined}>
+              {g.entryCount}
+            </span>
+          </div>
+          {g.entries.length ? (
+            <div className="give-list">
+              {g.entries.map((e) => (
+                <span
+                  className="give-chip"
+                  key={e.userId}
+                  data-win={shownWinner?.userId === e.userId}
+                >
+                  {e.username}
+                  {e.roobet && <em>{e.roobet}</em>}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="give-panel-empty">Waiting for “{g.keyword}” in chat…</p>
+          )}
+        </div>
+
+        {/* --------------------------------------------- winner's own chat */}
+        <div className="give-panel">
+          <div className="give-panel-head">
+            <h3>{shownWinner ? `${shownWinner.username}’s recent messages` : 'Recent messages'}</h3>
+          </div>
+          {!shownWinner ? (
+            <p className="give-panel-empty">Spin to see the winner’s chat history.</p>
+          ) : g.winnerMessages.length ? (
+            <div className="give-msgs">
+              {g.winnerMessages.map((m, i) => (
+                <p className="give-msg" key={i}>
+                  <span>
+                    {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {m.text}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="give-panel-empty">Waiting for {shownWinner.username} to chat…</p>
+          )}
+        </div>
       </div>
 
-      {/* ------------------------------------------------------ not eligible */}
+      {/* --------------------------------------------------- not eligible */}
       {g.misses.length > 0 && (
-        <div className="admin-panel">
+        <div className="admin-panel" style={{ marginTop: 16 }}>
           <div className="admin-panel-head">
             <h2 className="h-section">
               Not eligible <span className="admin-count">{g.missCount}</span>
@@ -413,40 +502,13 @@ export function AdminGiveaway({
         </div>
       )}
 
-      {g.gates.requireCode && g.gates.minWagered > 0 && (
-        <p className="admin-note">
-          Gate: under the code, {formatMoney(g.gates.minWagered)}+ wagered.
-        </p>
-      )}
-
-      {/* ------------------------------------------------------- channel */}
-      <div className="admin-panel">
-        <div className="admin-panel-head">
-          <h2 className="h-section">Kick chat</h2>
-        </div>
-        <form action={onConnect} className="admin-form">
-          <label className="field">
-            <span>Channel</span>
-            <input name="channel" defaultValue={g.channel} placeholder="fugroo" />
-          </label>
-          <button className="btn btn-primary btn-sm" type="submit">
-            {g.connected ? 'Reconnect' : 'Connect'}
+      {g.connected && (
+        <form action={act(onDisconnect)} style={{ marginTop: 14 }}>
+          <button className="btn btn-quiet btn-sm" type="submit">
+            Disconnect from chat
           </button>
         </form>
-
-        {g.connected && (
-          <form action={act(onDisconnect)} style={{ marginTop: 12 }}>
-            <button className="btn btn-quiet btn-sm" type="submit">
-              Disconnect
-            </button>
-          </form>
-        )}
-
-        <p className="admin-note" style={{ marginTop: 14 }}>
-          Reading chat needs no Kick credentials — the feed is public. The connection lives in this
-          server process, so a redeploy mid-giveaway drops it and the entries with it.
-        </p>
-      </div>
+      )}
     </>
   );
 }

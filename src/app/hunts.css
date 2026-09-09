@@ -697,90 +697,201 @@
 }
 
 /* ==========================================================================
-   Giveaway spinner
+   Giveaway roller
 
    A reel of entrant cards that runs past a centre marker and decelerates onto
    the winner. The winner is decided on the server before any of this starts —
    the animation is presentation, and `lib/giveaway.ts` says so at length.
+
+   The panel is laid out as four regions: the channel bar across the top, a
+   controls rail, the stage, and two read-out panels underneath. Everything
+   that changes on its own (entry count, chat history) sits in the bottom row,
+   so the half being watched during a spin never reflows.
    ========================================================================== */
 
-.give-head {
+/* -------------------------------------------------------- the channel bar */
+
+.give-bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--hull);
 }
 
-.give-sub {
-  margin: 6px 0 0;
-  color: var(--muted);
+.give-bar-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #53fc18;
+  color: #08110a;
+}
+
+.give-bar-mark svg {
+  width: 17px;
+  height: 17px;
+}
+
+.give-bar-url {
+  margin: 0;
   font-size: 14px;
+  color: var(--dim);
 }
 
-.give-conn {
+.give-bar-url b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+}
+
+/* Pushed to the far end rather than the bar using `space-between`, so the
+   channel name stays next to its mark instead of drifting from it. */
+.give-bar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Live and connected are different facts. The pill is the streamer's state;
+   the warning next to it is ours. */
+.give-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   color: var(--dim);
   white-space: nowrap;
 }
 
-.give-conn::before {
+.give-pill::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--dim);
+  background: currentColor;
 }
 
-.give-conn[data-on='true'] {
-  color: var(--hue-teal);
+.give-pill[data-on] {
+  color: #ff5c5c;
+  border-color: rgba(255, 92, 92, 0.4);
+  background: rgba(255, 92, 92, 0.1);
 }
 
-.give-conn[data-on='true']::before {
-  background: var(--hue-teal);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue-teal) 22%, transparent);
+.give-pill[data-on]::before {
+  box-shadow: 0 0 0 3px rgba(255, 92, 92, 0.2);
 }
 
-/* Setup rail beside the stage. It collapses to one column before the reel
-   gets too narrow to read, which is around a tablet. */
-/*
- * The rail is the taller column, so the stage stretches to meet it rather than
- * sitting as a short box with a void underneath — which is what "oddly spaced"
- * looked like. `minmax(0, …)` on both tracks because a reel is far wider than
- * its column and would otherwise blow the grid out instead of scrolling.
- */
-.give-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: stretch;
-  margin-bottom: 16px;
+.give-pill-warn {
+  color: #ffc46b;
+  border-color: rgba(255, 196, 107, 0.35);
+  background: rgba(255, 196, 107, 0.08);
 }
 
-.give-setup {
+.give-bar-btn {
+  appearance: none;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: transparent;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+
+.give-bar-btn:hover {
+  border-color: var(--edge-lit);
+  color: var(--text);
+}
+
+.give-bar-edit {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+}
+
+.give-bar-edit input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r);
+  background: var(--void);
+  color: var(--text);
+  font: inherit;
+}
+
+/* ------------------------------------------------------------- the layout */
+
+/*
+ * Two columns, two rows. The rail and the entries list share the narrow
+ * column; the stage and the winner's chat share the wide one. `minmax(0, …)`
+ * on both tracks because the reel is far wider than its column and would
+ * otherwise blow the grid out rather than being clipped by it.
+ */
+.give-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
+  gap: 14px;
+  /* Stretched, not `start`: the rail is the taller column, and letting the
+     stage keep its own height leaves a void beside it down to the row below. */
+  align-items: stretch;
+}
+
+.give-controls,
+.give-panel,
+.give-stage {
   border: 1px solid var(--edge);
   border-radius: var(--r-lg);
   background: var(--hull);
+}
+
+/* ----------------------------------------------------------- the controls */
+
+.give-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 18px;
 }
 
-/* Buttons live in their own one-field forms so each posts a different action.
-   Without this every one of them carries a form's margin as well as its own. */
-.give-setup form {
+/* Each button posts a different server action, so each lives in its own
+   one-field form. Without this every one carries a form's margin as well. */
+.give-controls form {
   margin: 0;
 }
 
 .give-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+/* `.field` carries `flex: 1 1 180px` for the horizontal forms it was written
+   for. In a column that basis is a *height*, so each field grew to 180px of
+   mostly empty box. The rail wants them at their natural size. */
+.give-form .field {
+  flex: 0 0 auto;
 }
 
 .give-legend {
@@ -791,17 +902,6 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
-}
-
-.give-legend-sub {
-  margin-top: 6px;
-}
-
-.give-hint {
-  margin: -2px 0 0;
-  font-size: 12px;
-  color: var(--dim);
-  line-height: 1.5;
 }
 
 .give-check {
@@ -828,98 +928,149 @@
 
 .give-check em {
   display: block;
-  margin-top: 2px;
+  margin-top: 3px;
   font-style: normal;
   font-size: 12px;
   color: var(--dim);
   line-height: 1.5;
 }
 
-.give-wide {
-  width: 100%;
+/* The rail's own button shape. The site buttons are landing-page sized; a
+   column of six of them is mostly padding. */
+.give-btn {
+  display: flex;
+  align-items: center;
   justify-content: center;
-}
-
-/* The rail is a column of full-width controls, so the 48px default button
-   height stacks into a lot of rail. These are dense controls, not calls to
-   action on a landing page. */
-.give-setup .btn {
+  gap: 8px;
+  width: 100%;
   min-height: 42px;
-  padding: 0 16px;
+  padding: 0 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r);
+  background: var(--hull-2);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease),
+    color 0.2s var(--ease);
 }
 
-.give-stop {
+.give-btn:hover:not(:disabled) {
+  border-color: var(--edge-lit);
+}
+
+.give-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.give-btn-go {
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--edge));
+  background: var(--cyan-quiet);
+  color: var(--cyan);
+}
+
+/* Stop is destructive to a round in progress and the only red on the rail,
+   which is the point — it should not be reachable by muscle memory alone. */
+.give-btn-stop {
+  border-color: rgba(255, 92, 92, 0.45);
+  background: rgba(255, 92, 92, 0.12);
   color: #ff8a8a;
-  border-color: rgba(255, 106, 106, 0.35);
 }
 
-.give-stop:hover {
-  border-color: rgba(255, 106, 106, 0.6);
+.give-btn-stop:hover:not(:disabled) {
+  border-color: rgba(255, 92, 92, 0.75);
 }
 
-.give-sep {
-  height: 1px;
-  background: var(--edge);
-  margin: 4px 0;
+.give-btn-glyph {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
-.give-spin {
+/* Spin is the one control anyone looks at with a stream running, so it is the
+   one allowed to be big. */
+.give-btn-spin {
+  min-height: 54px;
+  border-color: color-mix(in srgb, var(--hue-teal) 55%, var(--edge));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hue-teal) 26%, transparent),
+    color-mix(in srgb, var(--hue-teal) 12%, transparent)
+  );
+  color: #d6ffe9;
   font-family: var(--font-display);
+  font-size: 15px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Spin is the one thing on this rail anyone is looking at while a stream is
-   running, so it is the one control allowed to be big. */
-.give-setup .give-spin {
-  min-height: 52px;
-  font-size: 15px;
+.give-btn-spin:hover:not(:disabled) {
+  border-color: var(--hue-teal);
+  box-shadow: 0 0 22px -6px color-mix(in srgb, var(--hue-teal) 60%, transparent);
 }
 
-/* ------------------------------------------------------------- the stage */
+.give-btn-quiet {
+  background: transparent;
+  color: var(--dim);
+}
+
+/* --------------------------------------------------------------- the main */
+
+.give-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
 
 .give-stage {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   justify-content: center;
-  min-height: 240px;
-  padding: 24px 0;
-  border: 1px solid var(--edge);
-  border-radius: var(--r-lg);
-  background: var(--hull);
+  min-height: 210px;
+  padding: 26px 0;
   overflow: hidden;
 }
 
-.give-stage-empty,
-.give-stage-note {
+.give-stage-empty {
   margin: 0;
   text-align: center;
   color: var(--dim);
   font-size: 13.5px;
 }
 
-.give-stage-note {
-  margin-top: 16px;
-  min-height: 1.2em;
-  font-family: var(--font-display);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: 11.5px;
-}
-
-/* The marker the winner lands under. Drawn over the reel, hence the z-index. */
+/* Two arrows rather than the old full-height line: the line ran through the
+   card it was pointing at and made the landed name harder to read, not
+   easier. Drawn over the reel, hence the z-index. */
 .give-marker {
   position: absolute;
-  top: 22px;
-  bottom: 58px;
   left: 50%;
-  width: 2px;
-  margin-left: -1px;
   z-index: 2;
-  background: linear-gradient(180deg, transparent, var(--cyan), transparent);
-  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--cyan) 45%, transparent);
+  margin-left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
   pointer-events: none;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 60%, transparent));
+}
+
+.give-marker-top {
+  top: 10px;
+  border-top: 11px solid var(--cyan);
+}
+
+.give-marker-bottom {
+  bottom: 10px;
+  border-bottom: 11px solid var(--cyan);
 }
 
 /* Masked at both ends so cards fade out rather than being sliced off — the
@@ -1008,17 +1159,37 @@
 
 .give-winner {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 16px 20px;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
   border: 1px solid color-mix(in srgb, var(--cyan) 40%, var(--edge));
   border-radius: var(--r-lg);
   background: linear-gradient(180deg, var(--cyan-quiet), var(--hull));
 }
 
-.give-winner span {
+.give-winner-face {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--cyan);
+  background: var(--void);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+.give-winner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.give-winner-tag {
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;
@@ -1027,16 +1198,119 @@
   color: var(--dim);
 }
 
+.give-winner-tag::before {
+  content: '🎉 ';
+}
+
 .give-winner b {
   font-family: var(--font-display);
   font-size: 24px;
+  line-height: 1.15;
   color: var(--cyan);
+  overflow-wrap: anywhere;
 }
 
 .give-winner i {
   font-style: normal;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--muted);
+}
+
+.give-winner .give-bar-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------- the two read-out panels */
+
+.give-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.give-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.give-panel-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.give-panel-count {
+  margin-left: auto;
+  padding: 3px 11px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.give-panel-count[data-on] {
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--edge));
+  background: var(--cyan-quiet);
+  color: var(--cyan);
+}
+
+.give-panel-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+/*
+ * Both read-outs scroll inside the panel rather than growing it: a busy chat
+ * would otherwise push the winner banner off the screen mid-giveaway.
+ *
+ * They take the panel's leftover height rather than a fixed cap, because the
+ * two panels share a grid row and are stretched to match — a fixed cap sliced
+ * a chip in half while leaving empty panel underneath it. `min-height: 0` is
+ * what lets a flex child actually scroll instead of growing past its parent.
+ */
+.give-panel .give-list {
+  margin: 0;
+  flex: 1 1 auto;
+  align-content: flex-start;
+  min-height: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.give-msgs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.give-msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.give-msg span {
+  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--dim);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1048,7 +1322,16 @@
 }
 
 @media (max-width: 900px) {
-  .give-grid {
+  .give-layout {
     grid-template-columns: 1fr;
+  }
+
+  .give-bar {
+    flex-wrap: wrap;
+  }
+
+  .give-bar-end {
+    margin-left: 0;
+    width: 100%;
   }
 }

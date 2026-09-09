@@ -236,6 +236,13 @@
 .board-row[data-open='true'] .board-prize { color: var(--muted); }
 .board-row[data-open='true'] .board-prize .sym { color: var(--dim); }
 
+/* ----------------------------------------------------------------- rules */
+
+.rules { margin-top: 22px; }
+/* The percentage is the answer someone came for, so it is the thing set in the
+   display face rather than the band it belongs to. */
+.rules .kv b { font-family: var(--font-display); color: var(--cyan); white-space: nowrap; }
+
 /* ----------------------------------------------------------------- stats */
 
 .board-stats {

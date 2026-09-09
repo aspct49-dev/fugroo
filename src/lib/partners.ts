@@ -49,11 +49,27 @@ export const TOTAL_PRIZE_POOL = PARTNER_ORDER.reduce(
  * How Roobet weights a wager toward the board. Published so the ranking is
  * checkable rather than asserted.
  */
+/**
+ * How much of a wager counts toward the board.
+ *
+ * Roobet's own bands, stated in their terms and reproduced here verbatim in
+ * meaning — the site must not paraphrase a rule it does not set. Banded on
+ * **RTP**, not house edge: the two are inverses and quoting the wrong one is
+ * exactly the kind of small error that reads as the board being rigged.
+ *
+ * Every game counts for something under these bands, dice included. An earlier
+ * version of this list was wrong on both the boundaries and the percentages;
+ * if Roobet changes them again, this array is the only place to edit.
+ */
 export const WAGER_WEIGHTS = [
-  { band: 'House edge under 2%', weight: '20%', note: 'Low-edge originals and table games' },
-  { band: 'House edge 2% – 3%', weight: '50%', note: 'Most originals, blackjack, roulette' },
-  { band: 'House edge over 3%', weight: '100%', note: 'Slots and the majority of the lobby' },
+  { band: 'RTP of 97% or lower', weight: '100%', note: 'Most slots and the bulk of the lobby' },
+  { band: 'RTP between 97.01% and 98.99%', weight: '50%', note: 'Higher-RTP slots and table games' },
+  { band: 'RTP of 99% and over', weight: '10%', note: 'Dice and the lowest-edge originals' },
 ];
+
+/** Roobet's wording, kept close to theirs because it is their rule. */
+export const WAGER_NOTE =
+  'Leaderboard wager amounts may differ from your statistics on Roobet, depending on the games you are playing.';
 
 /**
  * PLACEHOLDER mechanics. Roobet's VIP transfer is real and is described on

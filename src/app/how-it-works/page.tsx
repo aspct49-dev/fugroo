@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { CopyCode } from '@/components/CopyCode';
 import { formatMoney } from '@/lib/format';
-import { PRIMARY_PARTNER, WAGER_WEIGHTS, VIP_TRANSFER } from '@/lib/partners';
+import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS, VIP_TRANSFER } from '@/lib/partners';
 
 export const metadata: Metadata = {
   title: 'How it works',
@@ -39,9 +39,9 @@ export default function HowItWorksPage() {
       <div className="card" style={{ marginTop: 34 }}>
         <h2 className="h-section">How a wager is weighted</h2>
         <p className="lede" style={{ marginTop: 12 }}>
-          {PRIMARY_PARTNER.name} counts a wager toward the board by the house edge of the game it
-          was placed on. Without that, a low-edge game could be cycled endlessly to climb the board
-          at almost no cost, which is not what the prize pool is for.
+          {WAGER_NOTE} Every game counts for something — dice included — but not every game counts
+          the same, because a game you can cycle at almost no cost would otherwise climb the board
+          faster than one you actually risk money on.
         </p>
         <div style={{ marginTop: 18 }}>
           {WAGER_WEIGHTS.map((w) => (
@@ -53,6 +53,14 @@ export default function HowItWorksPage() {
             </div>
           ))}
         </div>
+
+        <p className="notice" style={{ marginTop: 18 }}>
+          <span className="notice-mark" aria-hidden>
+            !
+          </span>
+          Any abuse found by {PRIMARY_PARTNER.code} or {PRIMARY_PARTNER.name} may result in your
+          prize being forfeit.
+        </p>
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>

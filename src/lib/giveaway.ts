@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { chatState, chatroomId, connectChat, disconnectChat, onChat } from './kick';
+import { channelInfo, chatState, connectChat, disconnectChat, onChat } from './kick';
 import { listProfiles } from './profiles';
 import { roster } from './roster';
 
@@ -43,6 +43,7 @@ export interface Gates {
 
 interface State {
   channel: string;
+  slug: string;
   chatroomId: number | null;
   keyword: string;
   open: boolean;
@@ -51,10 +52,14 @@ interface State {
   misses: Miss[];
   winner: Entry | null;
   drawnAt: number | null;
+  /** Whether the channel is streaming, as of the last connect. */
+  live: boolean;
+  avatar: string | null;
 }
 
 const state: State = {
   channel: process.env.KICK_CHANNEL ?? 'fugroo',
+  slug: process.env.KICK_CHANNEL ?? 'fugroo',
   chatroomId: null,
   keyword: '!enter',
   open: false,
@@ -63,7 +68,42 @@ const state: State = {
   misses: [],
   winner: null,
   drawnAt: null,
+  live: false,
+  avatar: null,
 };
+
+/**
+ * The last few things each chatter said.
+ *
+ * Kept so the panel can show the winner's recent messages — on stream that is
+ * how you tell a real viewer from a name that appeared once to enter, without
+ * leaving the panel to go and read chat.
+ *
+ * Capped hard in both directions: a handful of lines per person, and a bounded
+ * number of people. A giveaway runs for minutes in a busy chat, and an
+ * unbounded map keyed on username is a memory leak with a stream attached.
+ */
+const MAX_PER_USER = 6;
+const MAX_USERS = 400;
+const recent = new Map<string, { text: string; at: number }[]>();
+
+function remember(username: string, text: string) {
+  const key = username.toLowerCase();
+  const list = recent.get(key) ?? [];
+  list.unshift({ text, at: Date.now() });
+  if (list.length > MAX_PER_USER) list.length = MAX_PER_USER;
+  recent.set(key, list);
+  if (recent.size > MAX_USERS) {
+    // Oldest insertion first — Map keeps insertion order.
+    const oldest = recent.keys().next().value;
+    if (oldest) recent.delete(oldest);
+  }
+}
+
+export function recentMessages(username: string | null | undefined) {
+  if (!username) return [];
+  return recent.get(username.toLowerCase()) ?? [];
+}
 
 /** Roobet name by Discord id is the wrong direction — we need Kick name in.
  *  Rebuilt each time the giveaway opens rather than per message. */
@@ -71,11 +111,15 @@ let kickToRoobet = new Map<string, string>();
 
 export function giveawayState() {
   const chat = chatState();
+  const winnerName = state.winner?.username ?? null;
   return {
     ...state,
     connected: chat.connected,
     entryCount: state.entries.length,
     missCount: state.misses.length,
+    /* The winner's own lines, so the panel can show who they are without
+       anyone leaving it to go and read chat. */
+    winnerMessages: recentMessages(winnerName),
   };
 }
 
@@ -111,6 +155,9 @@ async function admit(username: string): Promise<{ ok: boolean; reason?: string; 
 }
 
 async function handle(msg: { username: string; userId: string; text: string }) {
+  // Remembered whether or not the round is open, so the winner's history is
+  // already there the moment they are drawn.
+  remember(msg.username, msg.text);
   if (!state.open) return;
   if (msg.text.trim().toLowerCase() !== state.keyword.trim().toLowerCase()) return;
 
@@ -141,13 +188,27 @@ async function handle(msg: { username: string; userId: string; text: string }) {
 /* ------------------------------------------------------------------ admin */
 
 export async function connect(channel?: string): Promise<{ ok: boolean; error?: string }> {
-  if (channel) state.channel = channel.trim();
-  const id = await chatroomId(state.channel);
-  if (!id) return { ok: false, error: `Could not find a chatroom for "${state.channel}"` };
-  state.chatroomId = id;
+  if (channel) state.channel = channel.trim().replace(/^.*kick\.com\//i, '');
+  const info = await channelInfo(state.channel);
+  if (!info?.chatroomId) {
+    return { ok: false, error: `Could not find a chatroom for "${state.channel}"` };
+  }
+  state.chatroomId = info.chatroomId;
+  state.slug = info.slug;
+  state.live = info.live;
+  state.avatar = info.avatar;
   onChat(handle);
-  connectChat(id);
+  connectChat(info.chatroomId);
   return { ok: true };
+}
+
+/** Re-reads whether the channel is live, without touching the socket. */
+export async function refreshLive(): Promise<void> {
+  const info = await channelInfo(state.channel);
+  if (info) {
+    state.live = info.live;
+    state.avatar = info.avatar;
+  }
 }
 
 export function disconnect(): void {

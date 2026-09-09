@@ -7,7 +7,7 @@ import { CopyCode } from '@/components/CopyCode';
 import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
 import { formatMoney } from '@/lib/format';
-import { PRIMARY_PARTNER } from '@/lib/partners';
+import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
 export const revalidate = 60;
@@ -69,6 +69,33 @@ export default async function LeaderboardPage() {
       <section className="section wrap">
         <Board board={board} />
         <BoardStats board={board} />
+
+        {/* On the page the board is on, not one click away. Someone querying
+            their position is standing right here when they do it. */}
+        <div className="rules card">
+          <h2 className="h-section">Wager rules</h2>
+          <p className="lede" style={{ marginTop: 12 }}>
+            {WAGER_NOTE} Every game counts toward the board — dice included — but not every game
+            counts the same:
+          </p>
+
+          <div style={{ marginTop: 16 }}>
+            {WAGER_WEIGHTS.map((w) => (
+              <div className="kv" key={w.band}>
+                <span>{w.band}</span>
+                <b>{w.weight} of wager counted</b>
+              </div>
+            ))}
+          </div>
+
+          <p className="notice" style={{ marginTop: 18 }}>
+            <span className="notice-mark" aria-hidden>
+              !
+            </span>
+            Any abuse found by {PRIMARY_PARTNER.code} or {PRIMARY_PARTNER.name} may result in your
+            prize being forfeit.
+          </p>
+        </div>
       </section>
     </>
   );
