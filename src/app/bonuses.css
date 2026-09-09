@@ -96,13 +96,15 @@
 .offer::before {
   content: "";
   position: absolute;
-  inset: -25%;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.13;
-  background: var(--wash);
+  opacity: 0.1;
+  background-color: var(--wash-ink);
+  -webkit-mask: var(--wash) center / 100% 100% no-repeat;
+          mask: var(--wash) center / 100% 100% no-repeat;
 }
-.offer:nth-child(2)::before { transform: rotate(158deg); }
+.offer:nth-child(2)::before { transform: scaleX(-1); }
 
 .offer-head {
   display: flex;

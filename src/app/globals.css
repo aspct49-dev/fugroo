@@ -74,37 +74,33 @@
 * { box-sizing: border-box; }
 
 /*
- * The wash behind a card: three overlapping soft lobes in the card's own hue,
- * drifting off every edge so none of them reads as a shape placed on the card.
- * It replaced a contour plate, which at card size looked like a texture laid
- * over the navy rather than light moving behind it.
+ * The wash behind a card: one drawn shape, filled flat in the card's own hue.
  *
- * Each lobe holds solid to about 40% of its radius before falling away over a
- * short run, which is what gives a soft but readable edge — a plain two-stop
- * radial has no edge at all and reads as fog. Where two overlap the tone
- * doubles, and that is the whole trick: the silhouette comes from the overlaps,
- * not from any one shape.
+ * It replaced a contour plate, which at card size read as a texture printed on
+ * the navy rather than as light behind the art.
  *
- * The lobes are mostly white with the hue mixed in rather than the hue itself.
- * Pure hue sat at the same colour as the bloom already behind the art and
- * disappeared into it; lifting the ground instead reads as a surface catching
- * light, and still tells the cards apart.
+ * Drawn rather than assembled from gradients, and that was the third attempt.
+ * Soft radials read as fog; hard-stopped radials read as one big arc slicing a
+ * corner off, because that is exactly what an ellipse edge is. A path is the
+ * only way to get a boundary that wanders, which is what makes the shape look
+ * like a shape and not like a clip.
  *
- * It is declared here, on the two things that carry a hue, and NOT on :root —
- * that was the first attempt and it silently produced nothing. A custom
- * property has its var() references substituted on the element it is declared
- * on, so `var(--hue)` inside a :root declaration resolves against :root, which
- * has no --hue; the whole value goes invalid and `background: var(--wash)`
- * computes to `none`. Declared here it resolves against the card, which is
- * where --hue actually lives.
+ * It is a mask, not an image, so the fill is `--wash-ink` and each card tints
+ * its own. `preserveAspectRatio="none"` lets one drawing stretch to any card —
+ * an abstract blob has no proportions to protect — and stretching means no
+ * overscan and no rotation, so the shape can never be cut by the edge of its
+ * own layer.
+ *
+ * Declared here, on the two things that carry a hue, and NOT on :root — that
+ * was an earlier attempt and it silently produced nothing. A custom property
+ * has its var() references substituted on the element it is declared on, so
+ * `var(--hue)` inside a :root declaration resolves against :root, which has no
+ * --hue; the value goes invalid and the property computes to nothing.
  */
 .rack-card,
 .offer {
   --wash-ink: color-mix(in srgb, var(--hue) 38%, #d8e6ff);
-  --wash:
-    radial-gradient(52% 44% at 76% 6%, var(--wash-ink) 0% 42%, transparent 62%),
-    radial-gradient(60% 48% at 6% 90%, var(--wash-ink) 0% 38%, transparent 60%),
-    radial-gradient(40% 56% at 104% 68%, var(--wash-ink) 0% 34%, transparent 58%);
+  --wash: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%2080%22%20preserveAspectRatio=%22none%22%3E%3Cpath%20fill=%22%23fff%22%20d=%22M0%200h100c-6%2010-2%2020-16%2027-15%208-10%2020-27%2025-13%204-19%2016-33%2018-9%201-17%204-24%2010V0Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%2046c-9%204-19%206-21%2016-2%208%204%2013%206%2018h15Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M62%2080c-4-6-1-12%206-14%208-2%2013%204%2012%2014Z%22/%3E%3C/svg%3E");
 }
 
 

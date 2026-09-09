@@ -257,32 +257,30 @@
   to   { opacity: 0.26; }
 }
 
-/*
- * The wash across each card, in its own hue. Defined once in globals.css.
- *
- * Overscanned well past the card and rotated per position, because the lobes
- * have to run off every edge — one that stops inside the card reads as a
- * shape someone drew on it rather than as light behind it.
- */
+/* The wash across each card, in its own hue. The shape is defined once in
+   globals.css; this is what fills and places it. */
 .rack-card::before {
   content: "";
   position: absolute;
-  inset: -25%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.16;
-  background: var(--wash);
+  opacity: 0.13;
+  background-color: var(--wash-ink);
+  -webkit-mask: var(--wash) center / 100% 100% no-repeat;
+          mask: var(--wash) center / 100% 100% no-repeat;
   transition: opacity 0.32s var(--ease);
 }
 .rack-card:hover::before,
-.rack-card:focus-visible::before { opacity: 0.24; }
+.rack-card:focus-visible::before { opacity: 0.2; }
 
-/* Rotation rather than a different set of gradients: a row of cards should
-   not read as the same picture repeated, and turning the layer changes every
-   silhouette at once. */
-.rack-card:nth-child(2)::before { transform: rotate(132deg); }
-.rack-card:nth-child(3)::before { transform: rotate(214deg); }
-.rack-card:nth-child(4)::before { transform: rotate(58deg); }
+/* Flips rather than rotations: a row of cards should not read as the same
+   picture repeated, and a flipped shape is a different silhouette. Rotating
+   would swing the layer's own corners into view, leaving a straight edge
+   across the card where the shape got cut. A flip cannot. */
+.rack-card:nth-child(2)::before { transform: scaleX(-1); }
+.rack-card:nth-child(3)::before { transform: scale(-1, -1); }
+.rack-card:nth-child(4)::before { transform: scaleY(-1); }
 
 /* A pool the object sits in, so it does not float in a void. */
 .rack-card::after {
@@ -493,9 +491,12 @@
     opacity 300ms var(--ease);
   filter: drop-shadow(0 8px 18px rgba(2, 4, 14, 0.55));
 }
+/* 1.10 rather than the 1.16 this used to be. The gems now sit out near the
+   card edge, and the drawing's zoom carries them: every extra percent here
+   comes off the spread, and the spread is the point. */
 .rack-card:hover .rack-art,
 .rack-card:focus-visible .rack-art {
-  transform: scale(1.16) translateY(-6px);
+  transform: scale(1.1) translateY(-6px);
   filter: drop-shadow(0 16px 28px rgba(2, 4, 14, 0.72))
           drop-shadow(0 0 26px color-mix(in srgb, var(--hue) 60%, transparent));
 }
@@ -721,9 +722,12 @@
 .rack-card:hover .art-orb-4,
 .hold:hover .art-orb-4 { animation-delay: 0.18s; }
 
+/* The pop is smaller than it was, because it stacks on the 1.16 the whole
+   drawing already takes on hover. Now that the gems sit out near the card
+   edge, the two together were carrying them past it. */
 @keyframes art-orb-out {
   0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  22%      { transform: translate(0, -10px) rotate(-8deg) scale(1.16); }
+  22%      { transform: translate(0, -7px) rotate(-8deg) scale(1.06); }
   56%      { transform: translate(0, 2px) rotate(4deg) scale(0.98); }
 }
 

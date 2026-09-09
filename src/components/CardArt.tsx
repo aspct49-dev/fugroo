@@ -156,22 +156,31 @@ function Gem({
 
 /**
  * One gem size and one placement for every card, so a row of them reads as a
- * set. The pair sits on opposite diagonals, far enough out to clear the object
- * and far enough in to clear the card edge; the glints fill the two corners the
- * gems leave empty.
+ * set. The pair sits on opposite diagonals, out in the open either side of the
+ * object; the glints fill the two corners the gems leave empty.
  *
- * Gems are drawn before the object, so where one does graze the silhouette it
- * passes behind it.
+ * The coordinates run outside the viewBox on purpose. `.art` is
+ * `overflow: visible`, so the drawing is not clipped by its own box — only by
+ * the card — and the object is sized to fill that box. Anything placed inside
+ * it therefore lands against the object, which is what the gems used to do.
+ * Pushing them past the edge is what puts them in the empty part of the card.
+ *
+ * How far past is set by the hover state, not by taste. Three things compound
+ * there: `.rack-art` scales 1.16, each gem pops on top of that, and the pop
+ * also lifts the gem. A gem at 12% of the card width from the edge ends up
+ * outside it, which is what the first pass did — the spread looked right at
+ * rest and sliced two gems in half the moment anyone pointed at the card.
+ * These sit at about 15%, the furthest out that survives all three.
  */
 const GEM = 38;
 const PAIR: [number, number][] = [
-  [32, 62],
-  [168, 138],
+  [2, 24],
+  [198, 176],
 ];
 const SPARKS: [number, number, number][] = [
-  [100, 24, 9],
-  [170, 58, 8],
-  [30, 142, 8],
+  [172, 14, 9],
+  [24, 168, 8],
+  [116, 216, 7],
 ];
 
 /** Four-point glints, the shape a highlight makes. */
@@ -216,11 +225,11 @@ function GiftArt() {
   const id = 'bo';
   return (
     <Frame id={id} className="art-gift" w={300}>
-      <Gem id={id} className="art-orb art-orb-1" x={54} y={58} s={GEM} r={-18} />
-      <Gem id={id} className="art-orb art-orb-2" x={246} y={58} s={GEM} r={18} />
-      <Gem id={id} className="art-orb art-orb-3" x={54} y={152} s={GEM} r={14} />
-      <Gem id={id} className="art-orb art-orb-4" x={246} y={152} s={GEM} r={-14} />
-      <Sparks pts={[[150, 24, 9], [24, 106, 8], [276, 106, 8], [150, 182, 8]]} />
+      <Gem id={id} className="art-orb art-orb-1" x={26} y={32} s={GEM} r={-18} />
+      <Gem id={id} className="art-orb art-orb-2" x={274} y={32} s={GEM} r={18} />
+      <Gem id={id} className="art-orb art-orb-3" x={26} y={170} s={GEM} r={14} />
+      <Gem id={id} className="art-orb art-orb-4" x={274} y={170} s={GEM} r={-14} />
+      <Sparks pts={[[150, 10, 9], [8, 104, 8], [292, 104, 8], [150, 194, 8]]} />
 
       <g transform="translate(50 0)">
       <g className="art-bow">
