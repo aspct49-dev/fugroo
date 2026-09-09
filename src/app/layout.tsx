@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Oxanium, Outfit } from 'next/font/google';
 
+import { LoginButton } from '@/components/LoginButton';
 import { Shell } from '@/components/Shell';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TOTAL_PRIZE_POOL } from '@/lib/partners';
@@ -103,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           // input to escape here.
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
         />
-        <Shell totalPot={TOTAL_PRIZE_POOL}>
+        <Shell totalPot={TOTAL_PRIZE_POOL} account={<LoginButton />}>
           {children}
           <SiteFooter />
         </Shell>

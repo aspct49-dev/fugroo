@@ -3,7 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     // Roobet serves player tier badges from its own CDN.
-    remotePatterns: [{ protocol: 'https', hostname: 'roobet.com' }],
+    remotePatterns: [
+      // Roobet serves player tier badges from its own CDN.
+      { protocol: 'https', hostname: 'roobet.com' },
+      // Discord serves account avatars from theirs.
+      { protocol: 'https', hostname: 'cdn.discordapp.com' },
+    ],
   },
   async redirects() {
     return [

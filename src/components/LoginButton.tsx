@@ -1,34 +1,49 @@
-'use client';
-
 import { FaDiscord } from 'react-icons/fa';
+
+import { auth, authConfigured } from '@/lib/auth';
+import { AccountMenu } from './AccountMenu';
 
 /**
  * The account control at the right of the top bar.
  *
- * PLACEHOLDER until Discord OAuth is wired. It renders disabled and says so
- * rather than looking live and doing nothing when clicked — a login button
- * that silently fails is worse than one that admits it is not ready yet.
+ * A server component, so the signed-in state is already correct in the first
+ * paint — no flash of "Log in" for someone who is logged in, and no client
+ * fetch to find out.
  *
- * Turning it on is a two-line change: swap the button for one that calls the
- * sign-in route, and read the session for the signed-in state. The markup and
- * the styling below already cover both.
+ * Three states, and the first one matters: with no Discord credentials in the
+ * environment the button renders disabled and says why, rather than looking
+ * live and failing on click. That keeps the site running and honest before the
+ * OAuth app exists, the same way the leaderboard runs before the Roobet key
+ * does.
  */
-export function LoginButton() {
-  const ready = false;
-
-  if (!ready) {
+export async function LoginButton() {
+  if (!authConfigured) {
     return (
-      <button className="login-btn" disabled title="Discord login is not wired up yet">
+      <button className="login-btn" disabled title="Discord login is not configured yet">
         <FaDiscord aria-hidden />
         <span className="login-btn-label">Log in</span>
       </button>
     );
   }
 
+  const session = await auth();
+
+  if (session?.user) {
+    return <AccountMenu name={session.user.name ?? 'Account'} image={session.user.image ?? null} />;
+  }
+
   return (
-    <a className="login-btn" href="/api/auth/signin/discord">
-      <FaDiscord aria-hidden />
-      <span className="login-btn-label">Log in</span>
-    </a>
+    <form
+      action={async () => {
+        'use server';
+        const { signIn } = await import('@/lib/auth');
+        await signIn('discord');
+      }}
+    >
+      <button className="login-btn" type="submit">
+        <FaDiscord aria-hidden />
+        <span className="login-btn-label">Log in</span>
+      </button>
+    </form>
   );
 }

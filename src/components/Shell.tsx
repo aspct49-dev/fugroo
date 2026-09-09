@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { PRIMARY_PARTNER, SOCIALS } from '@/lib/partners';
 import { formatMoney } from '@/lib/format';
 import { SOCIAL_LINKS } from './socials';
-import { LoginButton } from './LoginButton';
 
 /**
  * A full-width bar across the top, and the nav in a rail beneath it — sidebar
@@ -35,7 +34,21 @@ const NAV = [
   { href: '/how-it-works', label: 'How it works' },
 ];
 
-export function Shell({ totalPot, children }: { totalPot: number; children: React.ReactNode }) {
+/**
+ * `account` is passed in rather than imported, because the shell is a client
+ * component (it owns the drawer state) and the account control is a server one
+ * that reads the session. Passing it as a slot keeps the session off the
+ * client bundle entirely.
+ */
+export function Shell({
+  totalPot,
+  account,
+  children,
+}: {
+  totalPot: number;
+  account: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -70,7 +83,7 @@ export function Shell({ totalPot, children }: { totalPot: number; children: Reac
           >
             Play on {PRIMARY_PARTNER.name}
           </a>
-          <LoginButton />
+          {account}
         </div>
       </header>
 
