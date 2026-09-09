@@ -1,3 +1,4 @@
+import { FeedState } from '@/components/FeedState';
 import { formatMoney } from '@/lib/format';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 import type { Leaderboard } from '@/lib/types';
@@ -22,6 +23,10 @@ export function Board({ board }: { board: Leaderboard }) {
           fill back in once the feed returns.
         </p>
       )}
+
+      {/* Above the head rather than beside the title: it qualifies the numbers
+          in the rows, and an empty board is exactly when someone wants it. */}
+      <FeedState at={board.updatedAt} live={board.source === 'live' && !board.error} />
 
       <div className="board-head" role="presentation">
         <span>Rank</span>

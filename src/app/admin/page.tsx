@@ -1,7 +1,10 @@
 import Link from 'next/link';
 
+import { formatMoney } from '@/lib/format';
 import { giveawayState } from '@/lib/giveaway';
 import { activeGame } from '@/lib/guesses';
+import { roster } from '@/lib/roster';
+import { getLeaderboard } from '@/lib/services/leaderboard';
 import { activeTournament, listTournaments, tournamentProgress } from '@/lib/tournaments';
 
 /**
@@ -16,15 +19,34 @@ import { activeTournament, listTournaments, tournamentProgress } from '@/lib/tou
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOverviewPage() {
-  const [game, tournament, tournaments] = await Promise.all([
+  const [game, tournament, tournaments, board, under] = await Promise.all([
     activeGame(),
     activeTournament(),
     listTournaments(),
+    getLeaderboard('roobet'),
+    // How many accounts are under the code *at all*, not just this month. A
+    // month with nobody on the board and a month with nobody under the code
+    // are different problems, and only this number tells them apart.
+    roster()
+      .then((r) => r.players.size)
+      .catch(() => null),
   ]);
   const give = giveawayState();
   const progress = tournament ? tournamentProgress(tournament) : null;
 
   const cards = [
+    {
+      href: '/leaderboard',
+      title: 'Roobet leaderboard',
+      // The feed's own state first, because that is the thing that can be
+      // broken. The counts after it only mean something once it is live.
+      state: board.error
+        ? `Feed error: ${board.error}`
+        : `Live · ${board.stats.players} on the board · ${formatMoney(board.stats.totalWagered)} wagered${
+            under === null ? '' : ` · ${under} under the code all-time`
+          }`,
+      live: !board.error,
+    },
     {
       href: '/admin/giveaway',
       title: 'Giveaway picker',

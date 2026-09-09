@@ -137,6 +137,43 @@
 
 .board { margin-top: 0; }
 
+/* Whether the standings are live, sat above the column heads. An empty board
+   is ambiguous — a quiet month and a broken feed look the same — so this line
+   renders in both states rather than only on failure. */
+.feed-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0 20px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
+.feed-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.feed-state[data-live] {
+  color: var(--hue-teal);
+}
+
+.feed-state[data-live] .feed-dot {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue-teal) 22%, transparent);
+}
+
+.feed-age {
+  color: var(--dim);
+}
+
+.feed-age::before {
+  content: '·';
+  margin-right: 8px;
+}
+
 
 .board-head,
 .board-row {
@@ -205,14 +242,27 @@
 .board-row[data-rank='1'] .board-avatar-mark { background: var(--rank-1); }
 .board-row[data-rank='2'] .board-avatar-mark { background: var(--rank-2); }
 .board-row[data-rank='3'] .board-avatar-mark { background: var(--rank-3); }
+/* Both `display: block`, and not decoration: they are spans, and `overflow`
+   and `text-overflow` do nothing on an inline box — so a long name ran under
+   the wagered column instead of clipping, with the favourite game jammed
+   against it on the same line. Invisible until a row actually had a game. */
 .board-name {
+  display: block;
   font-weight: 600;
   font-size: 14.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.board-game { font-size: 12.5px; color: var(--dim); }
+.board-game {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .board-wagered {
   font-family: var(--font-display);
