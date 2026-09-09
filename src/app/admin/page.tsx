@@ -2,9 +2,18 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
+import { AdminGuess } from '@/components/AdminGuess';
 import { HuntBoard } from '@/components/HuntBoard';
 import { requireAdmin } from '@/lib/admin';
 import { formatMoney } from '@/lib/format';
+import {
+  activeGame,
+  createGame,
+  deleteGame,
+  drawGame,
+  listGames,
+  setGameStatus,
+} from '@/lib/guesses';
 import {
   addBonus,
   createHunt,
@@ -42,7 +51,7 @@ export default async function AdminPage() {
   if (!session) redirect('/login');
   if (!admin) redirect('/');
 
-  const hunts = await listHunts();
+  const [hunts, games, game] = await Promise.all([listHunts(), listGames(), activeGame()]);
   const current = hunts.find((h) => h.status !== 'settled') ?? hunts[0];
 
   async function create(form: FormData) {
@@ -106,6 +115,48 @@ export default async function AdminPage() {
     revalidatePath('/bonus-hunts');
   }
 
+  /* --------------------------------------------------- guess the balance */
+
+  async function openGame(form: FormData) {
+    'use server';
+    await guard();
+    const name = String(form.get('name') ?? '').trim();
+    const start = Number(form.get('startBalance'));
+    const bonuses = Number(form.get('numBonuses') || 0);
+    const huntId = String(form.get('huntId') ?? '') || null;
+    if (!name || !Number.isFinite(start) || start <= 0) return;
+    await createGame(name, start, Number.isFinite(bonuses) ? bonuses : 0, huntId);
+    revalidatePath('/admin');
+    revalidatePath('/guess-the-balance');
+  }
+
+  async function gameStatus(form: FormData) {
+    'use server';
+    await guard();
+    const status = String(form.get('status')) as 'open' | 'closed';
+    await setGameStatus(String(form.get('gameId')), status);
+    revalidatePath('/admin');
+    revalidatePath('/guess-the-balance');
+  }
+
+  async function draw(form: FormData) {
+    'use server';
+    await guard();
+    const final = Number(form.get('finalBalance'));
+    if (!Number.isFinite(final) || final < 0) return;
+    await drawGame(String(form.get('gameId')), final);
+    revalidatePath('/admin');
+    revalidatePath('/guess-the-balance');
+  }
+
+  async function dropGame(form: FormData) {
+    'use server';
+    await guard();
+    await deleteGame(String(form.get('gameId')));
+    revalidatePath('/admin');
+    revalidatePath('/guess-the-balance');
+  }
+
   return (
     <section className="section wrap">
       <header className="admin-head">
@@ -116,6 +167,20 @@ export default async function AdminPage() {
           </p>
         </div>
       </header>
+
+      <h2 className="admin-group">Guess the balance</h2>
+
+      <AdminGuess
+        game={game}
+        games={games}
+        hunts={hunts}
+        onCreate={openGame}
+        onStatus={gameStatus}
+        onDraw={draw}
+        onDelete={dropGame}
+      />
+
+      <h2 className="admin-group">Bonus hunts</h2>
 
       <div className="admin-panel">
         <h2 className="h-section">Start a hunt</h2>
