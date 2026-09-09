@@ -124,6 +124,41 @@ export const JOIN_STEPS = [
   },
 ] as const;
 
+/**
+ * Roobet's rank-up rewards, in ladder order.
+ *
+ * Climbing a rank is what pays; the wagering is only how you climb. The
+ * emblems are the operator's own art with the baked-in name and amount cropped
+ * off, so those are set here as data — they belong in type that stays sharp
+ * and can be corrected without a new bitmap.
+ *
+ * PLACEHOLDER: six of Roobet's ranks are covered. The rest of the ladder is
+ * added by appending to this array, and the page counts and totals itself.
+ */
+export const RANK_REWARDS = [
+  { id: 'silver3', name: 'Silver III', tier: 'silver', reward: 5 },
+  { id: 'gold2', name: 'Gold II', tier: 'gold', reward: 10 },
+  { id: 'gold3', name: 'Gold III', tier: 'gold', reward: 15 },
+  { id: 'gold4', name: 'Gold IV', tier: 'gold', reward: 25 },
+  { id: 'emerald1', name: 'Emerald I', tier: 'emerald', reward: 100 },
+  { id: 'emerald2', name: 'Emerald II', tier: 'emerald', reward: 150 },
+] as const;
+
+/** One accent per tier, so the ladder reads as three bands rather than six
+ *  unrelated cards. */
+export const TIER_HUE: Record<string, string> = {
+  silver: '#9fb2d9',
+  gold: '#ffa23d',
+  emerald: '#2fe6a7',
+};
+
+/** Everything on the ladder, added up. */
+export const RANK_REWARD_TOTAL = RANK_REWARDS.reduce((sum, r) => sum + r.reward, 0);
+
+/** The biggest single rank-up. Taken as a maximum rather than as the last
+ *  entry, so appending a rank out of order cannot make the page lie. */
+export const RANK_REWARD_TOP = Math.max(...RANK_REWARDS.map((r) => r.reward));
+
 export const SOCIALS = {
   kick: 'https://kick.com/fugroo',
   youtube: 'https://www.youtube.com/@FugrooGambles',

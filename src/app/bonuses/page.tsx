@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { GemBanner } from '@/components/CardArt';
 import { CopyCode } from '@/components/CopyCode';
+import { PageBanner } from '@/components/PageBanner';
 import { Promo } from '@/components/Promo';
 import { ExternalIcon, TagIcon, TrophyIcon, UserPlusIcon } from '@/components/icons';
 import { JOIN_STEPS, OFFERS, PRIMARY_PARTNER } from '@/lib/partners';
 import { getLeaderboard } from '@/lib/services/leaderboard';
-import { SITE } from '@/lib/site';
 
 export const revalidate = 60;
 
@@ -24,23 +23,7 @@ export default async function BonusesPage() {
 
   return (
     <>
-      {/* The gems carry the banner; the heading sits on top of them. */}
-      <section className="section wrap">
-        <header className="bonus-hero">
-          <GemBanner />
-          <div className="bonus-hero-copy">
-            <p className="bonus-pair">
-              <span>{SITE.name}</span>
-              <span className="bonus-pair-x" aria-hidden>
-                ×
-              </span>
-              {/* eslint-disable-next-line @next/next/no-img-element -- operator brand mark */}
-              <img src={PRIMARY_PARTNER.logo} alt={PRIMARY_PARTNER.name} />
-            </p>
-            <h1 className="bonus-title">Bonuses</h1>
-          </div>
-        </header>
-      </section>
+      <PageBanner title="Bonuses" />
 
       <section className="section wrap">
         <div className="offer-grid">

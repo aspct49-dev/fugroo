@@ -1,17 +1,17 @@
 /* ===========================================================================
-   FUGROO — bonuses page
+   FUGROO — bonuses and milestones
 
    A banner, the offers, the board, and the three steps to get on it. The
    offer cards and the step cards deliberately do not share a treatment: one is
    a thing you claim, the other is a thing you read.
    =========================================================================== */
 
-/* ------------------------------------------------------------------ banner */
+/* ------------------------------------------------------- shared page banner */
 
 /* The gems mix their gradient from --hue. Without one declared here the
    color-mix has nothing to work from, the stops resolve to nothing, and every
    gem paints black. */
-.bonus-hero {
+.page-banner {
   --hue: var(--cyan);
   position: relative;
   isolation: isolate;
@@ -26,7 +26,7 @@
     radial-gradient(70% 120% at 50% 100%, rgba(34, 211, 255, 0.16) 0%, transparent 64%),
     linear-gradient(160deg, #0d1338 0%, #070b24 58%, #05071a 100%);
 }
-.bonus-hero .gem-banner {
+.page-banner .gem-banner {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -38,7 +38,7 @@
 }
 /* The heading needs clean ground under it, so the middle of the field is
    darkened rather than the gems being moved out of the way. */
-.bonus-hero::before {
+.page-banner::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -47,32 +47,26 @@
   background: radial-gradient(46% 74% at 50% 50%, rgba(5, 7, 26, 0.92) 0%, transparent 72%);
 }
 
-.bonus-hero-copy { position: relative; z-index: 2; text-align: center; }
+.page-banner-copy { position: relative; z-index: 2; text-align: center; }
 
-.bonus-pair {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 11px;
-  margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: clamp(15px, 1.7vw, 20px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--text);
+/* The mark is the artwork, so it is set at a size that reads as a signature
+   over the field rather than as a second headline above the page name. */
+.page-banner-mark {
+  width: clamp(150px, 17vw, 240px);
+  height: auto;
+  margin: 0 auto 12px;
+  filter: drop-shadow(0 4px 20px rgba(34, 211, 255, 0.35));
 }
-.bonus-pair-x { color: var(--dim); font-weight: 400; }
-.bonus-pair img { height: clamp(17px, 1.8vw, 22px); width: auto; }
 
-.bonus-title {
+.page-banner-title {
   margin: 0;
-  font-size: clamp(34px, 5.6vw, 62px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.01em;
+  font-size: clamp(22px, 3.2vw, 36px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 6px 30px rgba(5, 7, 26, 0.9);
+  color: var(--muted);
+  text-shadow: 0 4px 22px rgba(5, 7, 26, 0.9);
 }
 
 /* ------------------------------------------------------------------ offers */
@@ -276,4 +270,97 @@
   .join-actions { flex-direction: column; }
   .join-actions .btn,
   .join-actions .code-copy { width: 100%; }
+}
+
+/* ------------------------------------------------------------ rank ladder */
+
+.rank-intro { max-width: 68ch; margin-bottom: clamp(20px, 2.6vw, 28px); }
+.rank-intro .lede { margin-top: 12px; }
+
+.rank-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: clamp(20px, 2.6vw, 30px);
+}
+
+.rank-ladder {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank {
+  --hue: var(--cyan);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 14px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--edge);
+  background: linear-gradient(168deg, var(--hull) 0%, var(--void) 100%);
+  text-align: center;
+  transition: border-color 0.24s var(--ease), transform 0.28s var(--ease-out);
+}
+.rank:hover {
+  border-color: color-mix(in srgb, var(--hue) 50%, var(--edge));
+  transform: translateY(-3px);
+}
+
+/* The tier's own light, pooled behind its emblem. */
+.rank::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(58% 44% at 50% 32%, var(--hue) 0%, transparent 72%);
+  opacity: 0.16;
+  transition: opacity 0.28s var(--ease);
+}
+.rank:hover::before { opacity: 0.3; }
+
+/*
+ * The emblem is the operator's own art on its own purple plate, so it is
+ * framed as an inset tile rather than floated on the card — a cut-out would
+ * have fringed on the anti-aliased wing edges.
+ */
+.rank-emblem {
+  width: 100%;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  box-shadow: 0 8px 22px -12px rgba(2, 4, 14, 0.9);
+}
+.rank-emblem img { width: 100%; height: auto; display: block; }
+
+.rank-name {
+  margin: 14px 0 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.rank-reward {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--hue);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--hue) 45%, transparent);
+}
+
+.rank-note { margin-top: 4px; }
+
+@media (max-width: 720px) {
+  .rank-stats { grid-template-columns: 1fr; gap: 10px; }
+  .rank-ladder { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
