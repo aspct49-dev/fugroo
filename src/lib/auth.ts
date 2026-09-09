@@ -1,40 +1,60 @@
 import NextAuth from 'next-auth';
 import Discord from 'next-auth/providers/discord';
+import Google from 'next-auth/providers/google';
 
 /**
- * Discord sign-in.
+ * Sign-in, over Discord and Google.
  *
- * The whole thing is gated on the credentials being present. Auth.js throws at
- * import time if a provider is configured without them, which on a server
- * component would take the entire page down — so with no credentials the
- * provider list is simply empty, every route still renders, and the login
- * button stays disabled. That is the same shape as the Roobet provider: the
- * site runs without secrets, it just does less.
+ * Each provider is gated independently on its own credentials. Auth.js throws
+ * at import time if a provider is configured without them, which on a server
+ * component would take the entire page down — so a provider whose secrets are
+ * missing is simply not in the list, every route still renders, and the login
+ * page offers whatever is actually wired. That is the same shape as the Roobet
+ * provider: the site runs without secrets, it just does less.
  *
  * Sessions are JWT-only for now, which needs no database. Adding one is a
  * change to `session.strategy` plus an adapter; nothing above this line moves.
  *
- * `identify` is the only scope requested. It returns the id, username and
- * avatar and nothing else — no email, no server list. Asking for more than the
- * feature needs is what makes a consent screen look alarming, and the id is
- * what a Roobet account would be linked against anyway.
+ * Scopes are kept to the minimum each provider needs. Discord is asked only
+ * for `identify` — id, username, avatar, no email and no server list. Google
+ * returns the email, which is the point of offering it. Asking for more than
+ * the feature needs is what makes a consent screen look alarming.
  */
-const clientId = process.env.DISCORD_CLIENT_ID;
-const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+const discordId = process.env.DISCORD_CLIENT_ID;
+const discordSecret = process.env.DISCORD_CLIENT_SECRET;
+const googleId = process.env.GOOGLE_CLIENT_ID;
+const googleSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-/** True once both halves of the OAuth credential are set. */
-export const authConfigured = Boolean(clientId && clientSecret);
+export const discordConfigured = Boolean(discordId && discordSecret);
+export const googleConfigured = Boolean(googleId && googleSecret);
+
+/** Whether there is any way in at all. */
+export const authConfigured = discordConfigured || googleConfigured;
+
+/** What the login page offers, in the order it shows them. */
+export const PROVIDERS = [
+  { id: 'discord', name: 'Discord', ready: discordConfigured },
+  { id: 'google', name: 'Google', ready: googleConfigured },
+] as const;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: authConfigured
-    ? [
-        Discord({
-          clientId,
-          clientSecret,
-          authorization: { params: { scope: 'identify' } },
-        }),
-      ]
-    : [],
+  providers: [
+    ...(discordConfigured
+      ? [
+          Discord({
+            clientId: discordId,
+            clientSecret: discordSecret,
+            authorization: { params: { scope: 'identify' } },
+          }),
+        ]
+      : []),
+    ...(googleConfigured
+      ? [Google({ clientId: googleId, clientSecret: googleSecret })]
+      : []),
+  ],
+  /* Our own page, so signing in looks like the rest of the site and can offer
+     both providers side by side rather than Auth.js's default list. */
+  pages: { signIn: '/login' },
   /*
    * Behind a reverse proxy the request arrives with the proxy's host, not the
    * site's, and Auth.js refuses to build a callback URL from a host it has not

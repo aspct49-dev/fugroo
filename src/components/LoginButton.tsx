@@ -1,4 +1,4 @@
-import { FaDiscord } from 'react-icons/fa';
+import Link from 'next/link';
 
 import { auth, authConfigured } from '@/lib/auth';
 import { AccountMenu } from './AccountMenu';
@@ -10,17 +10,18 @@ import { AccountMenu } from './AccountMenu';
  * paint — no flash of "Log in" for someone who is logged in, and no client
  * fetch to find out.
  *
- * Three states, and the first one matters: with no Discord credentials in the
- * environment the button renders disabled and says why, rather than looking
- * live and failing on click. That keeps the site running and honest before the
- * OAuth app exists, the same way the leaderboard runs before the Roobet key
- * does.
+ * It carries no provider mark. There is more than one way in, and putting one
+ * platform's logo on the button would promise a route that may not be the one
+ * someone wants; choosing between them is what /login is for.
+ *
+ * With nothing configured it renders disabled and says why, rather than
+ * looking live and failing on click. The site runs before the OAuth apps
+ * exist, the same way the leaderboard runs before the Roobet key does.
  */
 export async function LoginButton() {
   if (!authConfigured) {
     return (
-      <button className="login-btn" disabled title="Discord login is not configured yet">
-        <FaDiscord aria-hidden />
+      <button className="login-btn" disabled title="Sign-in is not configured yet">
         <span className="login-btn-label">Log in</span>
       </button>
     );
@@ -33,17 +34,8 @@ export async function LoginButton() {
   }
 
   return (
-    <form
-      action={async () => {
-        'use server';
-        const { signIn } = await import('@/lib/auth');
-        await signIn('discord');
-      }}
-    >
-      <button className="login-btn" type="submit">
-        <FaDiscord aria-hidden />
-        <span className="login-btn-label">Log in</span>
-      </button>
-    </form>
+    <Link className="login-btn" href="/login">
+      <span className="login-btn-label">Log in</span>
+    </Link>
   );
 }
