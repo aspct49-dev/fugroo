@@ -49,7 +49,7 @@ export default async function AdminOverviewPage() {
     },
     {
       href: '/admin/giveaway',
-      title: 'Giveaway picker',
+      title: 'Raffle picker',
       state: give.connected
         ? give.open
           ? `Open · ${give.entryCount} entries`

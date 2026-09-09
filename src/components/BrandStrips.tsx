@@ -29,7 +29,7 @@ export function BrandStrips({ only }: { only?: 'kick' | 'partner' } = {}) {
           </span>
           <p className="strip-msg">
             <span className="strip-dot" />
-            Watch me <b>live</b> for bonus hunts, giveaways and more
+            Watch me <b>live</b> for bonus hunts, raffles and more
           </p>
           <a className="strip-btn" href={SOCIALS.kick} target="_blank" rel="noreferrer">
             Watch live

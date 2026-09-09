@@ -30,9 +30,19 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Raffles became Giveaways. Anything already linking to the old path —
-      // a Discord pin, a stream panel — keeps working.
-      { source: '/raffles', destination: '/giveaways', permanent: true },
+      /*
+       * ...and then Giveaways became Raffles again, so this points back the
+       * way it came. Anything linking to the old path — a Discord pin, a
+       * stream panel — keeps working.
+       *
+       * Temporary (307) rather than permanent, deliberately. The redirect that
+       * used to live here sent `/raffles` to `/giveaways` as a 308, which
+       * browsers cache indefinitely; a permanent redirect in the opposite
+       * direction would put any browser holding that cached entry into a loop.
+       * Nothing was public while that was live, so the exposure is small, but
+       * a 307 costs nothing and cannot be baked in the same way.
+       */
+      { source: '/giveaways', destination: '/raffles', permanent: false },
       // Bonus hunts was retired. Guess the balance is the section that asks
       // the same question of the same round, so anything linking to the old
       // path — a Discord pin, a stream panel — lands somewhere sensible.

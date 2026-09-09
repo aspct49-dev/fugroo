@@ -31,7 +31,7 @@ export const SOCIAL_LINKS: Social[] = [
     href: SOCIALS.kick,
     action: 'Watch',
     cta: 'Watch on Kick',
-    blurb: 'Live streams, hunts and giveaways',
+    blurb: 'Live streams, hunts and raffles',
     Icon: SiKick,
     brand: '#53fc18',
   },

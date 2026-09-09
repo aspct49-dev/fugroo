@@ -8,7 +8,7 @@ const shots = [
   ['home', '/', 1440, 900, true],
   ['home-hero', '/', 1440, 900, false],
   ['lb', '/leaderboard', 1440, 900, true],
-  ['giveaways', '/giveaways', 1440, 800, false],
+  ['raffles', '/raffles', 1440, 800, false],
   ['mobile', '/', 390, 844, true],
 ];
 

@@ -4,7 +4,7 @@ import type { SectionCard } from './types';
  * The destinations on the home page, in two ranks.
  *
  * Each card owns a hue, and that hue is its identity — it drives the label
- * bar, the bloom behind the art and the lit border, so someone finds Giveaways
+ * bar, the bloom behind the art and the lit border, so someone finds Raffles
  * again by colour before they read the label. Five hues across five cards, all
  * reading as neon on navy: a system rather than a swatch book.
  *
@@ -48,9 +48,9 @@ export const SECTION_CARDS: SectionCard[] = [
     blurb: 'Call the final balance. Closest guess takes it.',
   },
   {
-    id: 'giveaways',
-    label: 'Giveaways',
-    href: '/giveaways',
+    id: 'raffles',
+    label: 'Raffles',
+    href: '/raffles',
     hue: 'var(--hue-teal)',
     blurb: 'Draws for everyone playing under the code.',
   },

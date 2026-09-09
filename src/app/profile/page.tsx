@@ -115,7 +115,7 @@ export default async function ProfilePage({
             ) : (
               <>
                 <p className="acct-note">
-                  Link the {PRIMARY_PARTNER.name} username you play under so giveaways and rank
+                  Link the {PRIMARY_PARTNER.name} username you play under so raffles and rank
                   rewards know who you are. It has to be an account registered under code{' '}
                   <b>{PRIMARY_PARTNER.code}</b>.
                 </p>

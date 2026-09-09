@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation';
 
 const TABS = [
   { href: '/admin', label: 'Overview' },
-  { href: '/admin/giveaway', label: 'Giveaway picker' },
+  { href: '/admin/giveaway', label: 'Raffle picker' },
   { href: '/admin/guess', label: 'Guess the balance' },
   { href: '/admin/tournaments', label: 'Tournaments' },
 ];

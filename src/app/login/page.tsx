@@ -39,7 +39,7 @@ export default async function LoginPage() {
 
         <h1 className="login-title">Log in</h1>
         <p className="login-lede">
-          Sign in to track your place on the board, claim rank rewards and enter giveaways. Playing
+          Sign in to track your place on the board, claim rank rewards and enter raffles. Playing
           under code <b>{PRIMARY_PARTNER.code}</b> is what puts you on the leaderboard; this is how
           we know it is you.
         </p>

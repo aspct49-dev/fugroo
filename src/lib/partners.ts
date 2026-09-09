@@ -104,7 +104,7 @@ export const OFFERS = [
   {
     id: 'leaderboard',
     title: 'Monthly leaderboard',
-    body: `Register using code ${PARTNERS.roobet.code} for access to the monthly wager leaderboard, giveaways and milestones.`,
+    body: `Register using code ${PARTNERS.roobet.code} for access to the monthly wager leaderboard, raffles and milestones.`,
     cta: 'Claim bonus',
     href: PARTNERS.roobet.signupUrl,
     hue: 'var(--hue-cyan)',
@@ -136,7 +136,7 @@ export const JOIN_STEPS = [
   {
     n: 3,
     title: 'You’re in',
-    body: 'Everything unlocks straight away — the wager leaderboard, giveaways, milestones and tournaments.',
+    body: 'Everything unlocks straight away — the wager leaderboard, raffles, milestones and tournaments.',
   },
 ] as const;
 

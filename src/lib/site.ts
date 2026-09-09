@@ -39,7 +39,7 @@ export const ROUTES = [
   { path: '/bonuses', priority: 0.7, changeFrequency: 'weekly' as const },
   { path: '/milestones', priority: 0.6, changeFrequency: 'weekly' as const },
   { path: '/tournaments', priority: 0.6, changeFrequency: 'weekly' as const },
-  { path: '/giveaways', priority: 0.6, changeFrequency: 'weekly' as const },
+  { path: '/raffles', priority: 0.6, changeFrequency: 'weekly' as const },
   { path: '/guess-the-balance', priority: 0.6, changeFrequency: 'weekly' as const },
   { path: '/how-it-works', priority: 0.6, changeFrequency: 'monthly' as const },
   { path: '/legal', priority: 0.3, changeFrequency: 'yearly' as const },

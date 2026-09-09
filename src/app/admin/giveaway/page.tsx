@@ -25,7 +25,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Giveaway picker' };
+export const metadata: Metadata = { title: 'Raffle picker' };
 
 /** The server state the panel starts from, before its own polling takes over. */
 function view(): GiveawayView {
@@ -64,7 +64,7 @@ export default async function AdminGiveawayPage() {
     await assertAdmin();
     disconnect();
     revalidatePath('/admin/giveaway');
-    revalidatePath('/giveaways');
+    revalidatePath('/raffles');
   }
 
   async function gOpen(form: FormData) {
@@ -76,7 +76,7 @@ export default async function AdminGiveawayPage() {
       minWagered: Number.isFinite(min) && min > 0 ? min : 0,
     });
     revalidatePath('/admin/giveaway');
-    revalidatePath('/giveaways');
+    revalidatePath('/raffles');
   }
 
   async function gClose() {
@@ -84,7 +84,7 @@ export default async function AdminGiveawayPage() {
     await assertAdmin();
     closeGiveaway();
     revalidatePath('/admin/giveaway');
-    revalidatePath('/giveaways');
+    revalidatePath('/raffles');
   }
 
   /**
@@ -100,7 +100,7 @@ export default async function AdminGiveawayPage() {
     'use server';
     await assertAdmin();
     const winner = roll();
-    revalidatePath('/giveaways');
+    revalidatePath('/raffles');
     return winner;
   }
 
@@ -109,7 +109,7 @@ export default async function AdminGiveawayPage() {
     await assertAdmin();
     resetGiveaway();
     revalidatePath('/admin/giveaway');
-    revalidatePath('/giveaways');
+    revalidatePath('/raffles');
   }
 
   async function gClearMisses() {

@@ -52,7 +52,7 @@ const NAV: NavItem[] = [
   { href: '/bonuses', label: 'Bonus offers' },
   { href: '/milestones', label: 'Wager milestones' },
   { href: '/tournaments', label: 'Tournaments' },
-  { href: '/giveaways', label: 'Giveaways' },
+  { href: '/raffles', label: 'Raffles', soon: true },
   { href: '/guess-the-balance', label: 'Guess the balance' },
   { href: '/how-it-works', label: 'How it works' },
 ];

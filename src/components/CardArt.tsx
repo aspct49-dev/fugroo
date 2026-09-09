@@ -350,7 +350,7 @@ function TargetArt() {
   );
 }
 
-/* --------------------------------------------------------------- giveaways */
+/* ----------------------------------------------------------------- raffles */
 
 /** A torn-off ticket, rocking on its perforation. */
 function TicketArt() {
@@ -405,7 +405,7 @@ const ART: Record<string, () => React.JSX.Element> = {
   milestones: TiersArt,
   tournaments: SwordsArt,
   'guess-the-balance': TargetArt,
-  giveaways: TicketArt,
+  raffles: TicketArt,
 };
 
 export function CardArt({ id }: { id: string }) {
