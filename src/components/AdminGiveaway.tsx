@@ -290,13 +290,45 @@ export function AdminGiveaway({
               <span className="give-pill" data-on={g.live || undefined}>
                 {g.live ? 'Live' : 'Offline'}
               </span>
-              {!g.connected && <span className="give-pill give-pill-warn">Not reading chat</span>}
+              <span className={g.connected ? 'give-pill give-pill-ok' : 'give-pill give-pill-warn'}>
+                {g.connected ? 'Reading chat' : 'Not reading chat'}
+              </span>
+
+              {/*
+               * Connect and disconnect, on the state they describe.
+               *
+               * Reconnecting used to mean opening the channel editor and
+               * retyping a channel that had not changed — the editor is for
+               * changing which chat we read, and it was carrying the job of
+               * turning the socket back on as well. `connect()` keeps the
+               * stored channel when it is handed a blank one, so this form
+               * needs no field at all.
+               */}
+              {g.connected ? (
+                <form action={act(onDisconnect)}>
+                  <button className="give-bar-btn give-bar-btn-off" type="submit">
+                    Disconnect
+                  </button>
+                </form>
+              ) : (
+                <form
+                  action={async (fd) => {
+                    await onConnect(fd);
+                    void refresh();
+                  }}
+                >
+                  <button className="give-bar-btn give-bar-btn-on" type="submit">
+                    Connect
+                  </button>
+                </form>
+              )}
+
               <button
                 className="give-bar-btn"
                 type="button"
                 onClick={() => setEditingChannel(true)}
               >
-                &larr; Change channel
+                Change channel
               </button>
             </span>
           </>
@@ -502,13 +534,6 @@ export function AdminGiveaway({
         </div>
       )}
 
-      {g.connected && (
-        <form action={act(onDisconnect)} style={{ marginTop: 14 }}>
-          <button className="btn btn-quiet btn-sm" type="submit">
-            Disconnect From Chat
-          </button>
-        </form>
-      )}
     </>
   );
 }

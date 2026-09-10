@@ -808,6 +808,15 @@
   background: rgba(255, 196, 107, 0.08);
 }
 
+/* The same pill saying the good news. Whether we are reading chat is worth
+   stating in both directions — "not reading" only ever appearing is how you
+   end up unsure whether the absence of a warning means anything. */
+.give-pill-ok {
+  color: var(--hue-teal);
+  border-color: color-mix(in srgb, var(--hue-teal) 40%, transparent);
+  background: color-mix(in srgb, var(--hue-teal) 10%, transparent);
+}
+
 .give-bar-btn {
   appearance: none;
   border: 1px solid var(--edge);
@@ -828,6 +837,34 @@
 .give-bar-btn:hover {
   border-color: var(--edge-lit);
   color: var(--text);
+}
+
+/* The two that change what the socket is doing, coloured for the direction
+   they move it. Change channel stays plain — it is the one that needs a
+   second thought, not the one that needs finding fast mid-stream. */
+.give-bar-btn-on {
+  color: var(--hue-teal);
+  border-color: color-mix(in srgb, var(--hue-teal) 45%, transparent);
+  background: color-mix(in srgb, var(--hue-teal) 12%, transparent);
+}
+.give-bar-btn-on:hover {
+  color: var(--hue-teal);
+  border-color: var(--hue-teal);
+}
+
+.give-bar-btn-off {
+  color: #ff8a8a;
+  border-color: rgba(255, 106, 106, 0.35);
+}
+.give-bar-btn-off:hover {
+  color: #ff8a8a;
+  border-color: rgba(255, 106, 106, 0.7);
+}
+
+/* Each sits in its own one-field form so it can post its own action. */
+.give-bar-end form {
+  margin: 0;
+  display: flex;
 }
 
 .give-bar-edit {
