@@ -52,11 +52,17 @@ function view(): GiveawayView {
 export default async function AdminGiveawayPage() {
   const give = view();
 
-  async function gConnect(form: FormData) {
+  /* Returns the outcome rather than swallowing it. `connect()` has always
+     reported why it failed — a channel that does not exist, a socket that
+     would not open — and this threw the answer away, so a failed Connect was
+     indistinguishable from one nobody had pressed. */
+  async function gConnect(form: FormData): Promise<{ ok: boolean; error?: string }> {
     'use server';
     await assertAdmin();
-    await connect(String(form.get('channel') ?? ''));
+    const result = await connect(String(form.get('channel') ?? ''));
+    if (!result.ok) console.error('[giveaway] connect failed:', result.error);
     revalidatePath('/admin/giveaway');
+    return result;
   }
 
   async function gDisconnect() {

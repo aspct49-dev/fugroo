@@ -127,7 +127,7 @@ export function AdminGiveaway({
   onClearMisses,
 }: {
   initial: GiveawayView;
-  onConnect: (form: FormData) => Promise<void>;
+  onConnect: (form: FormData) => Promise<{ ok: boolean; error?: string }>;
   onDisconnect: () => Promise<void>;
   onOpen: (form: FormData) => Promise<void>;
   onClose: () => Promise<void>;
@@ -241,6 +241,35 @@ export function AdminGiveaway({
 
   const [editingChannel, setEditingChannel] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  /**
+   * One place for both attempts at connecting, because both were silent.
+   *
+   * A rejected server action is caught as well as a refused connect. The two
+   * fail for completely different reasons — a stale tab posting an action id
+   * the running build no longer has, versus Kick not answering — but they
+   * looked identical from the panel: nothing happened, and the pill still
+   * said what it said before. Anything that stops this working now says so.
+   */
+  const attemptConnect = async (fd: FormData): Promise<boolean> => {
+    setConnecting(true);
+    setConnectError(null);
+    try {
+      const result = await onConnect(fd);
+      if (!result?.ok) {
+        setConnectError(result?.error ?? 'Could not connect.');
+        return false;
+      }
+      return true;
+    } catch {
+      setConnectError('The page could not reach the server. Reload and try again.');
+      return false;
+    } finally {
+      setConnecting(false);
+      void refresh();
+    }
+  };
 
   return (
     <>
@@ -254,9 +283,7 @@ export function AdminGiveaway({
         {editingChannel ? (
           <form
             action={async (fd) => {
-              await onConnect(fd);
-              setEditingChannel(false);
-              void refresh();
+              if (await attemptConnect(fd)) setEditingChannel(false);
             }}
             className="give-bar-edit"
           >
@@ -314,13 +341,7 @@ export function AdminGiveaway({
               ) : (
                 <form
                   action={async (fd) => {
-                    setConnecting(true);
-                    try {
-                      await onConnect(fd);
-                    } finally {
-                      setConnecting(false);
-                    }
-                    void refresh();
+                    await attemptConnect(fd);
                   }}
                 >
                   {/* The handshake takes a beat even when it works, so the
@@ -346,6 +367,13 @@ export function AdminGiveaway({
           </>
         )}
       </div>
+
+      {connectError && (
+        <p className="give-bar-error" role="status">
+          <span aria-hidden>!</span>
+          {connectError}
+        </p>
+      )}
 
       <div className="give-layout">
         {/* ----------------------------------------------------- controls */}

@@ -867,6 +867,26 @@
   display: flex;
 }
 
+/* Why the last Connect did not work. Sits under the bar rather than inside
+   it, because the bar is a row of short controls and this is a sentence. */
+.give-bar-error {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: -6px 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 106, 106, 0.4);
+  border-radius: var(--r);
+  background: rgba(255, 92, 92, 0.09);
+  font-size: 13.5px;
+  color: #ffb3b3;
+}
+.give-bar-error span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #ff8a8a;
+}
+
 .give-bar-edit {
   display: flex;
   align-items: center;
