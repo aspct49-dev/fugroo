@@ -31,7 +31,7 @@ export default async function AdminOverviewPage() {
       .then((r) => r.players.size)
       .catch(() => null),
   ]);
-  const give = giveawayState();
+  const give = await giveawayState();
   const progress = tournament ? tournamentProgress(tournament) : null;
 
   const cards = [
@@ -50,12 +50,15 @@ export default async function AdminOverviewPage() {
     {
       href: '/admin/giveaway',
       title: 'Raffle Picker',
-      state: give.connected
-        ? give.open
-          ? `Open · ${give.entryCount} entries`
-          : `Connected · ${give.entryCount} entries held`
-        : 'Not connected',
-      live: give.connected,
+      /* No "connected" here any more, and that is not an omission. The chat
+         socket lives in whichever browser has the picker open, so this page
+         cannot know whether anyone is listening — only what the round says. */
+      state: give.open
+        ? `Collecting · ${give.entryCount} entries`
+        : give.entryCount > 0
+          ? `${give.entryCount} entries held`
+          : 'No round',
+      live: give.open,
     },
     {
       href: '/admin/guess',

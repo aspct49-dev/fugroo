@@ -6,32 +6,37 @@ import { assertAdmin } from '@/lib/admin';
 import {
   clearMisses,
   closeGiveaway,
-  connect,
-  disconnect,
+  forgetChannel,
   giveawayState,
+  ingest,
+  lookupChannel,
   openGiveaway,
   reset as resetGiveaway,
   roll,
   type Entry,
+  type IncomingMessage,
 } from '@/lib/giveaway';
 
 /**
- * The giveaway roller, on its own route.
+ * The raffle picker, on its own route.
  *
  * This is the one panel used with a stream running, which is the whole reason
  * the admin area was split: it needs to be one click away and hold still,
  * rather than sitting below whatever else was on the page.
+ *
+ * The chat connection is not here. It runs in the browser — `lib/kick-client`
+ * — and posts what it hears to `gIngest`. Everything that decides anything is
+ * still on this side of the line: the eligibility gate and the draw.
  */
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Raffle Picker' };
 
-/** The server state the panel starts from, before its own polling takes over. */
-function view(): GiveawayView {
-  const g = giveawayState();
+/** The state the panel starts from, before its own polling takes over. */
+async function view(): Promise<GiveawayView> {
+  const g = await giveawayState();
   return {
-    connected: g.connected,
     open: g.open,
     keyword: g.keyword,
     channel: g.channel,
@@ -42,36 +47,45 @@ function view(): GiveawayView {
     entryCount: g.entryCount,
     missCount: g.missCount,
     gates: g.gates,
-    ephemeral: g.ephemeral,
     slug: g.slug,
     live: g.live,
     avatar: g.avatar,
-    winnerMessages: g.winnerMessages,
   };
 }
 
 export default async function AdminGiveawayPage() {
-  const give = view();
+  const give = await view();
 
-  /* Returns the outcome rather than swallowing it. `connect()` has always
-     reported why it failed — a channel that does not exist, a socket that
-     would not open — and this threw the answer away, so a failed Connect was
-     indistinguishable from one nobody had pressed. */
-  async function gConnect(form: FormData): Promise<{ ok: boolean; error?: string }> {
+  /* Returns the outcome rather than swallowing it. A failed lookup used to be
+     indistinguishable from a button nobody pressed. */
+  async function gLookup(form: FormData): Promise<{ ok: boolean; error?: string }> {
     'use server';
     await assertAdmin();
-    const result = await connect(String(form.get('channel') ?? ''));
-    if (!result.ok) console.error('[giveaway] connect failed:', result.error);
+    const result = await lookupChannel(String(form.get('channel') ?? ''));
+    if (!result.ok) console.error('[raffle] channel lookup failed:', result.error);
     revalidatePath('/admin/giveaway');
     return result;
   }
 
-  async function gDisconnect() {
+  async function gForget() {
     'use server';
     await assertAdmin();
-    disconnect();
+    await forgetChannel();
     revalidatePath('/admin/giveaway');
     revalidatePath('/raffles');
+  }
+
+  /**
+   * Takes the messages the browser matched on the keyword.
+   *
+   * Deliberately does not revalidate: this fires every second or so while a
+   * round is collecting, and re-rendering the page on each batch would fight
+   * the panel's own polling for no gain.
+   */
+  async function gIngest(messages: IncomingMessage[]): Promise<void> {
+    'use server';
+    await assertAdmin();
+    await ingest(messages);
   }
 
   async function gOpen(form: FormData) {
@@ -89,7 +103,7 @@ export default async function AdminGiveawayPage() {
   async function gClose() {
     'use server';
     await assertAdmin();
-    closeGiveaway();
+    await closeGiveaway();
     revalidatePath('/admin/giveaway');
     revalidatePath('/raffles');
   }
@@ -106,7 +120,7 @@ export default async function AdminGiveawayPage() {
   async function gRoll(): Promise<Entry | null> {
     'use server';
     await assertAdmin();
-    const winner = roll();
+    const winner = await roll();
     revalidatePath('/raffles');
     return winner;
   }
@@ -114,7 +128,7 @@ export default async function AdminGiveawayPage() {
   async function gReset() {
     'use server';
     await assertAdmin();
-    resetGiveaway();
+    await resetGiveaway();
     revalidatePath('/admin/giveaway');
     revalidatePath('/raffles');
   }
@@ -122,15 +136,16 @@ export default async function AdminGiveawayPage() {
   async function gClearMisses() {
     'use server';
     await assertAdmin();
-    clearMisses();
+    await clearMisses();
     revalidatePath('/admin/giveaway');
   }
 
   return (
     <AdminGiveaway
       initial={give}
-      onConnect={gConnect}
-      onDisconnect={gDisconnect}
+      onLookup={gLookup}
+      onForget={gForget}
+      onIngest={gIngest}
       onOpen={gOpen}
       onClose={gClose}
       onRoll={gRoll}

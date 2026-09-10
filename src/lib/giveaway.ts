@@ -1,24 +1,35 @@
 import 'server-only';
 
-import { channelInfo, chatState, connectChat, disconnectChat, onChat } from './kick';
+import { channelInfo } from './kick';
 import { listProfiles } from './profiles';
 import { roster } from './roster';
+import { mutateJson, readJson, writeJson } from './store';
 
 /**
- * The chat giveaway.
+ * The chat raffle.
  *
  * Someone types the keyword in Kick chat and lands in the entry list, provided
  * they clear whatever gates are switched on. Every gate is checked here, on
- * the server, at the moment the message arrives — the admin toggles decide
- * what is enforced, and nothing in a browser can talk its way past them.
+ * the server, and so is the draw — the browser reads chat and forwards what it
+ * saw, but nothing it sends decides who is eligible or who wins.
  *
- * State is in memory on purpose. A giveaway is a thing that happens during one
- * stream: it starts, it is rolled, it is over. Persisting it would mean
- * deciding what a half-finished round means after a restart, and the honest
- * answer is that it means "run it again".
+ * **Where the chat connection lives.** Not here. `lib/kick-client.ts` opens
+ * the socket in the admin's browser and posts the messages that match the
+ * keyword to `ingest()`. The socket used to live in this process, which works
+ * only where the process outlives the request — on serverless it is frozen the
+ * moment a response is sent, so the connection died before anything could use
+ * it. The reasoning is written out in `kick-client.ts`.
  *
- * The cost of that, stated plainly: a redeploy mid-giveaway loses the entries.
+ * **Where the round lives.** In the store, not in module memory, for the same
+ * reason: two requests on serverless are two different instances as far as
+ * memory is concerned. That also means a round now survives a redeploy and a
+ * page reload, which the in-memory version never did.
+ *
+ * The one thing it does not survive is nobody watching: entries arrive through
+ * a browser, so they arrive only while the panel is open.
  */
+
+const FILE = 'giveaway.json';
 
 export interface Entry {
   username: string;
@@ -41,7 +52,7 @@ export interface Gates {
   minWagered: number;
 }
 
-interface State {
+export interface Round {
   channel: string;
   slug: string;
   chatroomId: number | null;
@@ -52,96 +63,40 @@ interface State {
   misses: Miss[];
   winner: Entry | null;
   drawnAt: number | null;
-  /** Whether the channel is streaming, as of the last connect. */
+  /** Whether the channel was streaming, as of the last channel lookup. */
   live: boolean;
   avatar: string | null;
 }
 
-const state: State = {
-  channel: process.env.KICK_CHANNEL ?? 'fugroo',
-  slug: process.env.KICK_CHANNEL ?? 'fugroo',
-  chatroomId: null,
-  keyword: '!enter',
-  open: false,
-  gates: { requireCode: false, minWagered: 0 },
-  entries: [],
-  misses: [],
-  winner: null,
-  drawnAt: null,
-  live: false,
-  avatar: null,
-};
-
-/**
- * The last few things each chatter said.
- *
- * Kept so the panel can show the winner's recent messages — on stream that is
- * how you tell a real viewer from a name that appeared once to enter, without
- * leaving the panel to go and read chat.
- *
- * Capped hard in both directions: a handful of lines per person, and a bounded
- * number of people. A giveaway runs for minutes in a busy chat, and an
- * unbounded map keyed on username is a memory leak with a stream attached.
- */
-const MAX_PER_USER = 6;
-const MAX_USERS = 400;
-const recent = new Map<string, { text: string; at: number }[]>();
-
-function remember(username: string, text: string) {
-  const key = username.toLowerCase();
-  const list = recent.get(key) ?? [];
-  list.unshift({ text, at: Date.now() });
-  if (list.length > MAX_PER_USER) list.length = MAX_PER_USER;
-  recent.set(key, list);
-  if (recent.size > MAX_USERS) {
-    // Oldest insertion first — Map keeps insertion order.
-    const oldest = recent.keys().next().value;
-    if (oldest) recent.delete(oldest);
-  }
-}
-
-export function recentMessages(username: string | null | undefined) {
-  if (!username) return [];
-  return recent.get(username.toLowerCase()) ?? [];
-}
-
-/** Roobet name by Discord id is the wrong direction — we need Kick name in.
- *  Rebuilt each time the giveaway opens rather than per message. */
-let kickToRoobet = new Map<string, string>();
-
-/**
- * Whether this runtime can hold a chat socket open at all.
- *
- * The reader is a WebSocket living in module memory, which needs a process
- * that stays up between requests. Serverless gives it the opposite: the
- * function is frozen the moment a request finishes and thawed for the next
- * one, on no guarantee it is even the same instance. So Connect succeeds, the
- * invocation ends, the socket dies with it, and the next poll — quite possibly
- * a different instance entirely — reports a connection nobody is holding.
- *
- * That is exactly what it looks like from the panel: press Connect, nothing
- * changes; reload, it says connected; a moment later it does not. Worth
- * saying out loud on the page rather than leaving someone to press the button
- * harder.
- */
-export function socketCanPersist(): boolean {
-  return process.env.VERCEL !== '1';
-}
-
-export function giveawayState() {
-  const chat = chatState();
-  const winnerName = state.winner?.username ?? null;
+function blank(): Round {
   return {
-    ...state,
-    ephemeral: !socketCanPersist(),
-    connected: chat.connected,
-    entryCount: state.entries.length,
-    missCount: state.misses.length,
-    /* The winner's own lines, so the panel can show who they are without
-       anyone leaving it to go and read chat. */
-    winnerMessages: recentMessages(winnerName),
+    channel: process.env.KICK_CHANNEL ?? 'fugroo',
+    slug: process.env.KICK_CHANNEL ?? 'fugroo',
+    chatroomId: null,
+    keyword: '!enter',
+    open: false,
+    gates: { requireCode: false, minWagered: 0 },
+    entries: [],
+    misses: [],
+    winner: null,
+    drawnAt: null,
+    live: false,
+    avatar: null,
   };
 }
+
+/* ------------------------------------------------------------------ reads */
+
+export async function giveawayState() {
+  const round = await readJson<Round>(FILE, blank());
+  return {
+    ...round,
+    entryCount: round.entries.length,
+    missCount: round.misses.length,
+  };
+}
+
+/* ------------------------------------------------------------------ gates */
 
 /**
  * Whether one chatter may enter.
@@ -149,11 +104,19 @@ export function giveawayState() {
  * A lookup failure is refused with the reason rather than being silently
  * treated as "not under the code" — the two are different, and only one of
  * them is the entrant's problem.
+ *
+ * `linked` is passed in rather than read here because a batch of messages
+ * checks it once for all of them; reading the profile list per entrant would
+ * be one store round trip each, in the middle of a live chat.
  */
-async function admit(username: string): Promise<{ ok: boolean; reason?: string; roobet?: string }> {
-  if (!state.gates.requireCode) return { ok: true };
+async function admit(
+  username: string,
+  gates: Gates,
+  linked: Map<string, string>,
+): Promise<{ ok: boolean; reason?: string; roobet?: string }> {
+  if (!gates.requireCode) return { ok: true };
 
-  const roobetName = kickToRoobet.get(username.toLowerCase());
+  const roobetName = linked.get(username.toLowerCase());
   if (!roobetName) {
     return { ok: false, reason: 'No Roobet account linked on the site' };
   }
@@ -162,11 +125,8 @@ async function admit(username: string): Promise<{ ok: boolean; reason?: string; 
     const { players } = await roster();
     const player = players.get(roobetName.toLowerCase());
     if (!player) return { ok: false, reason: `${roobetName} is not under the code` };
-    if (state.gates.minWagered > 0 && player.weightedWagered < state.gates.minWagered) {
-      return {
-        ok: false,
-        reason: `${roobetName} has wagered under the minimum`,
-      };
+    if (gates.minWagered > 0 && player.weightedWagered < gates.minWagered) {
+      return { ok: false, reason: `${roobetName} has wagered under the minimum` };
     }
     return { ok: true, roobet: player.username };
   } catch {
@@ -174,112 +134,147 @@ async function admit(username: string): Promise<{ ok: boolean; reason?: string; 
   }
 }
 
-async function handle(msg: { username: string; userId: string; text: string }) {
-  // Remembered whether or not the round is open, so the winner's history is
-  // already there the moment they are drawn.
-  remember(msg.username, msg.text);
-  if (!state.open) return;
-  if (msg.text.trim().toLowerCase() !== state.keyword.trim().toLowerCase()) return;
+/** Kick name to Roobet name. The profile list stores one name; both sides of
+ *  the lookup are the same string, lower-cased for matching. */
+async function linkedNames(): Promise<Map<string, string>> {
+  const profiles = await listProfiles();
+  return new Map(profiles.map((p) => [p.roobetUsername.toLowerCase(), p.roobetUsername]));
+}
 
-  const key = msg.userId;
-  // Someone spamming the keyword must not reset their own entry time, or a
-  // tie-break on "who was first" stops meaning anything.
-  if (state.entries.some((e) => e.userId === key)) return;
+/* ----------------------------------------------------------------- ingest */
 
-  const verdict = await admit(msg.username);
-  if (!verdict.ok) {
-    if (!state.misses.some((m) => m.username === msg.username)) {
-      state.misses.push({
+export interface IncomingMessage {
+  username: string;
+  userId: string;
+  text: string;
+}
+
+/**
+ * Records a batch of chat messages the browser matched on the keyword.
+ *
+ * Batched on purpose. Each call is a read, a change and a write of one
+ * document, and a busy chat sending one request per message would be that
+ * round trip per message — on serverless, per invocation. The panel collects
+ * for a beat and sends what it has.
+ *
+ * The keyword is re-checked here rather than trusted. The browser filters so
+ * it is not posting all of chat, but "this message matched" is a claim from a
+ * client, and the round's keyword is the server's to decide.
+ */
+export async function ingest(messages: IncomingMessage[]): Promise<void> {
+  if (messages.length === 0) return;
+
+  const round = await readJson<Round>(FILE, blank());
+  if (!round.open) return;
+
+  const keyword = round.keyword.trim().toLowerCase();
+  const linked = round.gates.requireCode ? await linkedNames() : new Map<string, string>();
+
+  const admitted: Entry[] = [];
+  const refused: Miss[] = [];
+  // Within one batch as well as against what is already stored: someone
+  // spamming the keyword must not take two seats.
+  const seen = new Set(round.entries.map((e) => e.userId));
+
+  for (const msg of messages) {
+    if (msg.text.trim().toLowerCase() !== keyword) continue;
+    if (seen.has(msg.userId)) continue;
+    seen.add(msg.userId);
+
+    const verdict = await admit(msg.username, round.gates, linked);
+    if (verdict.ok) {
+      admitted.push({
+        username: msg.username,
+        userId: msg.userId,
+        at: Date.now(),
+        roobet: verdict.roobet ?? null,
+      });
+    } else {
+      refused.push({
         username: msg.username,
         reason: verdict.reason ?? 'Not eligible',
         at: Date.now(),
       });
     }
-    return;
   }
-  state.entries.push({
-    username: msg.username,
-    userId: key,
-    at: Date.now(),
-    roobet: verdict.roobet ?? null,
+
+  if (admitted.length === 0 && refused.length === 0) return;
+
+  // Re-read inside the mutation rather than writing the copy read above: the
+  // gate checks are `await`s, and an admin pressing something during them
+  // would otherwise be overwritten.
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    if (!r.open) return;
+    const already = new Set(r.entries.map((e) => e.userId));
+    for (const entry of admitted) {
+      if (!already.has(entry.userId)) r.entries.push(entry);
+    }
+    const missed = new Set(r.misses.map((m) => m.username));
+    for (const miss of refused) {
+      if (!missed.has(miss.username)) r.misses.push(miss);
+    }
   });
 }
 
 /* ------------------------------------------------------------------ admin */
 
-export async function connect(channel?: string): Promise<{ ok: boolean; error?: string }> {
-  /*
-   * The candidate is only committed once it turns out to exist.
-   *
-   * This used to write the typed name straight onto the state and then look
-   * it up, so a typo left the panel pointing at a channel that is not there —
-   * and the bare Connect button, which deliberately reuses the stored
-   * channel, would then keep failing until someone retyped the right one.
-   * A failed connect should leave you where you were.
-   */
-  const candidate = channel
-    ? channel.trim().replace(/^.*kick\.com\//i, '')
-    : state.channel;
+/**
+ * Looks the channel up and remembers it. Does not open anything.
+ *
+ * The chatroom id is all the browser needs to subscribe, and finding it is a
+ * plain HTTP call — which is why this half stayed on the server while the
+ * socket moved off it.
+ *
+ * The candidate is only committed once it turns out to exist. Writing the
+ * typed name first and looking it up second left a typo stored as the current
+ * channel, and everything that reuses the stored channel then kept failing.
+ */
+export async function lookupChannel(channel?: string): Promise<{ ok: boolean; error?: string }> {
+  const current = await readJson<Round>(FILE, blank());
+  const candidate = channel ? channel.trim().replace(/^.*kick\.com\//i, '') : current.channel;
 
   const info = await channelInfo(candidate);
   if (!info?.chatroomId) {
     return { ok: false, error: `Could not find a chatroom for "${candidate}"` };
   }
 
-  state.channel = candidate;
-  state.chatroomId = info.chatroomId;
-  state.slug = info.slug;
-  state.live = info.live;
-  state.avatar = info.avatar;
-  // The handler goes on before the socket does, or the first messages after
-  // the subscribe land with nobody listening.
-  onChat(handle);
-  // Awaited, so this returns with the socket genuinely open rather than
-  // merely asked to open — the panel reads the state the moment this
-  // resolves, and a half-open socket reads there as "not reading chat".
-  const opened = await connectChat(info.chatroomId);
-  if (!opened) {
-    return { ok: false, error: `Could not reach ${candidate}'s chat. Try again.` };
-  }
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.channel = candidate;
+    r.slug = info.slug;
+    r.chatroomId = info.chatroomId;
+    r.live = info.live;
+    r.avatar = info.avatar;
+  });
   return { ok: true };
 }
 
-/** Re-reads whether the channel is live, without touching the socket. */
+/** Re-reads whether the channel is live. */
 export async function refreshLive(): Promise<void> {
-  const info = await channelInfo(state.channel);
-  if (info) {
-    state.live = info.live;
-    state.avatar = info.avatar;
-  }
-}
-
-export function disconnect(): void {
-  onChat(null);
-  disconnectChat();
-  state.open = false;
-  state.chatroomId = null;
+  const current = await readJson<Round>(FILE, blank());
+  const info = await channelInfo(current.channel);
+  if (!info) return;
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.live = info.live;
+    r.avatar = info.avatar;
+  });
 }
 
 export async function openGiveaway(keyword: string, gates: Gates): Promise<void> {
-  state.keyword = keyword.trim() || '!enter';
-  state.gates = gates;
-  state.entries = [];
-  state.misses = [];
-  state.winner = null;
-  state.drawnAt = null;
-
-  // Built once here rather than per message: a busy chat would otherwise read
-  // the profile file hundreds of times a minute.
-  const profiles = await listProfiles();
-  kickToRoobet = new Map(
-    profiles.map((p) => [p.roobetUsername.toLowerCase(), p.roobetUsername]),
-  );
-
-  state.open = true;
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.keyword = keyword.trim() || '!enter';
+    r.gates = gates;
+    r.entries = [];
+    r.misses = [];
+    r.winner = null;
+    r.drawnAt = null;
+    r.open = true;
+  });
 }
 
-export function closeGiveaway(): void {
-  state.open = false;
+export async function closeGiveaway(): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.open = false;
+  });
 }
 
 /**
@@ -309,30 +304,48 @@ function unbiasedIndex(max: number): number {
  * gets money and the difference costs nothing — and drawn through
  * `unbiasedIndex`, for the same reason.
  *
- * The winner is chosen here, on the server, and returned. The admin panel's
- * spinner animates *towards* the name it is given; it does not pick one. An
- * animation that chose the winner would put the draw in a browser, where the
- * person running the giveaway could reload until they liked the result.
+ * The winner is chosen here, on the server, and returned. The panel's spinner
+ * animates *towards* the name it is given; it does not pick one. An animation
+ * that chose the winner would put the draw in a browser, where the person
+ * running the giveaway could reload until they liked the result — and now that
+ * the browser is holding the chat socket too, that line matters more, not
+ * less.
  */
-export function roll(): Entry | null {
-  if (state.entries.length === 0) return null;
-  const winner = state.entries[unbiasedIndex(state.entries.length)];
-  state.winner = winner;
-  state.drawnAt = Date.now();
-  state.open = false;
+export async function roll(): Promise<Entry | null> {
+  const round = await readJson<Round>(FILE, blank());
+  if (round.entries.length === 0) return null;
+
+  const winner = round.entries[unbiasedIndex(round.entries.length)];
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.winner = winner;
+    r.drawnAt = Date.now();
+    r.open = false;
+  });
   return winner;
 }
 
-export function clearMisses(): void {
-  state.misses = [];
+export async function clearMisses(): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.misses = [];
+  });
 }
 
-export function reset(): void {
-  state.entries = [];
-  state.misses = [];
-  state.winner = null;
-  state.drawnAt = null;
-  state.open = false;
+export async function reset(): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.entries = [];
+    r.misses = [];
+    r.winner = null;
+    r.drawnAt = null;
+    r.open = false;
+  });
+}
+
+/** Forgets the channel as well as the round. Used by Disconnect, which is now
+ *  a browser-side act — the server only has to stop claiming a chatroom. */
+export async function forgetChannel(): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    r.open = false;
+  });
 }
 
 /**
@@ -347,18 +360,28 @@ export async function enterFromSite(
   userId: string,
   roobetName: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!state.open) return { ok: false, error: 'Entries are closed.' };
-  if (state.entries.some((e) => e.userId === userId)) return { ok: true };
+  const round = await readJson<Round>(FILE, blank());
+  if (!round.open) return { ok: false, error: 'Entries are closed.' };
+  if (round.entries.some((e) => e.userId === userId)) return { ok: true };
 
-  if (state.gates.requireCode) {
+  let roobet = roobetName;
+  if (round.gates.requireCode) {
     if (!roobetName) return { ok: false, error: 'Link your Roobet account first.' };
-    kickToRoobet.set(roobetName.toLowerCase(), roobetName);
-    const verdict = await admit(roobetName);
+    const linked = new Map([[roobetName.toLowerCase(), roobetName]]);
+    const verdict = await admit(roobetName, round.gates, linked);
     if (!verdict.ok) return { ok: false, error: verdict.reason };
-    state.entries.push({ username, userId, at: Date.now(), roobet: verdict.roobet ?? roobetName });
-    return { ok: true };
+    roobet = verdict.roobet ?? roobetName;
   }
 
-  state.entries.push({ username, userId, at: Date.now(), roobet: roobetName });
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    if (!r.open) return;
+    if (r.entries.some((e) => e.userId === userId)) return;
+    r.entries.push({ username, userId, at: Date.now(), roobet });
+  });
   return { ok: true };
+}
+
+/** Kept so a future caller can replace a round wholesale without a migration. */
+export async function replaceRound(round: Round): Promise<void> {
+  await writeJson(FILE, round);
 }

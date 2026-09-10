@@ -17,14 +17,12 @@
     "react-dom": "^19.2.8",
     "react-icons": "^5.7.0",
     "server-only": "^0.0.1",
-    "sharp": "^0.35.4",
-    "ws": "^8.21.3"
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
-    "@types/ws": "^8.18.1",
     "typescript": "^5.9.3"
   },
   "private": true,

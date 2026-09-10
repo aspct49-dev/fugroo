@@ -3,29 +3,37 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SiKick } from 'react-icons/si';
 
-import type { Entry, Gates, Miss } from '@/lib/giveaway';
+import type { Entry, Gates, IncomingMessage, Miss } from '@/lib/giveaway';
+import { readChat, type ChatMessage, type ChatReader, type ChatStatus } from '@/lib/kick-client';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 
 /**
- * Running a chat giveaway.
+ * Running a chat raffle.
  *
  * Connect to the channel, open a round with a keyword and whatever gates
- * apply, then spin. The gates are enforced on the server as each message
- * arrives — these switches decide what is checked, not whether it is checked.
+ * apply, then spin.
  *
- * Two things make this a client component rather than the form-post panel it
- * used to be:
+ * **This component holds the chat connection.** The socket to Kick is opened
+ * here, in the browser, because the alternative — holding it on the server —
+ * only works where the server process outlives the request, and on serverless
+ * it does not. The reasoning is written out in `lib/kick-client.ts`.
  *
- *   1. **Entries arrive on their own.** They come from chat while the admin
- *      watches, so the count has to move without anyone clicking. It polls.
- *   2. **The spin is an animation.** A reel of names runs past and slows onto
- *      the winner, because a giveaway on stream is a moment and an instant
- *      answer throws it away.
+ * That makes the split worth being precise about, because it is now the only
+ * thing keeping a raffle honest:
  *
- * The spinner does **not** decide anything. `roll()` picks the winner on the
- * server and returns it; the reel is then built so that name lands under the
- * marker. Letting the animation choose would move the draw into a browser,
- * where whoever is running it could reload until they liked the outcome.
+ *   · the browser **hears** chat, and forwards messages matching the keyword
+ *   · the server **decides** — it re-checks the keyword, runs the eligibility
+ *     gate against the affiliate list, and draws the winner
+ *
+ * So nothing a browser could tamper with changes who is eligible or who wins.
+ * The entry list on screen is the server's answer, fetched back by polling,
+ * not the browser's own tally.
+ *
+ * The spinner does not decide anything either. `roll()` picks the winner on
+ * the server and returns it; the reel is then built so that name lands under
+ * the marker. Letting the animation choose would put the draw in a browser,
+ * where whoever is running it could reload until they liked the outcome — and
+ * now that the browser holds the socket too, that line matters more, not less.
  *
  * The "not eligible" list under the entries is the point of the whole panel on
  * stream: it turns "why am I not in the list?" from a guess into an answer.
@@ -33,7 +41,6 @@ import { PRIMARY_PARTNER } from '@/lib/partners';
 
 /** Server state, as the poll endpoint returns it. */
 export interface GiveawayView {
-  connected: boolean;
   open: boolean;
   keyword: string;
   channel: string;
@@ -44,14 +51,30 @@ export interface GiveawayView {
   entryCount: number;
   missCount: number;
   gates: Gates;
-  /* Added for the channel bar and the winner's chat history. */
   slug: string;
   live: boolean;
   avatar: string | null;
-  winnerMessages: { text: string; at: number }[];
-  /** True where the runtime cannot hold a socket between requests. */
-  ephemeral: boolean;
 }
+
+/** The chat pill, in the three states the socket actually has. Reconnecting
+ *  after a drop is not "off" and it is not "reading" — saying so is the
+ *  difference between a quiet chat and a broken one. */
+const CHAT_PILL: Record<ChatStatus, string> = {
+  off: 'give-pill give-pill-warn',
+  connecting: 'give-pill give-pill-warn',
+  on: 'give-pill give-pill-ok',
+};
+const CHAT_LABEL: Record<ChatStatus, string> = {
+  off: 'Not reading chat',
+  connecting: 'Connecting…',
+  on: 'Reading chat',
+};
+
+/** How long matched messages are held before being posted as one batch. */
+const INGEST_MS = 1200;
+/** Recent chat kept per person, for the winner's history. Browser-side only. */
+const HISTORY_PER_USER = 6;
+const HISTORY_USERS = 400;
 
 /* ------------------------------------------------------------- the reel */
 
@@ -120,8 +143,9 @@ function ReelCard({ entry, lit }: { entry: Entry; lit?: boolean }) {
 
 export function AdminGiveaway({
   initial: initialState,
-  onConnect,
-  onDisconnect,
+  onLookup,
+  onForget,
+  onIngest,
   onOpen,
   onClose,
   onRoll,
@@ -129,8 +153,9 @@ export function AdminGiveaway({
   onClearMisses,
 }: {
   initial: GiveawayView;
-  onConnect: (form: FormData) => Promise<{ ok: boolean; error?: string }>;
-  onDisconnect: () => Promise<void>;
+  onLookup: (form: FormData) => Promise<{ ok: boolean; error?: string }>;
+  onForget: () => Promise<void>;
+  onIngest: (messages: IncomingMessage[]) => Promise<void>;
   onOpen: (form: FormData) => Promise<void>;
   onClose: () => Promise<void>;
   onRoll: () => Promise<Entry | null>;
@@ -143,6 +168,21 @@ export function AdminGiveaway({
   const [strip, setStrip] = useState<Entry[]>([]);
   const [x, setX] = useState(0);
   const [gliding, setGliding] = useState(false);
+
+  /* ------------------------------------------------------ the connection */
+
+  const [chat, setChat] = useState<ChatStatus>('off');
+  /** Set when the admin has asked to be reading; the effect below does it. */
+  const [wanted, setWanted] = useState(false);
+  const readerRef = useRef<ChatReader | null>(null);
+  /** Matched messages waiting to be posted as a batch. */
+  const pendingRef = useRef<IncomingMessage[]>([]);
+  /** One in-flight post at a time: the store has no compare-and-set, so two
+   *  overlapping read-modify-writes could drop entries. */
+  const postingRef = useRef(false);
+  /** Recent chat per person, for the winner's history. Never leaves the tab. */
+  const historyRef = useRef(new Map<string, { text: string; at: number }[]>());
+  const [history, setHistory] = useState<{ text: string; at: number }[]>([]);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const spinningRef = useRef(false);
@@ -163,6 +203,87 @@ export function AdminGiveaway({
     const id = setInterval(() => void refresh(), POLL_MS);
     return () => clearInterval(id);
   }, [refresh]);
+
+  /* ------------------------------------------------------------ the chat */
+
+  /**
+   * Sends whatever has piled up, one request at a time.
+   *
+   * Serialised deliberately. `ingest()` is a read, a change and a write of one
+   * document and the store has no compare-and-set, so two of these in flight
+   * together could read the same list and one write could lose the other's
+   * entries. Anything that arrives while a post is running waits for the next
+   * tick, which is a second away.
+   */
+  const flush = useCallback(async () => {
+    if (postingRef.current) return;
+    const batch = pendingRef.current;
+    if (batch.length === 0) return;
+    pendingRef.current = [];
+    postingRef.current = true;
+    try {
+      await onIngest(batch);
+      await refresh();
+    } catch {
+      // Put them back rather than dropping them on the floor: a failed post is
+      // usually a blip, and an entry silently lost is the one thing this panel
+      // must not do.
+      pendingRef.current = [...batch, ...pendingRef.current];
+    } finally {
+      postingRef.current = false;
+    }
+  }, [onIngest, refresh]);
+
+  useEffect(() => {
+    const id = setInterval(() => void flush(), INGEST_MS);
+    return () => clearInterval(id);
+  }, [flush]);
+
+  /**
+   * Opens and closes the socket to follow what the admin asked for.
+   *
+   * Keyed on the chatroom as well as the wish, so changing channel tears the
+   * old socket down and opens the new one without anyone pressing anything.
+   */
+  useEffect(() => {
+    if (!wanted || g.chatroomId === null) {
+      readerRef.current?.close();
+      readerRef.current = null;
+      return;
+    }
+
+    const reader = readChat(
+      g.chatroomId,
+      (msg: ChatMessage) => {
+        // Everyone's last few lines, kept here rather than sent up: the server
+        // only needs entries, and posting all of chat to it would be a request
+        // per message for something only this screen ever shows.
+        const key = msg.username.toLowerCase();
+        const map = historyRef.current;
+        const list = map.get(key) ?? [];
+        list.unshift({ text: msg.text, at: msg.at });
+        if (list.length > HISTORY_PER_USER) list.length = HISTORY_PER_USER;
+        map.delete(key);
+        map.set(key, list);
+        if (map.size > HISTORY_USERS) {
+          const oldest = map.keys().next().value;
+          if (oldest) map.delete(oldest);
+        }
+
+        pendingRef.current.push({
+          username: msg.username,
+          userId: msg.userId,
+          text: msg.text,
+        });
+      },
+      setChat,
+    );
+    readerRef.current = reader;
+    return () => {
+      reader.close();
+      readerRef.current = null;
+    };
+  }, [wanted, g.chatroomId]);
 
   /* --------------------------------------------------------------- spin */
 
@@ -236,6 +357,17 @@ export function AdminGiveaway({
   // `g.winner` would spoil the spin two seconds in. Suppress it until it lands.
   const shownWinner = spinning ? null : (revealed ?? g.winner);
 
+  /* The winner's own lines, read out of this tab's buffer. They were never
+     sent to the server — only entries are — so this is the one panel that
+     shows what the browser heard rather than what the server decided. */
+  useEffect(() => {
+    if (!shownWinner) {
+      setHistory([]);
+      return;
+    }
+    setHistory(historyRef.current.get(shownWinner.username.toLowerCase()) ?? []);
+  }, [shownWinner]);
+
   const act = (fn: () => Promise<void>) => async () => {
     await fn();
     void refresh();
@@ -246,23 +378,25 @@ export function AdminGiveaway({
   const [connectError, setConnectError] = useState<string | null>(null);
 
   /**
-   * One place for both attempts at connecting, because both were silent.
+   * Look the channel up, then start listening.
    *
-   * A rejected server action is caught as well as a refused connect. The two
-   * fail for completely different reasons — a stale tab posting an action id
-   * the running build no longer has, versus Kick not answering — but they
-   * looked identical from the panel: nothing happened, and the pill still
-   * said what it said before. Anything that stops this working now says so.
+   * Two steps and only the first can fail usefully: the server turns a channel
+   * name into a chatroom id, and the socket is opened by the effect above once
+   * `wanted` is set. Both failures are caught, because both used to be silent
+   * — a refused lookup and a server action that never arrived looked identical
+   * from here, which is to say they looked like a button that did nothing.
    */
   const attemptConnect = async (fd: FormData): Promise<boolean> => {
     setConnecting(true);
     setConnectError(null);
     try {
-      const result = await onConnect(fd);
+      const result = await onLookup(fd);
       if (!result?.ok) {
         setConnectError(result?.error ?? 'Could not connect.');
         return false;
       }
+      await refresh();
+      setWanted(true);
       return true;
     } catch {
       setConnectError('The page could not reach the server. Reload and try again.');
@@ -320,9 +454,9 @@ export function AdminGiveaway({
               <span className="give-pill" data-on={g.live || undefined}>
                 {g.live ? 'Live' : 'Offline'}
               </span>
-              <span className={g.connected ? 'give-pill give-pill-ok' : 'give-pill give-pill-warn'}>
-                {g.connected ? 'Reading chat' : 'Not reading chat'}
-              </span>
+              {/* This one is the socket in this tab, not anything the server
+                  knows — which is the whole point of where it now lives. */}
+              <span className={CHAT_PILL[chat]}>{CHAT_LABEL[chat]}</span>
 
               {/*
                * Connect and disconnect, on the state they describe.
@@ -330,24 +464,17 @@ export function AdminGiveaway({
                * Reconnecting used to mean opening the channel editor and
                * retyping a channel that had not changed — the editor is for
                * changing which chat we read, and it was carrying the job of
-               * turning the socket back on as well. `connect()` keeps the
-               * stored channel when it is handed a blank one, so this form
-               * needs no field at all.
+               * turning the socket back on as well. Connect sends no channel
+               * at all: the server reuses the stored one.
                */}
-              {g.connected ? (
-                <form action={act(onDisconnect)}>
-                  <button className="give-bar-btn give-bar-btn-off" type="submit">
-                    Disconnect
-                  </button>
-                </form>
-              ) : (
+              {chat === 'off' ? (
                 <form
                   action={async (fd) => {
                     await attemptConnect(fd);
                   }}
                 >
-                  {/* The handshake takes a beat even when it works, so the
-                      button says so rather than sitting there looking ignored. */}
+                  {/* The lookup and the handshake take a beat even when they
+                      work, so the button says so rather than looking ignored. */}
                   <button
                     className="give-bar-btn give-bar-btn-on"
                     type="submit"
@@ -356,6 +483,18 @@ export function AdminGiveaway({
                     {connecting ? 'Connecting…' : 'Connect'}
                   </button>
                 </form>
+              ) : (
+                <button
+                  className="give-bar-btn give-bar-btn-off"
+                  type="button"
+                  onClick={() => {
+                    setWanted(false);
+                    setConnectError(null);
+                    void onForget().then(refresh);
+                  }}
+                >
+                  Disconnect
+                </button>
               )}
 
               <button
@@ -370,14 +509,12 @@ export function AdminGiveaway({
         )}
       </div>
 
-      {g.ephemeral && (
+      {chat !== 'off' && (
         <p className="give-bar-error give-bar-note">
           <span aria-hidden>!</span>
           <span>
-            <b>This deployment cannot hold a chat connection.</b> Reading chat needs a server that
-            stays up between requests, and serverless functions are frozen as soon as a request
-            finishes — so Connect appears to work and the socket is gone before the next poll.
-            Run the raffle picker on the long-lived server instead.
+            <b>Keep this tab open.</b> The chat connection lives in this page, so entries collect
+            only while it is open — closing it or letting the machine sleep stops the round.
           </span>
         </p>
       )}
@@ -547,9 +684,9 @@ export function AdminGiveaway({
           </div>
           {!shownWinner ? (
             <p className="give-panel-empty">Spin to see the winner’s chat history.</p>
-          ) : g.winnerMessages.length ? (
+          ) : history.length ? (
             <div className="give-msgs">
-              {g.winnerMessages.map((m, i) => (
+              {history.map((m, i) => (
                 <p className="give-msg" key={i}>
                   <span>
                     {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

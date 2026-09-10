@@ -1,24 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  /**
-   * Leave `ws` to Node rather than bundling it.
-   *
-   * `ws/lib/buffer-util.js` does an optional `require('bufferutil')` inside a
-   * try/catch and falls back to its own JS masking when that throws. Bundled,
-   * the require does not throw — webpack resolves the missing optional
-   * dependency to an empty stub — so the fallback never installs and
-   * `bufferUtil.mask` is undefined. Every frame of 48 bytes or more then
-   * throws, which is the Pusher subscribe payload, so the Kick chat socket
-   * died the instant it opened and took the process with it as an
-   * uncaughtException.
-   *
-   * Marking the package external restores the real require, and with it the
-   * intended fallback. Installing `bufferutil` would also work, but it is a
-   * native build on every machine and every deploy for a socket that carries
-   * chat messages.
-   */
-  serverExternalPackages: ['ws'],
   images: {
     // Roobet serves player tier badges from its own CDN.
     remotePatterns: [
