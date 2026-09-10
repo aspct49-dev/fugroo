@@ -1145,7 +1145,9 @@
 
 .pod-name {
   position: relative;
-  margin: 3.5cqi 0 0;
+  /* The socket carries a 5px ring outside its border, so the gap here reads
+     tighter than the number suggests — the name was sitting on the mark. */
+  margin: 5.5cqi 0 0;
   font-family: var(--font-display);
   font-size: clamp(14px, 11.5cqi, 28px);
   font-weight: 700;
