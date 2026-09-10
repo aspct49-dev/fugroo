@@ -69,15 +69,12 @@ function PodiumCard({
       <div className="pod-card">
         <div className="pod-face">
           <div className="pod-avatar">
-            {/* Roobet publishes a tier badge per player. Where there is one it
-                fills the socket; where there is not, the operator mark stands
-                in, masked to the rank colour. */}
-            {!open && entry.tierBadgeUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- remote operator asset
-              <img src={entry.tierBadgeUrl} alt="" aria-hidden />
-            ) : (
-              <span className="pod-avatar-mark" aria-hidden />
-            )}
+            {/* The operator mark, always. Roobet publishes a tier badge per
+                player and this used to show it, but a rank emblem is Roobet's
+                measure of a player, not this board's — three cards each
+                carrying a different one read as a second, competing ranking
+                sat on top of the first. */}
+            <span className="pod-avatar-mark" aria-hidden />
           </div>
 
           <p className="pod-name">{open ? 'Open seat' : entry.username}</p>

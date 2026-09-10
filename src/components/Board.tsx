@@ -45,13 +45,11 @@ export function Board({ board }: { board: Leaderboard }) {
           <span className="board-rank">{entry.rank}</span>
 
           <span className="board-player">
+            {/* The operator mark, always — see the note in `Podium`. Rows and
+                cards have to agree here: rank emblems in one and not the other
+                would read as the rows having lost something. */}
             <span className="board-avatar">
-              {entry.tierBadgeUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- remote operator asset
-                <img src={entry.tierBadgeUrl} alt="" aria-hidden />
-              ) : (
-                <span className="board-avatar-mark" aria-hidden />
-              )}
+              <span className="board-avatar-mark" aria-hidden />
             </span>
             <span style={{ minWidth: 0 }}>
               <span className="board-name">{entry.unclaimed ? 'Open seat' : entry.username}</span>

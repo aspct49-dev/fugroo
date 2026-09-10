@@ -1126,9 +1126,6 @@
   place-items: center;
   overflow: hidden;
 }
-/* A real player photo fills the socket; the fallback mark does not. */
-.pod-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
 /* The operator mark, used as an alpha mask and filled with the rank colour
    rather than rendered in its own gold — one more hue on a palette of five
    would be the thing that made this read as a stock template. */

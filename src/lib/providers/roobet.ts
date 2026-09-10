@@ -96,6 +96,7 @@ export const roobetProvider: LeaderboardProvider = {
           username: row.username,
           wagered: ranked(row),
           favouriteGame: row.favoriteGameTitle,
+          // Carried through but not rendered — see the note in `Podium`.
           tierBadgeUrl: row.rankLevelImage,
         })),
         partner.prizeTable,
