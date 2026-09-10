@@ -815,3 +815,76 @@
   font-size: 13.5px;
   line-height: 1.6;
 }
+
+/* ==========================================================================
+   Identifying a winner
+
+   A Discord display name is neither unique nor stable — it can be changed
+   between the draw and the payout, and two accounts can carry the same one.
+   The avatar is how a person is recognised at a glance and the id is how they
+   are actually found, so the two travel together wherever a winner is shown.
+   ========================================================================== */
+
+.gtb-winner-who {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0 4px;
+}
+
+.gtb-winner-pfp {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--cyan) 55%, transparent);
+  background: var(--hull-2);
+}
+
+.gtb-winner-id {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+
+.gtb-winner-id code {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  /* Selectable as one unit: this gets copied into Discord to find someone. */
+  user-select: all;
+}
+
+/* ------------------------------------------------------------ admin rows */
+
+.admin-pfp {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--edge);
+  background: var(--hull-2);
+}
+
+.admin-pfp-none {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dim);
+}
+
+.admin-bonus-id {
+  display: block;
+  margin-top: 1px;
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+  user-select: all;
+}

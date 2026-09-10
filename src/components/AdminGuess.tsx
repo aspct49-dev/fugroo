@@ -35,7 +35,14 @@ export function AdminGuess({
    * on it was the error.
    */
   const ranked = game ? rankGuesses(game) : [];
-  const rows: { userId: string; username: string; value: number; place: number; offBy: number | null }[] =
+  const rows: {
+    userId: string;
+    username: string;
+    avatar: string | null;
+    value: number;
+    place: number;
+    offBy: number | null;
+  }[] =
     ranked.length
       ? ranked.map((g) => ({ ...g, offBy: g.offBy }))
       : (game?.guesses ?? []).map((g, i) => ({ ...g, place: i + 1, offBy: null }));
@@ -135,7 +142,21 @@ export function AdminGuess({
               {rows.map((g) => (
                 <div className="admin-bonus" key={g.userId}>
                   <span className="admin-bonus-n">{g.place}</span>
-                  <span className="admin-bonus-game">{g.username}</span>
+                  {g.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- remote Discord CDN avatar
+                    <img className="admin-pfp" src={g.avatar} alt="" width={28} height={28} />
+                  ) : (
+                    <span className="admin-pfp admin-pfp-none" aria-hidden>
+                      {g.username.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  {/* The id, not just the name: paying someone means finding
+                      them on Discord, and a display name is neither unique nor
+                      stable between the draw and the payout. */}
+                  <span className="admin-bonus-game">
+                    {g.username}
+                    <em className="admin-bonus-id">{g.userId}</em>
+                  </span>
                   <span className="admin-bonus-bet">{formatMoney(g.value, { cents: true })}</span>
                   {g.offBy !== null && (
                     <span className="admin-bonus-bet">

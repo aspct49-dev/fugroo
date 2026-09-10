@@ -112,7 +112,23 @@ function GameCard({
           <span className="gtb-trophy" aria-hidden>
             <TrophyIcon />
           </span>
-          <p className="gtb-winner">{winner.username} won</p>
+
+          {/* The avatar and the Discord id together are what let the streamer
+              find this person to pay them — a username can be changed between
+              the draw and the payout, and two accounts can share a display
+              name. The id cannot be changed and is unique. */}
+          <div className="gtb-winner-who">
+            {winner.avatar && (
+              // eslint-disable-next-line @next/next/no-img-element -- remote Discord CDN avatar
+              <img className="gtb-winner-pfp" src={winner.avatar} alt="" width={52} height={52} />
+            )}
+            <div>
+              <p className="gtb-winner">{winner.username} won</p>
+              <p className="gtb-winner-id">
+                Discord ID <code>{winner.userId}</code>
+              </p>
+            </div>
+          </div>
           <div className="gtb-result-grid">
             <div>
               <span className="hunt-k">Final balance</span>
