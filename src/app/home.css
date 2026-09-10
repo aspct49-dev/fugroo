@@ -265,14 +265,14 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.13;
+  opacity: 0.15;
   background-color: var(--wash-ink);
   -webkit-mask: var(--wash) center / 100% 100% no-repeat;
           mask: var(--wash) center / 100% 100% no-repeat;
   transition: opacity 0.32s var(--ease);
 }
 .rack-card:hover::before,
-.rack-card:focus-visible::before { opacity: 0.2; }
+.rack-card:focus-visible::before { opacity: 0.22; }
 
 /* Flips rather than rotations: a row of cards should not read as the same
    picture repeated, and a flipped shape is a different silhouette. Rotating

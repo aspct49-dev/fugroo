@@ -105,7 +105,21 @@
  */
 .rack-card,
 .offer {
-  --wash-ink: color-mix(in srgb, var(--hue) 38%, #d8e6ff);
+  /*
+   * Mostly the card's own hue, lifted with a cool white.
+   *
+   * It was mostly white with a little hue in it, which on a cyan card read as
+   * grey slate — a shape that belonged to no card in particular. The mix is
+   * the other way round now, so each shape is recognisably its card's colour.
+   *
+   * The white is cool (#eaf2ff) rather than neutral, and the hue does not go
+   * in at full strength, because of the amber card. Warm colour at low opacity
+   * over navy turns to mud: the raw hue put a brown smear behind the swords,
+   * and so did whitening it — brightness was never the problem, warmth was.
+   * Pulling every hue a little toward cool keeps amber as a warm grey, which
+   * is honest to it, and costs the cool cards nothing.
+   */
+  --wash-ink: color-mix(in srgb, var(--hue) 70%, #eaf2ff);
   --wash: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%2080%22%20preserveAspectRatio=%22none%22%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%200H70C76%2012%2070%2022%2082%2030%2090%2035%2097%2036%20100%2046Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M0%2080V52C8%2058%206%2066%2016%2072%2022%2075%2024%2077%2026%2080Z%22/%3E%3Cpath%20fill=%22%23fff%22%20d=%22M100%2066C94%2068%2090%2074%2092%2080h8Z%22/%3E%3C/svg%3E");
 }
 
