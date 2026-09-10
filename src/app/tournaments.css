@@ -792,3 +792,26 @@
 .trn-visibility[data-status='complete'] {
   border-left-color: var(--violet);
 }
+
+/* A condition that makes every tool on the page fail. Amber rather than red:
+   it is a deploy that has not been finished, not a fault in the site. */
+.admin-alarm {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--hue-amber) 40%, var(--edge));
+  border-left: 3px solid var(--hue-amber);
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--hue-amber) 9%, var(--hull)),
+    var(--hull) 46%
+  );
+}
+
+.admin-alarm p {
+  margin: 8px 0 0;
+  max-width: 78ch;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}

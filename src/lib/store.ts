@@ -139,3 +139,37 @@ export async function mutateJson<T>(name: string, fallback: T, fn: (value: T) =>
   await writeJson(name, value);
   return value;
 }
+
+/* ---------------------------------------------------------------- health */
+
+/**
+ * Whether the store can actually be written to.
+ *
+ * There is no way to answer this by inspection — a read-only filesystem and a
+ * mistyped KV token both look fine until something tries to save. So it tries,
+ * against a key nothing else uses.
+ *
+ * Cached, because the answer changes about as often as a deploy and the panel
+ * asks on every render. A failure is cached for much less time than a success:
+ * if someone is in the middle of connecting a KV store, they should not have
+ * to wait a minute to find out it worked.
+ */
+const HEALTH_KEY = '.writable-probe.json';
+const OK_MS = 60_000;
+const FAIL_MS = 5_000;
+
+let health: { ok: boolean; at: number } | null = null;
+
+export async function storeWritable(): Promise<boolean> {
+  const now = Date.now();
+  if (health && now - health.at < (health.ok ? OK_MS : FAIL_MS)) return health.ok;
+
+  let ok = true;
+  try {
+    await backend.write(HEALTH_KEY, JSON.stringify({ at: new Date().toISOString() }));
+  } catch {
+    ok = false;
+  }
+  health = { ok, at: now };
+  return ok;
+}
