@@ -13,11 +13,18 @@ export function maskUsername(name: string | null | undefined): string {
 
 /** Wagers run to five figures; the cents are noise. */
 export function formatMoney(n: number, opts: { cents?: boolean } = {}): string {
-  // A big multiplier is usually hit off a tiny stake — a 138× on a third of a
-  // cent rounds to "$0.00", which reads as broken rather than as impressive.
-  if (opts.cents && n > 0 && n < 0.01) {
-    return '$' + n.toFixed(4).replace(/0+$/, '');
-  }
+  /*
+   * Something under a cent, but not nothing.
+   *
+   * This used to print the real figure to four places, for bonus hunts, where
+   * a 138x off a third of a cent is the interesting part. That section is
+   * gone, and on a leaderboard the same rule put "$0.0072" in a column next to
+   * "$6,448.82" — which reads as a rendering fault, not as a small number.
+   * "$0.00" would be worse: it says they wagered nothing while a prize sits
+   * beside it. So say what is actually true and say it at the column's own
+   * precision.
+   */
+  if (opts.cents && n > 0 && n < 0.01) return '<$0.01';
   return (
     '$' +
     n.toLocaleString('en-US', {

@@ -165,17 +165,18 @@ function Gem({
  * it therefore lands against the object, which is what the gems used to do.
  * Pushing them past the edge is what puts them in the empty part of the card.
  *
- * How far past is set by the hover state, not by taste. Three things compound
- * there: `.rack-art` scales 1.16, each gem pops on top of that, and the pop
- * also lifts the gem. A gem at 12% of the card width from the edge ends up
- * outside it, which is what the first pass did — the spread looked right at
- * rest and sliced two gems in half the moment anyone pointed at the card.
- * These sit at about 15%, the furthest out that survives all three.
+ * They stop at about a fifth of the way in rather than going as far as they
+ * can. Two limits, and the tighter one is the eye's. A gem pressed against the
+ * card edge reads as cropped even when it is whole, and it lands on the wash
+ * shapes, which sit on the edges. The other limit is the hover state, where
+ * three things compound — `.rack-art` scales, each gem pops on top of that,
+ * and the pop lifts it. A gem at 12% survives none of that and gets sliced in
+ * half the moment anyone points at the card, which an earlier pass did.
  */
 const GEM = 38;
 const PAIR: [number, number][] = [
-  [2, 24],
-  [198, 176],
+  [12, 30],
+  [188, 170],
 ];
 const SPARKS: [number, number, number][] = [
   [172, 14, 9],
@@ -225,11 +226,11 @@ function GiftArt() {
   const id = 'bo';
   return (
     <Frame id={id} className="art-gift" w={300}>
-      <Gem id={id} className="art-orb art-orb-1" x={26} y={32} s={GEM} r={-18} />
-      <Gem id={id} className="art-orb art-orb-2" x={274} y={32} s={GEM} r={18} />
-      <Gem id={id} className="art-orb art-orb-3" x={26} y={170} s={GEM} r={14} />
-      <Gem id={id} className="art-orb art-orb-4" x={274} y={170} s={GEM} r={-14} />
-      <Sparks pts={[[150, 10, 9], [8, 104, 8], [292, 104, 8], [150, 194, 8]]} />
+      <Gem id={id} className="art-orb art-orb-1" x={46} y={44} s={GEM} r={-18} />
+      <Gem id={id} className="art-orb art-orb-2" x={254} y={44} s={GEM} r={18} />
+      <Gem id={id} className="art-orb art-orb-3" x={46} y={158} s={GEM} r={14} />
+      <Gem id={id} className="art-orb art-orb-4" x={254} y={158} s={GEM} r={-14} />
+      <Sparks pts={[[150, 18, 9], [22, 102, 8], [278, 102, 8], [150, 186, 8]]} />
 
       <g transform="translate(50 0)">
       <g className="art-bow">
