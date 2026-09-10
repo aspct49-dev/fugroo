@@ -49,6 +49,8 @@ export interface GiveawayView {
   live: boolean;
   avatar: string | null;
   winnerMessages: { text: string; at: number }[];
+  /** True where the runtime cannot hold a socket between requests. */
+  ephemeral: boolean;
 }
 
 /* ------------------------------------------------------------- the reel */
@@ -367,6 +369,18 @@ export function AdminGiveaway({
           </>
         )}
       </div>
+
+      {g.ephemeral && (
+        <p className="give-bar-error give-bar-note">
+          <span aria-hidden>!</span>
+          <span>
+            <b>This deployment cannot hold a chat connection.</b> Reading chat needs a server that
+            stays up between requests, and serverless functions are frozen as soon as a request
+            finishes — so Connect appears to work and the socket is gone before the next poll.
+            Run the raffle picker on the long-lived server instead.
+          </span>
+        </p>
+      )}
 
       {connectError && (
         <p className="give-bar-error" role="status">

@@ -109,11 +109,31 @@ export function recentMessages(username: string | null | undefined) {
  *  Rebuilt each time the giveaway opens rather than per message. */
 let kickToRoobet = new Map<string, string>();
 
+/**
+ * Whether this runtime can hold a chat socket open at all.
+ *
+ * The reader is a WebSocket living in module memory, which needs a process
+ * that stays up between requests. Serverless gives it the opposite: the
+ * function is frozen the moment a request finishes and thawed for the next
+ * one, on no guarantee it is even the same instance. So Connect succeeds, the
+ * invocation ends, the socket dies with it, and the next poll — quite possibly
+ * a different instance entirely — reports a connection nobody is holding.
+ *
+ * That is exactly what it looks like from the panel: press Connect, nothing
+ * changes; reload, it says connected; a moment later it does not. Worth
+ * saying out loud on the page rather than leaving someone to press the button
+ * harder.
+ */
+export function socketCanPersist(): boolean {
+  return process.env.VERCEL !== '1';
+}
+
 export function giveawayState() {
   const chat = chatState();
   const winnerName = state.winner?.username ?? null;
   return {
     ...state,
+    ephemeral: !socketCanPersist(),
     connected: chat.connected,
     entryCount: state.entries.length,
     missCount: state.misses.length,

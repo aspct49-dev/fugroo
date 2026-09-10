@@ -42,6 +42,7 @@ function view(): GiveawayView {
     entryCount: g.entryCount,
     missCount: g.missCount,
     gates: g.gates,
+    ephemeral: g.ephemeral,
     slug: g.slug,
     live: g.live,
     avatar: g.avatar,

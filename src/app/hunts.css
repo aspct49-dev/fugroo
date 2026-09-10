@@ -881,11 +881,23 @@
   font-size: 13.5px;
   color: #ffb3b3;
 }
-.give-bar-error span {
+.give-bar-error > span:first-child {
   font-family: var(--font-display);
   font-weight: 700;
   color: #ff8a8a;
 }
+
+/* The same shape saying something structural rather than something that just
+   went wrong, so it is amber and it stays put. */
+.give-bar-note {
+  align-items: flex-start;
+  border-color: rgba(255, 196, 107, 0.4);
+  background: rgba(255, 196, 107, 0.08);
+  color: #ffd9a3;
+  line-height: 1.55;
+}
+.give-bar-note > span:first-child { color: #ffc46b; }
+.give-bar-note b { color: #ffe0b8; }
 
 .give-bar-edit {
   display: flex;
