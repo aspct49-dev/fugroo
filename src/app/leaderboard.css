@@ -242,23 +242,14 @@
 .board-row[data-rank='1'] .board-avatar-mark { background: var(--rank-1); }
 .board-row[data-rank='2'] .board-avatar-mark { background: var(--rank-2); }
 .board-row[data-rank='3'] .board-avatar-mark { background: var(--rank-3); }
-/* Both `display: block`, and not decoration: they are spans, and `overflow`
-   and `text-overflow` do nothing on an inline box — so a long name ran under
-   the wagered column instead of clipping, with the favourite game jammed
-   against it on the same line. Invisible until a row actually had a game. */
+/* `display: block`, and not decoration: it is a span, and `overflow` and
+   `text-overflow` do nothing on an inline box — a long name ran under the
+   wagered column instead of clipping. */
 .board-name {
   display: block;
+  min-width: 0;
   font-weight: 600;
   font-size: 14.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.board-game {
-  display: block;
-  margin-top: 2px;
-  font-size: 12.5px;
-  color: var(--dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

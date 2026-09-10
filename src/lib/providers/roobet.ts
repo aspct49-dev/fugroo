@@ -95,6 +95,7 @@ export const roobetProvider: LeaderboardProvider = {
         sorted.map((row) => ({
           username: row.username,
           wagered: ranked(row),
+          // Carried through but not rendered, same as `tierBadgeUrl`.
           favouriteGame: row.favoriteGameTitle,
           // Carried through but not rendered — see the note in `Podium`.
           tierBadgeUrl: row.rankLevelImage,

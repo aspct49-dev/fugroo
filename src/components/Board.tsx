@@ -51,10 +51,11 @@ export function Board({ board }: { board: Leaderboard }) {
             <span className="board-avatar">
               <span className="board-avatar-mark" aria-hidden />
             </span>
-            <span style={{ minWidth: 0 }}>
-              <span className="board-name">{entry.unclaimed ? 'Open seat' : entry.username}</span>
-              {entry.favouriteGame && <span className="board-game">{entry.favouriteGame}</span>}
-            </span>
+            {/* The name and nothing else. The row used to carry the player's
+                most-played game under it, which said something about them
+                rather than about the board they are on — and on a masked name
+                it is the only identifying detail left. */}
+            <span className="board-name">{entry.unclaimed ? 'Open seat' : entry.username}</span>
           </span>
 
           <span className="board-wagered">
