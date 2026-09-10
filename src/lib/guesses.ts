@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+
+import { mutateJson, readJson } from './store';
 
 /**
  * Guess the balance.
@@ -11,9 +11,10 @@ import { randomUUID } from 'node:crypto';
  * the hunt will finish on, entries close, and the closest guess when the admin
  * draws takes it.
  *
- * Same storage as the hunts: one JSON file, written atomically and serialised.
- * The reasoning is in `hunts.ts` and applies here unchanged — and so does the
- * limitation, which is that neither can run behind more than one process.
+ * Storage goes through `lib/store.ts`, like the tournaments and the profiles.
+ * It used to open its own file handle, which meant it was the one table that
+ * would not follow the store to a different backend — and so the one table
+ * that broke the moment the site ran anywhere without a writable disk.
  */
 
 export interface Guess {
@@ -47,33 +48,15 @@ interface Store {
   games: Game[];
 }
 
-const FILE = path.join(process.cwd(), 'data', 'guesses.json');
+const FILE = 'guesses.json';
+const EMPTY: Store = { games: [] };
 
 async function read(): Promise<Store> {
-  try {
-    return JSON.parse(await fs.readFile(FILE, 'utf8')) as Store;
-  } catch {
-    return { games: [] };
-  }
-}
-
-let queue: Promise<unknown> = Promise.resolve();
-
-function write(next: Store): Promise<void> {
-  const run = queue.then(async () => {
-    await fs.mkdir(path.dirname(FILE), { recursive: true });
-    const tmp = `${FILE}.${process.pid}.tmp`;
-    await fs.writeFile(tmp, JSON.stringify(next, null, 2), 'utf8');
-    await fs.rename(tmp, FILE);
-  });
-  queue = run.catch(() => {});
-  return run;
+  return readJson<Store>(FILE, EMPTY);
 }
 
 async function mutate(fn: (s: Store) => void): Promise<void> {
-  const store = await read();
-  fn(store);
-  await write(store);
+  await mutateJson<Store>(FILE, EMPTY, fn);
 }
 
 /* ------------------------------------------------------------------ reads */
