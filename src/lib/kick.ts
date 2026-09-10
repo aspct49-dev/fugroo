@@ -88,6 +88,9 @@ let joined: number | null = null;
 let handler: Handler | null = null;
 let ping: NodeJS.Timeout | null = null;
 let reconnect: NodeJS.Timeout | null = null;
+/** The handshake in flight, so a second Connect waits on it rather than
+ *  restarting it. */
+let opening: Promise<boolean> | null = null;
 
 export function chatState() {
   return {
@@ -100,26 +103,66 @@ export function onChat(fn: Handler | null) {
   handler = fn;
 }
 
-/** Opens the socket and subscribes. Calling it again for the same room is a
- *  no-op, so an admin double-clicking Connect does not open two sockets. */
-export function connectChat(id: number): void {
-  if (socket && joined === id && socket.readyState <= WebSocket.OPEN) return;
+/**
+ * Opens the socket and subscribes, and does not resolve until it is actually
+ * open.
+ *
+ * The waiting is the point. This used to return the moment the socket was
+ * *asked* to open, so the admin panel's Connect finished with the handshake
+ * still in flight, `chatState()` still reported CONNECTING rather than OPEN,
+ * and the button appeared to have done nothing until the next poll two
+ * seconds later. Long enough to press it again, or reload and assume it had
+ * dropped.
+ *
+ * Calling it again for the same room is still a no-op — and a second call
+ * while the first is mid-handshake waits on that same handshake rather than
+ * tearing it down and starting another.
+ */
+export function connectChat(id: number): Promise<boolean> {
+  if (socket && joined === id && socket.readyState === WebSocket.OPEN) {
+    return Promise.resolve(true);
+  }
+  if (opening && joined === id) return opening;
+
   disconnectChat();
   joined = id;
-  open(id);
+  opening = open(id).finally(() => {
+    opening = null;
+  });
+  return opening;
 }
 
-function open(id: number) {
-  const ws = new WebSocket(PUSHER_URL);
-  socket = ws;
+/**
+ * Resolves true once the socket is open, false if it fails or takes too long.
+ *
+ * Never rejects: the reconnect timer calls this and nothing awaits it there,
+ * and an unhandled rejection on a background retry would take the process
+ * down for a chat socket.
+ */
+function open(id: number): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const ws = new WebSocket(PUSHER_URL);
+    socket = ws;
 
-  ws.on('open', () => {
-    ws.send(JSON.stringify({ event: 'pusher:subscribe', data: { channel: `chatrooms.${id}.v2` } }));
-    // Pusher drops an idle connection; this is well inside its timeout.
-    ping = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
-    }, 30_000);
-  });
+    let settled = false;
+    const settle = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      resolve(ok);
+    };
+    /* Kick is up or it is not; a handshake still running after this is not
+       going to complete, and the admin is waiting on a button. */
+    const deadline = setTimeout(() => settle(false), 8000);
+
+    ws.on('open', () => {
+      ws.send(JSON.stringify({ event: 'pusher:subscribe', data: { channel: `chatrooms.${id}.v2` } }));
+      // Pusher drops an idle connection; this is well inside its timeout.
+      ping = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+      }, 30_000);
+      settle(true);
+    });
 
   ws.on('message', (raw) => {
     let frame: { event?: string; data?: unknown };
@@ -151,25 +194,30 @@ function open(id: number) {
     }
   });
 
-  const retry = () => {
-    if (ping) clearInterval(ping);
-    ping = null;
-    // Only reconnect if nobody asked us to stop; `joined` is cleared on
-    // disconnect, which is what tells the difference.
-    if (joined === id && !reconnect) {
-      reconnect = setTimeout(() => {
-        reconnect = null;
-        if (joined === id) open(id);
-      }, 4000);
-    }
-  };
+    const retry = () => {
+      if (ping) clearInterval(ping);
+      ping = null;
+      // A close before the handshake finished is a failed connect, and the
+      // caller is owed the answer now rather than after the retry.
+      settle(false);
+      // Only reconnect if nobody asked us to stop; `joined` is cleared on
+      // disconnect, which is what tells the difference.
+      if (joined === id && !reconnect) {
+        reconnect = setTimeout(() => {
+          reconnect = null;
+          if (joined === id) void open(id);
+        }, 4000);
+      }
+    };
 
-  ws.on('close', retry);
-  ws.on('error', retry);
+    ws.on('close', retry);
+    ws.on('error', retry);
+  });
 }
 
 export function disconnectChat(): void {
   joined = null;
+  opening = null;
   if (ping) clearInterval(ping);
   if (reconnect) clearTimeout(reconnect);
   ping = null;

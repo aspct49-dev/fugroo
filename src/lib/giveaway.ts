@@ -188,17 +188,39 @@ async function handle(msg: { username: string; userId: string; text: string }) {
 /* ------------------------------------------------------------------ admin */
 
 export async function connect(channel?: string): Promise<{ ok: boolean; error?: string }> {
-  if (channel) state.channel = channel.trim().replace(/^.*kick\.com\//i, '');
-  const info = await channelInfo(state.channel);
+  /*
+   * The candidate is only committed once it turns out to exist.
+   *
+   * This used to write the typed name straight onto the state and then look
+   * it up, so a typo left the panel pointing at a channel that is not there —
+   * and the bare Connect button, which deliberately reuses the stored
+   * channel, would then keep failing until someone retyped the right one.
+   * A failed connect should leave you where you were.
+   */
+  const candidate = channel
+    ? channel.trim().replace(/^.*kick\.com\//i, '')
+    : state.channel;
+
+  const info = await channelInfo(candidate);
   if (!info?.chatroomId) {
-    return { ok: false, error: `Could not find a chatroom for "${state.channel}"` };
+    return { ok: false, error: `Could not find a chatroom for "${candidate}"` };
   }
+
+  state.channel = candidate;
   state.chatroomId = info.chatroomId;
   state.slug = info.slug;
   state.live = info.live;
   state.avatar = info.avatar;
+  // The handler goes on before the socket does, or the first messages after
+  // the subscribe land with nobody listening.
   onChat(handle);
-  connectChat(info.chatroomId);
+  // Awaited, so this returns with the socket genuinely open rather than
+  // merely asked to open — the panel reads the state the moment this
+  // resolves, and a half-open socket reads there as "not reading chat".
+  const opened = await connectChat(info.chatroomId);
+  if (!opened) {
+    return { ok: false, error: `Could not reach ${candidate}'s chat. Try again.` };
+  }
   return { ok: true };
 }
 

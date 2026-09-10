@@ -240,6 +240,7 @@ export function AdminGiveaway({
   };
 
   const [editingChannel, setEditingChannel] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   return (
     <>
@@ -313,12 +314,23 @@ export function AdminGiveaway({
               ) : (
                 <form
                   action={async (fd) => {
-                    await onConnect(fd);
+                    setConnecting(true);
+                    try {
+                      await onConnect(fd);
+                    } finally {
+                      setConnecting(false);
+                    }
                     void refresh();
                   }}
                 >
-                  <button className="give-bar-btn give-bar-btn-on" type="submit">
-                    Connect
+                  {/* The handshake takes a beat even when it works, so the
+                      button says so rather than sitting there looking ignored. */}
+                  <button
+                    className="give-bar-btn give-bar-btn-on"
+                    type="submit"
+                    disabled={connecting}
+                  >
+                    {connecting ? 'Connecting…' : 'Connect'}
                   </button>
                 </form>
               )}
