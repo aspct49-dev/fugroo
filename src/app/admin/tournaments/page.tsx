@@ -159,14 +159,14 @@ export default async function AdminTournamentsPage({
                   <input type="hidden" name="id" value={selected.id} />
                   <input type="hidden" name="status" value="live" />
                   <button className="btn btn-primary btn-sm" type="submit">
-                    {selected.status === 'draft' ? 'Publish now' : 'Reopen'}
+                    {selected.status === 'draft' ? 'Publish Now' : 'Reopen'}
                   </button>
                 </form>
               )}
               {selected.status === 'live' && (
                 <>
                   <Link className="btn btn-quiet btn-sm" href="/tournaments">
-                    View page
+                    View Page
                   </Link>
                   <form action={status}>
                     <input type="hidden" name="id" value={selected.id} />

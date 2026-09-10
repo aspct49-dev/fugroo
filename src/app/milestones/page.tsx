@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default function MilestonesPage() {
   return (
     <>
-      <PageBanner title="Wager milestones" />
+      <PageBanner title="Wager Milestones" />
 
       <section className="section wrap">
         <div className="rank-intro">

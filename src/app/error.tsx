@@ -47,10 +47,10 @@ export default function Error({
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 26 }}>
           <button className="btn btn-primary" type="button" onClick={reset}>
-            Try again
+            Try Again
           </button>
           <Link className="btn btn-quiet" href="/">
-            Back home
+            Back Home
           </Link>
         </div>
       </div>

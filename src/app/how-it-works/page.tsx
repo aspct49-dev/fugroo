@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function HowItWorksPage() {
   return (
     <section className="section wrap">
-      <h1 className="h-page">How it works</h1>
+      <h1 className="h-page">How It Works</h1>
       <p className="lede" style={{ marginTop: 14 }}>
         Three steps from signing up to being paid, and the two rules that decide where you land.
       </p>

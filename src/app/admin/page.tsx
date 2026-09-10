@@ -37,7 +37,7 @@ export default async function AdminOverviewPage() {
   const cards = [
     {
       href: '/leaderboard',
-      title: 'Roobet leaderboard',
+      title: 'Roobet Leaderboard',
       // The feed's own state first, because that is the thing that can be
       // broken. The counts after it only mean something once it is live.
       state: board.error
@@ -49,7 +49,7 @@ export default async function AdminOverviewPage() {
     },
     {
       href: '/admin/giveaway',
-      title: 'Raffle picker',
+      title: 'Raffle Picker',
       state: give.connected
         ? give.open
           ? `Open · ${give.entryCount} entries`
@@ -59,7 +59,7 @@ export default async function AdminOverviewPage() {
     },
     {
       href: '/admin/guess',
-      title: 'Guess the balance',
+      title: 'Guess The Balance',
       state: game ? `${game.name} · ${game.status} · ${game.guesses.length} guesses` : 'No round',
       live: game?.status === 'open',
     },

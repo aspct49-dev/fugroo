@@ -32,10 +32,10 @@ export function Placeholder({ id, body }: { id: string; body: string }) {
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 26 }}>
             <Link className="btn btn-primary" href="/leaderboard">
-              View leaderboard
+              View Leaderboard
             </Link>
             <Link className="btn btn-quiet" href="/">
-              Back home
+              Back Home
             </Link>
           </div>
         </div>

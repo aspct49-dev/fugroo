@@ -229,7 +229,7 @@ function MatchCard({
           )
         ) : canDecide ? (
           <button type="button" className="bkt-foot-btn" onClick={handlers.onDecide}>
-            Decide winner
+            Decide Winner
           </button>
         ) : (
           <span className="bkt-foot-note">

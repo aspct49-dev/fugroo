@@ -31,7 +31,7 @@ export function Promo({ board }: { board: Leaderboard }) {
             <span className="promo-pot">{formatMoney(board.prizePool)}</span>
 
             <Link className="btn btn-primary" href="/leaderboard">
-              View leaderboard
+              View Leaderboard
             </Link>
           </div>
 

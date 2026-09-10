@@ -335,7 +335,7 @@ export function AdminGiveaway({
             </label>
 
             <button className="give-btn give-btn-go" type="submit">
-              {g.open ? 'Restart collecting' : 'Start collecting'}
+              {g.open ? 'Restart Collecting' : 'Start Collecting'}
             </button>
           </form>
 
@@ -361,7 +361,7 @@ export function AdminGiveaway({
 
           <form action={act(onReset)}>
             <button className="give-btn give-btn-quiet" type="submit" disabled={spinning}>
-              Clear all
+              Clear All
             </button>
           </form>
         </aside>
@@ -505,7 +505,7 @@ export function AdminGiveaway({
       {g.connected && (
         <form action={act(onDisconnect)} style={{ marginTop: 14 }}>
           <button className="btn btn-quiet btn-sm" type="submit">
-            Disconnect from chat
+            Disconnect From Chat
           </button>
         </form>
       )}

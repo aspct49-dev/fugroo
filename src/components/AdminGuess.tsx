@@ -88,7 +88,7 @@ export function AdminGuess({
                     type="submit"
                     data-active={game.status === s}
                   >
-                    {s === 'open' ? 'Entries open' : 'Close entries'}
+                    {s === 'open' ? 'Entries Open' : 'Close Entries'}
                   </button>
                 </form>
               ))}
@@ -105,7 +105,7 @@ export function AdminGuess({
                     game.guesses.length === 1 ? 'guess' : 'guesses'
                   } go with it, and this cannot be undone.`}
                 >
-                  Delete round
+                  Delete Round
                 </ConfirmSubmit>
               </form>
             </div>
@@ -133,7 +133,7 @@ export function AdminGuess({
               />
             </label>
             <button className="btn btn-secondary btn-sm" type="submit">
-              {game.status === 'drawn' ? 'Redraw' : 'Draw winner'}
+              {game.status === 'drawn' ? 'Redraw' : 'Draw Winner'}
             </button>
           </form>
 

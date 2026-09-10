@@ -17,14 +17,14 @@ import type { SectionCard } from './types';
 export const FEATURE_CARDS: SectionCard[] = [
   {
     id: 'bonuses',
-    label: 'Bonus offers',
+    label: 'Bonus Offers',
     href: '/bonuses',
     hue: 'var(--hue-cyan)',
     blurb: 'Every offer available on Roobet under the code.',
   },
   {
     id: 'milestones',
-    label: 'Wager milestones',
+    label: 'Wager Milestones',
     href: '/milestones',
     hue: 'var(--hue-violet)',
     blurb: 'We pay out every rank you climb. Claimed in the Discord.',
@@ -42,7 +42,7 @@ export const SECTION_CARDS: SectionCard[] = [
   },
   {
     id: 'guess-the-balance',
-    label: 'Guess the balance',
+    label: 'Guess The Balance',
     href: '/guess-the-balance',
     hue: 'var(--hue-blue)',
     blurb: 'Call the final balance. Closest guess takes it.',

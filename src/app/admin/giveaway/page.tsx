@@ -25,7 +25,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Raffle picker' };
+export const metadata: Metadata = { title: 'Raffle Picker' };
 
 /** The server state the panel starts from, before its own polling takes over. */
 function view(): GiveawayView {

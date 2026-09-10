@@ -14,7 +14,7 @@ import { activeGame, createGame, deleteGame, drawGame, listGames, setGameStatus 
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Guess the balance' };
+export const metadata: Metadata = { title: 'Guess The Balance' };
 
 export default async function AdminGuessPage() {
   const [games, game] = await Promise.all([listGames(), activeGame()]);

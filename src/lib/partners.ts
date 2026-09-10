@@ -103,7 +103,7 @@ export const AFFILIATE_RETURN: AffiliateReturn = {
 export const OFFERS = [
   {
     id: 'leaderboard',
-    title: 'Monthly leaderboard',
+    title: 'Monthly Leaderboard',
     body: `Register using code ${PARTNERS.roobet.code} for access to the monthly wager leaderboard, raffles and milestones.`,
     cta: 'Claim bonus',
     href: PARTNERS.roobet.signupUrl,
@@ -112,7 +112,7 @@ export const OFFERS = [
   },
   {
     id: 'vip',
-    title: 'VIP transfer',
+    title: 'VIP Transfer',
     body: `Already a VIP somewhere else? Open ${PARTNERS.roobet.name} under the code and they review your play for a matched invitation.`,
     cta: 'How it works',
     href: '/how-it-works',

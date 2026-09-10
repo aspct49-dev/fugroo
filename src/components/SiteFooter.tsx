@@ -24,12 +24,12 @@ export function SiteFooter() {
             <h4>Site</h4>
             <nav>
               <Link href="/leaderboard">Leaderboard</Link>
-              <Link href="/bonuses">Bonus offers</Link>
-              <Link href="/milestones">Wager milestones</Link>
+              <Link href="/bonuses">Bonus Offers</Link>
+              <Link href="/milestones">Wager Milestones</Link>
               <Link href="/tournaments">Tournaments</Link>
-              <Link href="/guess-the-balance">Guess the balance</Link>
+              <Link href="/guess-the-balance">Guess The Balance</Link>
               <Link href="/raffles">Raffles</Link>
-              <Link href="/how-it-works">How it works</Link>
+              <Link href="/how-it-works">How It Works</Link>
               <Link href="/legal">Legal</Link>
             </nav>
           </div>

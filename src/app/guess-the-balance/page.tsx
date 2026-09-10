@@ -49,7 +49,7 @@ export default async function GuessPage() {
 
   return (
     <>
-      <PageBanner title="Guess the balance" />
+      <PageBanner title="Guess The Balance" />
 
       <section className="section wrap">
         {!game ? (
@@ -178,7 +178,7 @@ function GameCard({
             <div className="gtb-signin">
               <p>One guess per account, so we need to know who you are.</p>
               <Link className="btn btn-primary btn-sm" href="/login">
-                Log in to guess
+                Log In To Guess
               </Link>
             </div>
           )}

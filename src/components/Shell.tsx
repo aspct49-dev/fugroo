@@ -49,12 +49,12 @@ function isCurrent(pathname: string, href: string): boolean {
 const NAV: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/leaderboard', label: 'Leaderboard', showPot: true },
-  { href: '/bonuses', label: 'Bonus offers' },
-  { href: '/milestones', label: 'Wager milestones' },
+  { href: '/bonuses', label: 'Bonus Offers' },
+  { href: '/milestones', label: 'Wager Milestones' },
   { href: '/tournaments', label: 'Tournaments' },
   { href: '/raffles', label: 'Raffles', soon: true },
-  { href: '/guess-the-balance', label: 'Guess the balance' },
-  { href: '/how-it-works', label: 'How it works' },
+  { href: '/guess-the-balance', label: 'Guess The Balance' },
+  { href: '/how-it-works', label: 'How It Works' },
 ];
 
 /**

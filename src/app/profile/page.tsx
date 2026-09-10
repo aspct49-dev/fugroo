@@ -13,7 +13,7 @@ import { checkRoobet } from '@/lib/roster';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'My account',
+  title: 'My Account',
   robots: { index: false, follow: false },
 };
 
@@ -51,7 +51,7 @@ export default async function ProfilePage({
 
   return (
     <>
-      <PageBanner title="My account" />
+      <PageBanner title="My Account" />
 
       <section className="section wrap">
         <div className="acct-grid">
@@ -135,7 +135,7 @@ export default async function ProfilePage({
                     <input name="roobet" placeholder="yourname" required autoComplete="off" />
                   </label>
                   <button className="btn btn-primary btn-sm" type="submit">
-                    Link account
+                    Link Account
                   </button>
                 </form>
 
