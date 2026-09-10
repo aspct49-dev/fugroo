@@ -1244,4 +1244,90 @@
   .podium { grid-template-columns: repeat(2, 1fr); align-items: stretch; }
   .pod[data-place='1'] { order: -1; grid-column: 1 / -1; }
   .pod[data-place='1'] .pod-face { padding-top: 7cqi; padding-bottom: 8cqi; }
+
+  /*
+   * First place is twice the width of the other two here, and every size
+   * inside the card is in `cqi` — a share of the card. So going full width
+   * doubled the avatar and the figures with it, and the winner ended up with
+   * a 200px badge above two cards carrying 60px ones. It read as a different
+   * component, not a bigger one.
+   *
+   * Halving its own `cqi` values puts it back in proportion: still the
+   * largest card, no longer a different scale. The clamp floors stay, so it
+   * never goes smaller than second place either.
+   */
+  .pod[data-place='1'] .pod-avatar { width: 26cqi; }
+  .pod[data-place='1'] .pod-name { margin-top: 2.8cqi; font-size: clamp(16px, 5.8cqi, 28px); }
+  .pod[data-place='1'] .pod-metric { margin-top: 2.5cqi; font-size: clamp(9px, 2.7cqi, 13px); }
+  .pod[data-place='1'] .pod-wagered { font-size: clamp(16px, 5.4cqi, 26px); }
+  .pod[data-place='1'] .pod-rule { margin-top: 3cqi; }
+  .pod[data-place='1'] .pod-prize { font-size: clamp(18px, 6cqi, 30px); }
+  .pod[data-place='1'] .pod-badge { font-size: clamp(10px, 2.6cqi, 13px); }
+  .pod[data-place='1'] .pod-badge svg { width: clamp(11px, 2.7cqi, 15px); }
+}
+
+/*
+ * Phones proper.
+ *
+ * Two columns of section cards leaves the third one alone on its own row with
+ * a hole beside it — three cards do not divide by two. One column, and the
+ * cards go from 5:4 to a banner shape so that three of them are a scroll
+ * rather than an expedition. The artwork was drawn to fill the card, so it
+ * survives the change of shape.
+ */
+@media (max-width: 560px) {
+  .rack,
+  .rack[data-wide='true'] { grid-template-columns: 1fr; gap: 12px; }
+  .rack .rack-card,
+  .rack[data-wide='true'] .rack-card { aspect-ratio: 16 / 10; }
+  .rack-media { inset: 12% 10%; }
+
+  /*
+   * The drawing is square and its box is now wider than it is tall, so the
+   * height has to be what decides the size. It did not, and the swords ran
+   * out through the bottom of the card.
+   *
+   * `min-height: 0` is the part that matters. The svg already asks for
+   * `height: 100%`, and `.rack-media` has a definite height for it to resolve
+   * against — but every box in between is a grid item, and a grid item's
+   * default `min-height: auto` means it cannot be shorter than its contents.
+   * So each one grew to fit the svg, the svg sized itself off its width, and
+   * the "constraint" was decided by whichever edge was longer. Releasing the
+   * floor lets the height propagate and the svg letterbox inside it, which is
+   * what `preserveAspectRatio` does by default and what was wanted all along.
+   */
+  .rack-media .rack-art-wrap {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /*
+   * Square, and sized from the height.
+   *
+   * Trying to cap the svg directly does not work: percentages on it resolve
+   * against nothing usable, so `height: 100%` and even `max-height: 100%` are
+   * both ignored and it falls back to its viewBox ratio off its own width.
+   * Measured, twice.
+   *
+   * What the svg does do reliably is size off width. So the fix is to make
+   * the box it sits in square and let its *height* set that square: the width
+   * then follows, and the drawing has nowhere to overflow to.
+   */
+  .rack-media .rack-art {
+    height: 100%;
+    width: auto;
+    aspect-ratio: 1;
+    min-height: 0;
+  }
+
+  /* The hero was 88vh with the mark and the mascot sitting at the bottom of
+     it, so a phone opened on half a screen of empty room. Shorter, and the
+     art starts near the top of what you can see. */
+  .hero { min-height: min(62vh, 520px); }
+  .hero-mascot { width: 82vw; }
+  .hero-mark { width: 78vw; margin-bottom: -8vw; }
+  .prop { width: 17vw; opacity: 0.55; }
+  .prop[data-side='left'] { top: 8% !important; }
+  .prop[data-side='right'] { top: 17% !important; }
 }
