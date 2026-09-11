@@ -75,8 +75,8 @@ export default async function VipTransferPage() {
             )}
 
             <p className="acct-note" style={{ marginTop: 18 }}>
-              Applications go to the review channel in Discord. Nothing you send is stored on this
-              site.
+              Applications go to the review channel in Discord. None of what you send is kept on
+              this site — only a note that you applied, so the form cannot be flooded.
             </p>
           </article>
 

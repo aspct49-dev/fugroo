@@ -2,12 +2,16 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import {
+  applyCooldown,
   checkImage,
+  checkTotalSize,
   clean,
   deliver,
+  describeWait,
   LOSSBACK_OPTIONS,
   MAX_FILES,
   rateLimited,
+  recordApplication,
   type Lossback,
 } from '@/lib/vip-transfer';
 
@@ -41,6 +45,20 @@ export async function POST(request: NextRequest) {
     return bad('That form did not arrive in one piece. Try again.');
   }
 
+  /*
+   * The honeypot. A field that is hidden, unlabelled and skipped by tab, so a
+   * person never reaches it and a script filling every input does.
+   *
+   * Answered with the ordinary success shape on purpose: a bot told it failed
+   * tries something else, whereas one told it worked goes away. The cost of
+   * being wrong is a submission silently dropped, which is why the field is
+   * `autocomplete="off"` and named nothing a password manager would recognise.
+   */
+  if (String(form.get('company') ?? '').trim()) {
+    console.warn('[vip] honeypot filled, dropping submission');
+    return NextResponse.json({ ok: true });
+  }
+
   const roobetName = clean(String(form.get('roobetName') ?? ''), 40);
   if (roobetName.length < 2) return bad('Enter the Roobet username you play under.');
 
@@ -72,9 +90,23 @@ export async function POST(request: NextRequest) {
     return bad(`Up to ${MAX_FILES} images per section.`);
   }
 
+  const oversize = checkTotalSize([...recent, ...lifetime]);
+  if (oversize) return bad(oversize);
+
   for (const file of [...recent, ...lifetime]) {
     const problem = await checkImage(file);
     if (problem) return bad(problem);
+  }
+
+  /* Checked after validation, so a rejected submission does not count against
+     someone's daily allowance — they have not applied, they have made a
+     mistake, and the two should not cost the same. */
+  const wait = await applyCooldown(session?.user?.discordId ?? null, ip);
+  if (wait !== null) {
+    return bad(
+      `You have already applied today. If something was wrong with it, say so in Discord — otherwise try again ${describeWait(wait)}.`,
+      429,
+    );
   }
 
   const result = await deliver({
@@ -97,5 +129,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  await recordApplication(session?.user?.discordId ?? null, ip);
   return NextResponse.json({ ok: true });
 }

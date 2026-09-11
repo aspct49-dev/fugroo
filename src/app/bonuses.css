@@ -504,3 +504,14 @@
 @media (max-width: 860px) {
   .vip-grid { grid-template-columns: 1fr; }
 }
+
+/* Off-screen rather than `display: none`: some bots skip hidden inputs, and
+   the point is that they fill this one. */
+.vip-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

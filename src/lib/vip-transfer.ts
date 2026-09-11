@@ -1,5 +1,8 @@
 import 'server-only';
 
+import { createHash } from 'node:crypto';
+
+import { mutateJson } from './store';
 import { MAX_FILE_BYTES } from './vip-transfer.shared';
 
 /**
@@ -10,11 +13,15 @@ import { MAX_FILE_BYTES } from './vip-transfer.shared';
  * happened somewhere we cannot see, so it comes with screenshots, and a person
  * reads it — this does not approve anything, it delivers the case.
  *
- * **Nothing is stored.** The form posts, the images go straight to Discord as
- * attachments, and the request ends. That is deliberate: the only thing anyone
- * does with an application is read it and reply in Discord, so keeping a copy
- * would mean holding other people's account screenshots on a VPS for no use at
- * all. The webhook is the record.
+ * **None of the application is stored.** The form posts, the images go straight
+ * to Discord as attachments, and the request ends. That is deliberate: the only
+ * thing anyone does with an application is read it and reply in Discord, so
+ * keeping a copy would mean holding other people's account screenshots on a VPS
+ * for no use at all. The webhook is the record.
+ *
+ * The one thing that is written down is a hashed identity and a timestamp, so
+ * the same person cannot send it thirty times. That ledger cannot be read back
+ * into a person and holds nothing they typed.
  */
 
 /* Re-exported so server callers have one import, not two. The values live in
@@ -49,6 +56,23 @@ export function clean(input: string, max = 100): string {
     .replace(/`/g, "'")
     .trim()
     .slice(0, max);
+}
+
+/**
+ * Everything in one submission, together.
+ *
+ * Ten files at the per-file limit is eighty megabytes, which nobody needs to
+ * prove a VIP tier and which Discord would refuse anyway — better to say so
+ * before reading the whole upload than after.
+ */
+export const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
+
+export function checkTotalSize(files: File[]): string | null {
+  const total = files.reduce((sum, f) => sum + f.size, 0);
+  if (total > MAX_TOTAL_BYTES) {
+    return `That is ${(total / 1024 / 1024).toFixed(0)}MB of screenshots. Keep it under ${MAX_TOTAL_BYTES / 1024 / 1024}MB in total.`;
+  }
+  return null;
 }
 
 export async function checkImage(file: File): Promise<string | null> {
@@ -135,26 +159,99 @@ export async function deliver(app: Application): Promise<{ ok: boolean; error?: 
   }
 }
 
+/* -------------------------------------------------------------- spam */
+
 /**
- * Five applications per address per fifteen minutes.
+ * Two limits, because they stop different things.
  *
- * In memory, which is the same trade the raffle makes and carries the same
- * caveat: it resets on a redeploy and would not hold across two processes.
- * For a form a handful of people fill in a week that is proportionate — the
- * job here is stopping somebody emptying their camera roll into the channel,
- * not surviving a determined flood.
+ * The burst limit is per address and lives in memory: five attempts in fifteen
+ * minutes, which is about stopping a script hammering the endpoint. It resets
+ * on a redeploy and would not hold across two processes, and that is fine —
+ * nothing depends on it being exact.
+ *
+ * The standing limit is per *person* and lives in the store: three delivered
+ * applications a day. That is the one that matters, because the burst limit is
+ * defeated by switching from wifi to mobile data, and a VIP transfer is a
+ * once-off — three is room to correct a bad screenshot, not a rate.
  */
-const seen = new Map<string, { count: number; until: number }>();
-const WINDOW = 15 * 60_000;
-const LIMIT = 5;
+const burst = new Map<string, { count: number; until: number }>();
+const BURST_WINDOW = 15 * 60_000;
+const BURST_LIMIT = 5;
 
 export function rateLimited(ip: string): boolean {
   const now = Date.now();
-  const record = seen.get(ip);
+  const record = burst.get(ip);
   if (!record || now > record.until) {
-    seen.set(ip, { count: 1, until: now + WINDOW });
+    burst.set(ip, { count: 1, until: now + BURST_WINDOW });
     return false;
   }
   record.count += 1;
-  return record.count > LIMIT;
+  return record.count > BURST_LIMIT;
+}
+
+const LEDGER = 'vip-applications.json';
+const DAY = 24 * 60 * 60_000;
+const PER_DAY = 3;
+
+interface Ledger {
+  /** `{ k: hashed identity, at: epoch ms }`. Nothing else. */
+  sent: { k: string; at: number }[];
+}
+
+/**
+ * Who an application counts against.
+ *
+ * The Discord id where there is one, because that is the person and it follows
+ * them across networks. The address otherwise, which is weaker — shared wifi
+ * counts as one applicant — but it is the only handle an anonymous submission
+ * has, and the burst limit already assumes as much.
+ *
+ * Hashed before it is written. The ledger exists to answer "has this one
+ * applied today", and that question does not need the identity back, so there
+ * is no reason to keep a file of people's addresses to answer it.
+ */
+function identity(discordId: string | null, ip: string): string {
+  const raw = discordId ? `d:${discordId}` : `i:${ip}`;
+  return createHash('sha256').update(raw).digest('hex').slice(0, 32);
+}
+
+/**
+ * How long until they may apply again, in ms, or null if they may now.
+ *
+ * Old entries are dropped on the way past. The ledger is only ever read to
+ * answer this question, so there is nowhere else to prune it from and no
+ * reason to keep anything older than the window.
+ */
+export async function applyCooldown(
+  discordId: string | null,
+  ip: string,
+): Promise<number | null> {
+  const key = identity(discordId, ip);
+  const now = Date.now();
+  let wait: number | null = null;
+
+  await mutateJson<Ledger>(LEDGER, { sent: [] }, (l) => {
+    l.sent = l.sent.filter((e) => now - e.at < DAY);
+    const mine = l.sent.filter((e) => e.k === key).sort((a, b) => a.at - b.at);
+    if (mine.length >= PER_DAY) wait = mine[0].at + DAY - now;
+  });
+
+  return wait;
+}
+
+/** Recorded only once Discord has actually taken it. A delivery that failed is
+ *  not an application, and charging someone for it would lock them out over
+ *  our outage. */
+export async function recordApplication(discordId: string | null, ip: string): Promise<void> {
+  const key = identity(discordId, ip);
+  await mutateJson<Ledger>(LEDGER, { sent: [] }, (l) => {
+    l.sent.push({ k: key, at: Date.now() });
+  });
+}
+
+/** Rounds a wait down to something worth saying out loud. */
+export function describeWait(ms: number): string {
+  const hours = Math.ceil(ms / 3_600_000);
+  if (hours <= 1) return 'in about an hour';
+  return `in about ${hours} hours`;
 }

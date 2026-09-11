@@ -86,7 +86,8 @@ export function VipTransferForm({ roobetName, discord }: Props) {
           {discord ? ` as ${discord}` : ' on the handle you gave'} — usually within a few days.
         </p>
         <p className="acct-note" style={{ marginTop: 14 }}>
-          Nothing is stored on this site: your screenshots went straight to the review channel.
+          Your screenshots went straight to the review channel — none of what you sent is kept on
+          this site.
         </p>
       </div>
     );
@@ -183,6 +184,19 @@ export function VipTransferForm({ roobetName, discord }: Props) {
         />
       </label>
 
+      {/* The honeypot. Hidden from sight, from screen readers and from tab
+          order — a person cannot reach it, a script filling every input will.
+          Named so no password manager recognises it, since an autofill here
+          would silently drop a real application. */}
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="vip-trap"
+      />
+
       {error && (
         <p className="notice" role="alert">
           <span className="notice-mark" aria-hidden>
@@ -197,8 +211,8 @@ export function VipTransferForm({ roobetName, discord }: Props) {
       </button>
 
       <p className="acct-note">
-        Your screenshots go straight to the review channel in Discord. Nothing is stored on this
-        site.
+        Your screenshots go straight to the review channel in Discord. None of what you send is
+        kept here — only a note that you applied, so the form cannot be flooded.
       </p>
     </form>
   );
