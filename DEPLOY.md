@@ -43,6 +43,45 @@ dig +short www.fugroobets.com
 Both should print only the VPS IP. Certbot in step 10 proves ownership over
 port 80, so it cannot succeed until they do.
 
+### If the domain is on Cloudflare
+
+Set both records to **DNS only** (grey cloud) for the setup, and turn the proxy
+back on afterwards if you want it.
+
+With the proxy on (orange cloud), Let's Encrypt talks to Cloudflare rather than
+to your server, and whether the challenge reaches the VPS at all depends on
+Cloudflare's **SSL/TLS** mode. Two ways that goes wrong:
+
+* **Flexible** — Cloudflare reaches your origin over plain HTTP. Certbot's
+  `--redirect` then makes nginx bounce HTTP to HTTPS, Cloudflare re-requests
+  over HTTP, and round it goes: `ERR_TOO_MANY_REDIRECTS`. This is the single
+  most common way a Cloudflare site breaks, and the cause is never where you
+  look first, because the loop is between two machines that each think they are
+  right.
+* **Full** with no certificate yet — Cloudflare reaches your origin over HTTPS,
+  which is not listening, so the challenge fails and you have no certificate,
+  which is why it was not listening.
+
+Grey-clouding avoids both: Let's Encrypt talks to the VPS directly, gets its
+certificate, and nginx ends up holding a real one.
+
+Then, if you want the CDN and DDoS protection back:
+
+1. **SSL/TLS → Overview → Full (strict)** *first*. Setting this after you
+   re-enable the proxy leaves a window on whatever the old mode was.
+2. Turn both records back to **Proxied**.
+
+Renewal keeps working through the proxy, because by then the origin has a
+certificate and Full (strict) can verify it.
+
+While the proxy is on, `dig` returns Cloudflare's IPs rather than yours — that
+is correct and not a fault. To check the origin directly, ask it by IP:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}
+' http://YOUR_VPS_IP/
+```
+
 ---
 
 ## 1. Update the box
