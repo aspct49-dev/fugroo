@@ -22,6 +22,7 @@ const TABS = [
   { href: '/admin/giveaway', label: 'Raffle Picker' },
   { href: '/admin/guess', label: 'Guess The Balance' },
   { href: '/admin/tournaments', label: 'Tournaments' },
+  { href: '/admin/accounts', label: 'Linked Accounts' },
 ];
 
 export function AdminNav() {

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { formatMoney } from '@/lib/format';
 import { giveawayState } from '@/lib/giveaway';
 import { activeGame } from '@/lib/guesses';
+import { listProfiles } from '@/lib/profiles';
 import { roster } from '@/lib/roster';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 import { activeTournament, listTournaments, tournamentProgress } from '@/lib/tournaments';
@@ -19,7 +20,7 @@ import { activeTournament, listTournaments, tournamentProgress } from '@/lib/tou
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOverviewPage() {
-  const [game, tournament, tournaments, board, under] = await Promise.all([
+  const [game, tournament, tournaments, board, under, linked] = await Promise.all([
     activeGame(),
     activeTournament(),
     listTournaments(),
@@ -29,6 +30,16 @@ export default async function AdminOverviewPage() {
     // are different problems, and only this number tells them apart.
     roster()
       .then((r) => r.players.size)
+      .catch(() => null),
+    // How many linked accounts are actually playing under the code, so the
+    // overview says whether anything needs looking at.
+    Promise.all([listProfiles(), roster().catch(() => null)])
+      .then(([profiles, r]) => ({
+        total: profiles.length,
+        underCode: r
+          ? profiles.filter((p) => r.players.has(p.roobetUsername.toLowerCase())).length
+          : 0,
+      }))
       .catch(() => null),
   ]);
   const give = await giveawayState();
@@ -59,6 +70,17 @@ export default async function AdminOverviewPage() {
           ? `${give.entryCount} entries held`
           : 'No round',
       live: give.open,
+    },
+    {
+      href: '/admin/accounts',
+      title: 'Linked Accounts',
+      state:
+        linked === null
+          ? 'Could not check'
+          : linked.total === 0
+            ? 'None linked'
+            : `${linked.underCode} of ${linked.total} under the code`,
+      live: linked !== null && linked.total > 0 && linked.underCode === linked.total,
     },
     {
       href: '/admin/guess',
