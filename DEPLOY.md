@@ -1,6 +1,6 @@
 # Deploying to a VPS
 
-Written for **Ubuntu 22.04 LTS** on a Hostinger KVM plan, serving
+Written for **Ubuntu 22.04 / 24.04 LTS** on a Hostinger KVM plan, serving
 **fugroobets.com**. Every block is meant to be pasted whole.
 
 Run everything as `root` unless a command says otherwise. The site itself runs
@@ -11,26 +11,37 @@ Nothing here contains a secret. Step 6 is a template you fill in.
 
 ---
 
-## 0. Point the domain first
+## 0. When to move the domain
 
-DNS takes time to spread, so do it before anything else and it will be ready by
-the time you need it. At your registrar, two **A records**:
+**If the domain is already serving a live site somewhere, do not move it yet.**
+Steps 1 to 8 need no DNS at all — they end with the app answering on
+`127.0.0.1:3000` on the VPS. Move DNS after that, and the only outage is the
+propagation window rather than the whole setup.
 
-| Type | Name  | Value            |
-|------|-------|------------------|
-| A    | `@`   | your VPS IP      |
-| A    | `www` | your VPS IP      |
+If the domain is parked or new, point it now and it will be ready by the time
+you reach step 9.
 
-Delete any existing A, AAAA or CNAME on `@` and `www` first, or they will fight.
+Either way, the records are two **A records**:
 
-Check it from your own machine — not from the VPS, which may answer from its
-own hosts file:
+| Type | Name  | Value       |
+|------|-------|-------------|
+| A    | `@`   | your VPS IP |
+| A    | `www` | your VPS IP |
+
+Delete any existing A, AAAA or CNAME on `@` and `www` first. A name cannot hold
+a CNAME and an A record at once, so a leftover CNAME on `www` will block the
+new record rather than lose to it.
+
+Check from your own machine — not from the VPS, which may answer from its own
+hosts file:
 
 ```bash
 dig +short fugroobets.com
+dig +short www.fugroobets.com
 ```
 
-Carry on with the rest while it propagates; only step 9 actually needs it.
+Both should print only the VPS IP. Certbot in step 10 proves ownership over
+port 80, so it cannot succeed until they do.
 
 ---
 
