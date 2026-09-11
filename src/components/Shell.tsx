@@ -51,6 +51,7 @@ const NAV: NavItem[] = [
   { href: '/leaderboard', label: 'Leaderboard', showPot: true },
   { href: '/bonuses', label: 'Bonus Offers' },
   { href: '/milestones', label: 'Wager Milestones' },
+  { href: '/vip-transfer', label: 'VIP Transfer' },
   { href: '/tournaments', label: 'Tournaments' },
   { href: '/raffles', label: 'Raffles', soon: true },
   { href: '/guess-the-balance', label: 'Guess The Balance' },

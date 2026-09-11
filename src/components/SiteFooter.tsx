@@ -26,6 +26,7 @@ export function SiteFooter() {
               <Link href="/leaderboard">Leaderboard</Link>
               <Link href="/bonuses">Bonus Offers</Link>
               <Link href="/milestones">Wager Milestones</Link>
+              <Link href="/vip-transfer">VIP Transfer</Link>
               <Link href="/tournaments">Tournaments</Link>
               <Link href="/guess-the-balance">Guess The Balance</Link>
               <Link href="/raffles">Raffles</Link>
