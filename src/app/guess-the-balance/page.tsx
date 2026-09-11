@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { PageBanner } from '@/components/PageBanner';
 import { TrophyIcon } from '@/components/icons';
 import { auth } from '@/lib/auth';
+import { pageMeta } from '@/lib/site';
 import { formatMoney } from '@/lib/format';
 import { activeGame, rankGuesses, submitGuess, winnerOf } from '@/lib/guesses';
 
@@ -12,11 +13,11 @@ import { activeGame, rankGuesses, submitGuess, winnerOf } from '@/lib/guesses';
 // and the standings are read fresh every time.
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Guess the balance',
   description: 'Call the final balance of the hunt running on stream. Closest guess wins.',
-  alternates: { canonical: '/guess-the-balance' },
-};
+  path: '/guess-the-balance',
+});
 
 export default async function GuessPage() {
   const [game, session] = await Promise.all([activeGame(), auth()]);

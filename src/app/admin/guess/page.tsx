@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 
 import { AdminGuess } from '@/components/AdminGuess';
 import { assertAdmin } from '@/lib/admin';
+import { PRIVATE_PAGE } from '@/lib/site';
 import { activeGame, createGame, deleteGame, drawGame, listGames, setGameStatus } from '@/lib/guesses';
 
 /**
@@ -14,7 +15,10 @@ import { activeGame, createGame, deleteGame, drawGame, listGames, setGameStatus 
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Guess The Balance' };
+export const metadata: Metadata = {
+  title: 'Guess The Balance',
+  ...PRIVATE_PAGE,
+};
 
 export default async function AdminGuessPage() {
   const [games, game] = await Promise.all([listGames(), activeGame()]);

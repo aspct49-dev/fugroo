@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Placeholder } from '@/components/Placeholder';
 import { PRIMARY_PARTNER } from '@/lib/partners';
+import { pageMeta } from '@/lib/site';
 
 /**
  * Raffles — designed, not yet running.
@@ -15,11 +16,11 @@ import { PRIMARY_PARTNER } from '@/lib/partners';
  * place, so opening the section again is a page, not a rebuild.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Raffles',
   description: `Raffles for everyone playing on ${PRIMARY_PARTNER.name} under code ${PRIMARY_PARTNER.code}. Coming soon.`,
-  alternates: { canonical: '/raffles' },
-};
+  path: '/raffles',
+});
 
 export default function RafflesPage() {
   return (

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Bracket } from '@/components/Bracket';
 import { PageBanner } from '@/components/PageBanner';
 import { PRIMARY_PARTNER } from '@/lib/partners';
+import { pageMeta } from '@/lib/site';
 import {
   activeTournament,
   publicTournaments,
@@ -25,11 +26,11 @@ import {
 // here is cached — a stale round is worse than a slow page.
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Tournaments',
   description: `Head-to-head slot tournaments for the ${PRIMARY_PARTNER.name} community, run live on stream.`,
-  alternates: { canonical: '/tournaments' },
-};
+  path: '/tournaments',
+});
 
 export default async function TournamentsPage() {
   const [featured, all] = await Promise.all([activeTournament(), publicTournaments()]);

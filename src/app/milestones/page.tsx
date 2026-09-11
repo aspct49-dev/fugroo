@@ -16,15 +16,15 @@ import {
   SOCIALS,
   TIER_HUE,
 } from '@/lib/partners';
-import { SITE } from '@/lib/site';
+import { SITE, pageMeta } from '@/lib/site';
 
 const CLAIM_ICON = [TrophyIcon, FaDiscord, PaidIcon];
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Wager milestones',
   description: `Rank-up rewards on ${PRIMARY_PARTNER.name} under code ${PRIMARY_PARTNER.code}. Every rank you climb pays out, separately from the monthly leaderboard.`,
-  alternates: { canonical: '/milestones' },
-};
+  path: '/milestones',
+});
 
 export default function MilestonesPage() {
   return (

@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 
 import { AdminGiveaway, type GiveawayView } from '@/components/AdminGiveaway';
 import { assertAdmin } from '@/lib/admin';
+import { PRIVATE_PAGE } from '@/lib/site';
 import {
   clearMisses,
   closeGiveaway,
@@ -31,7 +32,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Raffle Picker' };
+export const metadata: Metadata = {
+  title: 'Raffle Picker',
+  ...PRIVATE_PAGE,
+};
 
 /** The state the panel starts from, before its own polling takes over. */
 async function view(): Promise<GiveawayView> {

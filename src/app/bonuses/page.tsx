@@ -6,15 +6,16 @@ import { PageBanner } from '@/components/PageBanner';
 import { Promo } from '@/components/Promo';
 import { ExternalIcon, TagIcon, TrophyIcon, UserPlusIcon } from '@/components/icons';
 import { JOIN_STEPS, OFFERS, PRIMARY_PARTNER } from '@/lib/partners';
+import { pageMeta } from '@/lib/site';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Bonus offers',
   description: `Every offer available on ${PRIMARY_PARTNER.name} under code ${PRIMARY_PARTNER.code}, and the three steps to claim them.`,
-  alternates: { canonical: '/bonuses' },
-};
+  path: '/bonuses',
+});
 
 const STEP_ICON = [UserPlusIcon, TagIcon, TrophyIcon];
 

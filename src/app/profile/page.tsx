@@ -7,6 +7,7 @@ import { ExternalIcon } from '@/components/icons';
 import { auth } from '@/lib/auth';
 import { formatMoney } from '@/lib/format';
 import { PRIMARY_PARTNER } from '@/lib/partners';
+import { PRIVATE_PAGE } from '@/lib/site';
 import { getProfile, linkRoobet, unlinkRoobet } from '@/lib/profiles';
 import { checkRoobet } from '@/lib/roster';
 
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'My Account',
-  robots: { index: false, follow: false },
+  ...PRIVATE_PAGE,
 };
 
 export default async function ProfilePage({

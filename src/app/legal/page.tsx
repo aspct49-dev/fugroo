@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 
 import { PRIMARY_PARTNER } from '@/lib/partners';
-import { SITE } from '@/lib/site';
+import { SITE, pageMeta } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Legal',
-  alternates: { canonical: '/legal' },
-};
+  description: `Terms, responsible gambling resources and the relationship between ${SITE.name} and ${PRIMARY_PARTNER.name}.`,
+  path: '/legal',
+});
 
 export default function LegalPage() {
   return (

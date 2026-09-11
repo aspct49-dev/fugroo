@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { AdminTournament } from '@/components/AdminTournament';
 import { ConfirmSubmit } from '@/components/ConfirmSubmit';
 import { assertAdmin } from '@/lib/admin';
+import { PRIVATE_PAGE } from '@/lib/site';
 import { BRACKET_SIZES, normaliseBracket, type Match } from '@/lib/bracket';
 import {
   createTournament,
@@ -28,7 +29,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Tournaments' };
+export const metadata: Metadata = {
+  title: 'Tournaments',
+  ...PRIVATE_PAGE,
+};
 
 export default async function AdminTournamentsPage({
   searchParams,

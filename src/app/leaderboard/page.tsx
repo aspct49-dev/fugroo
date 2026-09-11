@@ -8,15 +8,16 @@ import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
 import { formatMoney } from '@/lib/format';
 import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
+import { pageMeta } from '@/lib/site';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'Leaderboard',
   description: `The ${formatMoney(PRIMARY_PARTNER.prizePool)} monthly ${PRIMARY_PARTNER.name} wager leaderboard. Ten paying places, settled at the end of every month.`,
-  alternates: { canonical: '/leaderboard' },
-};
+  path: '/leaderboard',
+});
 
 export default async function LeaderboardPage() {
   const board = await getLeaderboard('roobet');

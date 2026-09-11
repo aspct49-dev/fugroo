@@ -3,12 +3,13 @@ import type { Metadata } from 'next';
 import { CopyCode } from '@/components/CopyCode';
 import { formatMoney } from '@/lib/format';
 import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS, VIP_TRANSFER } from '@/lib/partners';
+import { pageMeta } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: 'How it works',
   description: `How the ${PRIMARY_PARTNER.name} leaderboard is ranked, how wagers are weighted, and how the VIP transfer works.`,
-  alternates: { canonical: '/how-it-works' },
-};
+  path: '/how-it-works',
+});
 
 export default function HowItWorksPage() {
   return (
