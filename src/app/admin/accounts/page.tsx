@@ -103,7 +103,7 @@ export default async function AdminAccountsPage() {
                 <span className="admin-bonus-game">
                   {r.roobetUsername}
                   <span style={{ display: 'block', fontSize: 12, color: 'var(--dim)' }}>
-                    {r.kickUsername ? `kick.com/${r.kickUsername}` : 'no Kick username'}
+                    {r.kickUsername ? `kick.com/${r.kickUsername}` : 'Kick not connected'}
                   </span>
                 </span>
 

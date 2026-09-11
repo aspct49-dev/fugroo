@@ -21,19 +21,19 @@ export interface Profile {
   discordId: string;
   roobetUsername: string;
   /**
-   * Their Kick handle.
+   * The Kick account, from Kick's own OAuth.
    *
-   * Needed because a raffle entry arrives from chat carrying a Kick name and
-   * nothing else, and the eligibility gate has to get from that to a Roobet
-   * name to look up. Without it the gate searched a table of Roobet names for
-   * a Kick name and found nothing, so everyone whose two handles differ was
-   * refused with "No Roobet account linked" despite having linked correctly.
+   * A raffle entry arrives from chat carrying a Kick identity and nothing
+   * else, so the eligibility gate needs a way from that to a Roobet account.
+   * `kickUserId` is what the gate matches on — it is the same id a chat
+   * message carries as `sender.id`, and unlike a handle it survives a rename.
+   * The name is kept alongside it only so the pages have something to show.
    *
-   * Optional in the type because profiles written before this existed do not
-   * have one. They are not broken — the site still knows their Roobet account
-   * — they just cannot be matched from chat until they add it, and the profile
-   * page asks them to.
+   * Both optional: a profile can exist with a Roobet account and no Kick one.
+   * Only chat raffles read these, so nobody who wants the leaderboard and rank
+   * rewards should be made to connect Kick to get them.
    */
+  kickUserId?: string;
   kickUsername?: string;
   linkedAt: string;
 }
@@ -57,11 +57,6 @@ export async function listProfiles(): Promise<Profile[]> {
 
 export type LinkResult = { ok: true } | { ok: false; error: string };
 
-/** Kick handles are letters, digits and underscores. Worth rejecting a pasted
- *  URL or an @ here rather than storing something that can never match. */
-function cleanKick(raw: string): string {
-  return raw.trim().replace(/^.*kick\.com\//i, '').replace(/^@/, '');
-}
 
 /**
  * Claims a Roobet username for a Discord account.
@@ -89,29 +84,10 @@ function cleanKick(raw: string): string {
  *     cost of letting an unverifiable name link is nil, and the cost of
  *     refusing one is a player who cannot take part because Roobet was down.
  */
-export async function linkRoobet(
-  discordId: string,
-  username: string,
-  kick: string,
-): Promise<LinkResult> {
+export async function linkRoobet(discordId: string, username: string): Promise<LinkResult> {
   const name = username.trim();
   if (!name) return { ok: false, error: 'Enter your Roobet username.' };
   if (name.length > 40) return { ok: false, error: 'That is longer than a Roobet username.' };
-
-  const kickName = cleanKick(kick);
-  if (!kickName) return { ok: false, error: 'Enter your Kick username.' };
-  if (!/^[A-Za-z0-9_]{3,25}$/.test(kickName)) {
-    return { ok: false, error: 'That does not look like a Kick username.' };
-  }
-
-  const check = await checkRoobet(name);
-  if (!check.found && !check.error) {
-    return {
-      ok: false,
-      error:
-        'We cannot see that name playing under the code. If you have just signed up, place a bet and try again — Roobet only lists players who have wagered.',
-    };
-  }
 
   let result: LinkResult = { ok: true };
   await mutateJson<Store>(FILE, EMPTY, (s) => {
@@ -125,32 +101,12 @@ export async function linkRoobet(
       };
       return;
     }
-    /* The Kick name is claimed once too. It is what a raffle entry is matched
-       on, so leaving it shareable would let one person enter on another's
-       linked play — the same hole the Roobet check closes, by the other door. */
-    const kickTaken = s.profiles.find(
-      (p) => p.kickUsername?.toLowerCase() === kickName.toLowerCase() && p.discordId !== discordId,
-    );
-    if (kickTaken) {
-      result = {
-        ok: false,
-        error: 'That Kick username is already linked to another account.',
-      };
-      return;
-    }
-
     const mine = s.profiles.find((p) => p.discordId === discordId);
     if (mine) {
       mine.roobetUsername = name;
-      mine.kickUsername = kickName;
       mine.linkedAt = new Date().toISOString();
     } else {
-      s.profiles.push({
-        discordId,
-        roobetUsername: name,
-        kickUsername: kickName,
-        linkedAt: new Date().toISOString(),
-      });
+      s.profiles.push({ discordId, roobetUsername: name, linkedAt: new Date().toISOString() });
     }
   });
   return result;
@@ -159,5 +115,68 @@ export async function linkRoobet(
 export async function unlinkRoobet(discordId: string): Promise<void> {
   await mutateJson<Store>(FILE, EMPTY, (s) => {
     s.profiles = s.profiles.filter((p) => p.discordId !== discordId);
+  });
+}
+
+/**
+ * Attaches a Kick account, having just proved ownership of it through OAuth.
+ *
+ * One Kick account per Discord account, enforced in both directions: a Kick
+ * account cannot be claimed by a second Discord, and a Discord already holding
+ * one has to disconnect before connecting another. That is what stops one
+ * person entering the same raffle from several accounts, which is the only
+ * abuse this gate exists to prevent.
+ *
+ * Keyed on the Kick *id* rather than the name, so someone renaming on Kick
+ * keeps their link and does not free their old handle for somebody else.
+ */
+export async function linkKick(
+  discordId: string,
+  account: { id: string; username: string },
+): Promise<LinkResult> {
+  let result: LinkResult = { ok: true };
+  await mutateJson<Store>(FILE, EMPTY, (s) => {
+    const heldByAnother = s.profiles.find(
+      (p) => p.kickUserId === account.id && p.discordId !== discordId,
+    );
+    if (heldByAnother) {
+      result = { ok: false, error: 'That Kick account is already linked to another profile.' };
+      return;
+    }
+
+    const mine = s.profiles.find((p) => p.discordId === discordId);
+    if (mine) {
+      if (mine.kickUserId && mine.kickUserId !== account.id) {
+        result = {
+          ok: false,
+          error: 'Disconnect the Kick account already on this profile first.',
+        };
+        return;
+      }
+      mine.kickUserId = account.id;
+      mine.kickUsername = account.username;
+    } else {
+      /* No Roobet name yet, which is allowed: the two links are independent,
+         and someone may well connect Kick before they get round to Roobet. */
+      s.profiles.push({
+        discordId,
+        roobetUsername: '',
+        kickUserId: account.id,
+        kickUsername: account.username,
+        linkedAt: new Date().toISOString(),
+      });
+    }
+  });
+  return result;
+}
+
+export async function unlinkKick(discordId: string): Promise<void> {
+  await mutateJson<Store>(FILE, EMPTY, (s) => {
+    const mine = s.profiles.find((p) => p.discordId === discordId);
+    if (!mine) return;
+    delete mine.kickUserId;
+    delete mine.kickUsername;
+    // A profile that was only ever a Kick link has nothing left to be.
+    if (!mine.roobetUsername) s.profiles = s.profiles.filter((p) => p.discordId !== discordId);
   });
 }

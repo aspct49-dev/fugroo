@@ -110,15 +110,15 @@ export async function giveawayState() {
  * be one store round trip each, in the middle of a live chat.
  */
 async function admit(
-  username: string,
+  key: string,
   gates: Gates,
   linked: Map<string, string>,
 ): Promise<{ ok: boolean; reason?: string; roobet?: string }> {
   if (!gates.requireCode) return { ok: true };
 
-  const roobetName = linked.get(username.toLowerCase());
+  const roobetName = linked.get(key);
   if (!roobetName) {
-    return { ok: false, reason: 'No Roobet account linked on the site' };
+    return { ok: false, reason: 'No linked Kick and Roobet account on the site' };
   }
 
   try {
@@ -135,25 +135,28 @@ async function admit(
 }
 
 /**
- * Kick name to Roobet name, which is the direction a raffle entry needs.
+ * Kick user id to Roobet name, which is the direction a raffle entry needs.
  *
- * A message arrives from chat carrying a Kick handle and nothing else, and the
- * gate has to get from that to a Roobet name to look up in the affiliate list.
- * This used to be built from `roobetUsername` on both sides — a table of
- * Roobet names, searched for a Kick name — so it only ever matched people who
- * happened to use the same handle on both sites. Everyone else was refused
- * with "No Roobet account linked" despite having linked correctly.
+ * Keyed on the id rather than the handle, and that is the point of doing this
+ * through OAuth at all. A chat message carries `sender.id`; the id came from
+ * Kick's token endpoint, so it was proved rather than typed; and it survives a
+ * rename, which a handle does not — someone changing their Kick name mid-round
+ * would otherwise stop matching halfway through.
  *
- * Profiles written before the Kick handle existed are skipped rather than
- * guessed at. Falling back to the Roobet name would reintroduce exactly the
- * bug, quietly, for the accounts most likely to hit it.
+ * This was once built from `roobetUsername` on both sides — a table of Roobet
+ * names, searched for a Kick name — so it only ever matched people who used
+ * the same handle on both sites, and refused everyone else with "No Roobet
+ * account linked" despite them having linked correctly.
+ *
+ * A profile missing either half is skipped. Half a link cannot answer the
+ * question this table exists to answer.
  */
 async function linkedNames(): Promise<Map<string, string>> {
   const profiles = await listProfiles();
   const map = new Map<string, string>();
   for (const p of profiles) {
-    if (!p.kickUsername) continue;
-    map.set(p.kickUsername.toLowerCase(), p.roobetUsername);
+    if (!p.kickUserId || !p.roobetUsername) continue;
+    map.set(p.kickUserId, p.roobetUsername);
   }
   return map;
 }
@@ -198,7 +201,8 @@ export async function ingest(messages: IncomingMessage[]): Promise<void> {
     if (seen.has(msg.userId)) continue;
     seen.add(msg.userId);
 
-    const verdict = await admit(msg.username, round.gates, linked);
+    // Matched on the Kick id the message carries, not the display name.
+    const verdict = await admit(msg.userId, round.gates, linked);
     if (verdict.ok) {
       admitted.push({
         username: msg.username,
@@ -384,7 +388,7 @@ export async function enterFromSite(
   let roobet = roobetName;
   if (round.gates.requireCode) {
     if (!roobetName) return { ok: false, error: 'Link your Roobet account first.' };
-    const linked = new Map([[roobetName.toLowerCase(), roobetName]]);
+    const linked = new Map([[roobetName, roobetName]]);
     const verdict = await admit(roobetName, round.gates, linked);
     if (!verdict.ok) return { ok: false, error: verdict.reason };
     roobet = verdict.roobet ?? roobetName;
