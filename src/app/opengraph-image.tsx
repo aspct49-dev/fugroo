@@ -81,30 +81,30 @@ export default async function Image(): Promise<Response> {
         {/* eslint-disable @next/next/no-img-element -- Satori renders these itself */}
         <img src={vault} alt="" width={1200} height={676} style={{ position: 'absolute', top: -20, left: 0 }} />
 
-        {/* The room is busy on the right, where the mascot goes, and the copy
-            needs a quiet ground on the left. One gradient does both. */}
+        {/* Heavier on the left than the artwork wants, because the copy has to
+            win there. The right stays open for the mascot. */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(100deg, rgba(3,5,18,0.96) 0%, rgba(3,5,18,0.88) 42%, rgba(3,5,18,0.35) 72%, rgba(3,5,18,0.55) 100%)',
+              'linear-gradient(100deg, rgba(3,5,18,0.97) 0%, rgba(3,5,18,0.93) 46%, rgba(3,5,18,0.42) 74%, rgba(3,5,18,0.62) 100%)',
           }}
         />
 
         <img
           src={mascot}
           alt=""
-          width={560}
-          height={379}
-          style={{ position: 'absolute', right: 8, bottom: 0 }}
+          width={540}
+          height={366}
+          style={{ position: 'absolute', right: 4, bottom: 0 }}
         />
         <img
           src={ace}
           alt=""
-          width={150}
-          height={187}
-          style={{ position: 'absolute', right: 470, top: 52, transform: 'rotate(-16deg)' }}
+          width={132}
+          height={165}
+          style={{ position: 'absolute', right: 452, top: 44, transform: 'rotate(-16deg)' }}
         />
 
         <div
@@ -113,40 +113,59 @@ export default async function Image(): Promise<Response> {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '0 0 0 72px',
+            padding: '0 0 0 76px',
             width: 700,
             color: '#fff',
           }}
         >
-          <img src={wordmark} alt={SITE.name} width={420} height={138} />
-
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginTop: 18 }}>
-            <div style={{ display: 'flex', fontSize: 104, fontWeight: 800, lineHeight: 1, color: CYAN }}>
-              ${TOTAL_PRIZE_POOL.toLocaleString('en-US')}
-            </div>
-            <div style={{ display: 'flex', fontSize: 40, fontWeight: 700, lineHeight: 1 }}>monthly</div>
-          </div>
-
-          <div style={{ display: 'flex', fontSize: 40, fontWeight: 700, marginTop: 4 }}>
-            {PRIMARY_PARTNER.name} wager leaderboard
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 30 }}>
+          {/* Says whose board this is before it says what is on it. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 999, background: CYAN }} />
             <div
               style={{
                 display: 'flex',
-                fontSize: 26,
-                padding: '10px 22px',
+                fontSize: 21,
+                fontWeight: 700,
+                letterSpacing: 5,
+                color: '#8fa0c8',
+              }}
+            >
+              {PRIMARY_PARTNER.name.toUpperCase()} PARTNER
+            </div>
+          </div>
+
+          <img src={wordmark} alt={SITE.name} width={400} height={131} style={{ marginTop: 20 }} />
+
+          {/* Two lines rather than one wrapped paragraph: Satori's wrapping is
+              not worth trusting with the only sentence on the card. */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 26 }}>
+            <div style={{ display: 'flex', fontSize: 46, fontWeight: 800, color: CYAN, lineHeight: 1 }}>
+              ${TOTAL_PRIZE_POOL.toLocaleString('en-US')}
+            </div>
+            <div style={{ display: 'flex', fontSize: 33, fontWeight: 600, lineHeight: 1 }}>
+              in monthly prizes,
+            </div>
+          </div>
+          {/* Kept short enough to hold one line at this width. The longer
+              version wrapped onto a third line with one word on it. */}
+          <div style={{ display: 'flex', fontSize: 32, fontWeight: 600, marginTop: 10, color: '#dbe4ff' }}>
+            ten paying places, plus rank rewards.
+          </div>
+
+          <div style={{ display: 'flex', marginTop: 34 }}>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: 27,
+                fontWeight: 800,
+                letterSpacing: 3,
+                padding: '15px 34px',
                 borderRadius: 999,
-                border: `2px solid ${CYAN}`,
-                color: CYAN,
-                letterSpacing: 2,
+                background: CYAN,
+                color: '#04223a',
               }}
             >
               CODE {PRIMARY_PARTNER.code.toUpperCase()}
-            </div>
-            <div style={{ display: 'flex', fontSize: 24, color: '#9fb0d8' }}>
-              Ten paying places
             </div>
           </div>
         </div>
