@@ -318,6 +318,62 @@ h1, h2, h3, h4 {
 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+/* ------------------------------------------------------------- loading */
+
+/*
+ * The placeholder a navigation shows while the next page renders. Shaped like
+ * the pages rather than a spinner, so nothing jumps when the real thing
+ * arrives.
+ *
+ * The sweep is a moving highlight rather than a fade, because a block that
+ * only pulses reads as something broken sitting there; one that travels reads
+ * as something on its way.
+ */
+.skel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+  background: var(--hull);
+  border: 1px solid var(--edge);
+}
+.skel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--edge-lit) 55%, transparent),
+    transparent
+  );
+  animation: skel-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skel-sweep {
+  to { transform: translateX(100%); }
+}
+
+.skel-banner { height: clamp(120px, 18vw, 190px); }
+.skel-title {
+  height: 34px;
+  width: min(280px, 60%);
+  margin: 22px 0 26px;
+}
+.skel-rack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.skel-card { aspect-ratio: 5 / 4; }
+
+@media (max-width: 560px) {
+  .skel-rack { grid-template-columns: 1fr; }
+  .skel-card { aspect-ratio: 16 / 10; }
+}
+
+/* A sweep crossing the screen every 1.4s is exactly the kind of thing this
+   setting is for. The blocks stay, so the layout still holds. */
+@media (prefers-reduced-motion: reduce) {
+  .skel::after { animation: none; }
+}
+
 .main { min-width: 0; display: flex; flex-direction: column; }
 
 .topbar {
