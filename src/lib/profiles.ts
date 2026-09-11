@@ -20,6 +20,21 @@ import { mutateJson, readJson } from './store';
 export interface Profile {
   discordId: string;
   roobetUsername: string;
+  /**
+   * Their Kick handle.
+   *
+   * Needed because a raffle entry arrives from chat carrying a Kick name and
+   * nothing else, and the eligibility gate has to get from that to a Roobet
+   * name to look up. Without it the gate searched a table of Roobet names for
+   * a Kick name and found nothing, so everyone whose two handles differ was
+   * refused with "No Roobet account linked" despite having linked correctly.
+   *
+   * Optional in the type because profiles written before this existed do not
+   * have one. They are not broken — the site still knows their Roobet account
+   * — they just cannot be matched from chat until they add it, and the profile
+   * page asks them to.
+   */
+  kickUsername?: string;
   linkedAt: string;
 }
 
@@ -41,6 +56,12 @@ export async function listProfiles(): Promise<Profile[]> {
 }
 
 export type LinkResult = { ok: true } | { ok: false; error: string };
+
+/** Kick handles are letters, digits and underscores. Worth rejecting a pasted
+ *  URL or an @ here rather than storing something that can never match. */
+function cleanKick(raw: string): string {
+  return raw.trim().replace(/^.*kick\.com\//i, '').replace(/^@/, '');
+}
 
 /**
  * Claims a Roobet username for a Discord account.
@@ -68,10 +89,20 @@ export type LinkResult = { ok: true } | { ok: false; error: string };
  *     cost of letting an unverifiable name link is nil, and the cost of
  *     refusing one is a player who cannot take part because Roobet was down.
  */
-export async function linkRoobet(discordId: string, username: string): Promise<LinkResult> {
+export async function linkRoobet(
+  discordId: string,
+  username: string,
+  kick: string,
+): Promise<LinkResult> {
   const name = username.trim();
   if (!name) return { ok: false, error: 'Enter your Roobet username.' };
   if (name.length > 40) return { ok: false, error: 'That is longer than a Roobet username.' };
+
+  const kickName = cleanKick(kick);
+  if (!kickName) return { ok: false, error: 'Enter your Kick username.' };
+  if (!/^[A-Za-z0-9_]{3,25}$/.test(kickName)) {
+    return { ok: false, error: 'That does not look like a Kick username.' };
+  }
 
   const check = await checkRoobet(name);
   if (!check.found && !check.error) {
@@ -94,12 +125,32 @@ export async function linkRoobet(discordId: string, username: string): Promise<L
       };
       return;
     }
+    /* The Kick name is claimed once too. It is what a raffle entry is matched
+       on, so leaving it shareable would let one person enter on another's
+       linked play — the same hole the Roobet check closes, by the other door. */
+    const kickTaken = s.profiles.find(
+      (p) => p.kickUsername?.toLowerCase() === kickName.toLowerCase() && p.discordId !== discordId,
+    );
+    if (kickTaken) {
+      result = {
+        ok: false,
+        error: 'That Kick username is already linked to another account.',
+      };
+      return;
+    }
+
     const mine = s.profiles.find((p) => p.discordId === discordId);
     if (mine) {
       mine.roobetUsername = name;
+      mine.kickUsername = kickName;
       mine.linkedAt = new Date().toISOString();
     } else {
-      s.profiles.push({ discordId, roobetUsername: name, linkedAt: new Date().toISOString() });
+      s.profiles.push({
+        discordId,
+        roobetUsername: name,
+        kickUsername: kickName,
+        linkedAt: new Date().toISOString(),
+      });
     }
   });
   return result;

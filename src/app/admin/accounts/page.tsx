@@ -100,7 +100,12 @@ export default async function AdminAccountsPage() {
           <div className="admin-list">
             {rows.map((r) => (
               <div className="admin-bonus" key={r.discordId}>
-                <span className="admin-bonus-game">{r.roobetUsername}</span>
+                <span className="admin-bonus-game">
+                  {r.roobetUsername}
+                  <span style={{ display: 'block', fontSize: 12, color: 'var(--dim)' }}>
+                    {r.kickUsername ? `kick.com/${r.kickUsername}` : 'no Kick username'}
+                  </span>
+                </span>
 
                 <span className="admin-bonus-bet">
                   {r.player ? (

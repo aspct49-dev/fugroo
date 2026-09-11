@@ -37,7 +37,11 @@ export default async function ProfilePage({
     'use server';
     const s = await auth();
     if (!s?.user?.discordId) return;
-    const result = await linkRoobet(s.user.discordId, String(form.get('roobet') ?? ''));
+    const result = await linkRoobet(
+      s.user.discordId,
+      String(form.get('roobet') ?? ''),
+      String(form.get('kick') ?? ''),
+    );
     revalidatePath('/profile');
     if (!result.ok) redirect(`/profile?error=${encodeURIComponent(result.error)}`);
   }
@@ -83,6 +87,11 @@ export default async function ProfilePage({
               <>
                 <div className="acct-linked" data-ok={check?.found}>
                   <b>{profile.roobetUsername}</b>
+                  <span className="acct-state">
+                    {profile.kickUsername
+                      ? `Kick: ${profile.kickUsername}`
+                      : 'No Kick username — raffles cannot match you from chat'}
+                  </span>
                   {check?.error ? (
                     <span className="acct-state acct-warn">
                       Could not check right now — {check.error}
@@ -105,6 +114,19 @@ export default async function ProfilePage({
                     just signed up under <b>{PRIMARY_PARTNER.code}</b>, play a hand and check back
                     — it is not a spelling problem.
                   </p>
+                )}
+
+                {!profile.kickUsername && (
+                  <form action={link} className="admin-form" style={{ marginTop: 14 }}>
+                    <input type="hidden" name="roobet" value={profile.roobetUsername} />
+                    <label className="field">
+                      <span>Kick username</span>
+                      <input name="kick" placeholder="yourname" required autoComplete="off" />
+                    </label>
+                    <button className="btn btn-primary btn-sm" type="submit">
+                      Add It
+                    </button>
+                  </form>
                 )}
 
                 <form action={unlink} style={{ marginTop: 16 }}>
@@ -134,6 +156,13 @@ export default async function ProfilePage({
                   <label className="field">
                     <span>{PRIMARY_PARTNER.name} username</span>
                     <input name="roobet" placeholder="yourname" required autoComplete="off" />
+                  </label>
+                  {/* Asked for because a raffle entry arrives from chat with a
+                      Kick name on it and nothing else. Without this there is no
+                      way to tell whose Roobet account it belongs to. */}
+                  <label className="field">
+                    <span>Kick username</span>
+                    <input name="kick" placeholder="yourname" required autoComplete="off" />
                   </label>
                   <button className="btn btn-primary btn-sm" type="submit">
                     Link Account

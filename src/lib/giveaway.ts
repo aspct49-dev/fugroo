@@ -134,11 +134,28 @@ async function admit(
   }
 }
 
-/** Kick name to Roobet name. The profile list stores one name; both sides of
- *  the lookup are the same string, lower-cased for matching. */
+/**
+ * Kick name to Roobet name, which is the direction a raffle entry needs.
+ *
+ * A message arrives from chat carrying a Kick handle and nothing else, and the
+ * gate has to get from that to a Roobet name to look up in the affiliate list.
+ * This used to be built from `roobetUsername` on both sides — a table of
+ * Roobet names, searched for a Kick name — so it only ever matched people who
+ * happened to use the same handle on both sites. Everyone else was refused
+ * with "No Roobet account linked" despite having linked correctly.
+ *
+ * Profiles written before the Kick handle existed are skipped rather than
+ * guessed at. Falling back to the Roobet name would reintroduce exactly the
+ * bug, quietly, for the accounts most likely to hit it.
+ */
 async function linkedNames(): Promise<Map<string, string>> {
   const profiles = await listProfiles();
-  return new Map(profiles.map((p) => [p.roobetUsername.toLowerCase(), p.roobetUsername]));
+  const map = new Map<string, string>();
+  for (const p of profiles) {
+    if (!p.kickUsername) continue;
+    map.set(p.kickUsername.toLowerCase(), p.roobetUsername);
+  }
+  return map;
 }
 
 /* ----------------------------------------------------------------- ingest */
