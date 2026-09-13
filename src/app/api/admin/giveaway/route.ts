@@ -47,6 +47,8 @@ export async function GET() {
       entryCount: g.entryCount,
       missCount: g.missCount,
       gates: g.gates,
+      winners: g.winners,
+      removed: g.removed,
     },
     // A poll response that gets cached is a poll that stops working.
     { headers: { 'cache-control': 'no-store' } },

@@ -6,6 +6,8 @@ import { assertAdmin } from '@/lib/admin';
 import { PRIVATE_PAGE } from '@/lib/site';
 import {
   clearMisses,
+  removeEntry,
+  restoreEntry,
   closeGiveaway,
   forgetChannel,
   giveawayState,
@@ -51,6 +53,8 @@ async function view(): Promise<GiveawayView> {
     entryCount: g.entryCount,
     missCount: g.missCount,
     gates: g.gates,
+    winners: g.winners,
+    removed: g.removed,
     slug: g.slug,
     live: g.live,
     avatar: g.avatar,
@@ -137,6 +141,20 @@ export default async function AdminGiveawayPage() {
     revalidatePath('/raffles');
   }
 
+  /* Takes an entrant out of this round. They stay out if they type again,
+     until restored — see `removeEntry`. */
+  async function gRemove(userId: string) {
+    'use server';
+    await assertAdmin();
+    await removeEntry(userId);
+  }
+
+  async function gRestore(userId: string) {
+    'use server';
+    await assertAdmin();
+    await restoreEntry(userId);
+  }
+
   async function gClearMisses() {
     'use server';
     await assertAdmin();
@@ -155,6 +173,8 @@ export default async function AdminGiveawayPage() {
       onRoll={gRoll}
       onReset={gReset}
       onClearMisses={gClearMisses}
+      onRemove={gRemove}
+      onRestore={gRestore}
     />
   );
 }

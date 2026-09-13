@@ -61,8 +61,25 @@ export interface Round {
   gates: Gates;
   entries: Entry[];
   misses: Miss[];
+  /** The most recent draw, for the banner. */
   winner: Entry | null;
   drawnAt: number | null;
+  /**
+   * Everyone drawn this round, in order.
+   *
+   * A winner leaves `entries` the moment they are drawn, so the next spin is
+   * between the people who have not won yet — a round with three prizes is
+   * three spins, not three spins and a hope that nobody comes up twice. They
+   * are kept here rather than dropped so the panel can still say who has
+   * already been paid out.
+   */
+  winners: Entry[];
+  /**
+   * Entries the admin took out by hand, and why that is a list rather than a
+   * delete: someone removed mid-round who types the keyword again should stay
+   * out, and a removal made by mistake on stream should be one click to undo.
+   */
+  removed: Entry[];
   /** Whether the channel was streaming, as of the last channel lookup. */
   live: boolean;
   avatar: string | null;
@@ -80,15 +97,35 @@ function blank(): Round {
     misses: [],
     winner: null,
     drawnAt: null,
+    winners: [],
+    removed: [],
     live: false,
     avatar: null,
   };
 }
 
+/**
+ * Fills in what rounds saved before `winners` and `removed` existed are
+ * missing. Every read goes through here, so no caller has to guess whether a
+ * field is there.
+ */
+function normalise(r: Round): Round {
+  r.winners ??= [];
+  r.removed ??= [];
+  return r;
+}
+
+/** Why someone typing the keyword is not let back in, or null if they may be. */
+function barred(r: Round, userId: string): string | null {
+  if (r.winners.some((e) => e.userId === userId)) return 'Already won this round';
+  if (r.removed.some((e) => e.userId === userId)) return 'Removed from this round';
+  return null;
+}
+
 /* ------------------------------------------------------------------ reads */
 
 export async function giveawayState() {
-  const round = await readJson<Round>(FILE, blank());
+  const round = normalise(await readJson<Round>(FILE, blank()));
   return {
     ...round,
     entryCount: round.entries.length,
@@ -184,7 +221,7 @@ export interface IncomingMessage {
 export async function ingest(messages: IncomingMessage[]): Promise<void> {
   if (messages.length === 0) return;
 
-  const round = await readJson<Round>(FILE, blank());
+  const round = normalise(await readJson<Round>(FILE, blank()));
   if (!round.open) return;
 
   const keyword = round.keyword.trim().toLowerCase();
@@ -200,6 +237,14 @@ export async function ingest(messages: IncomingMessage[]): Promise<void> {
     if (msg.text.trim().toLowerCase() !== keyword) continue;
     if (seen.has(msg.userId)) continue;
     seen.add(msg.userId);
+
+    // Checked before the gate: someone already paid out or taken out by hand
+    // is not re-admitted by typing the keyword again.
+    const bar = barred(round, msg.userId);
+    if (bar) {
+      refused.push({ username: msg.username, reason: bar, at: Date.now() });
+      continue;
+    }
 
     // Matched on the Kick id the message carries, not the display name.
     const verdict = await admit(msg.userId, round.gates, linked);
@@ -225,10 +270,12 @@ export async function ingest(messages: IncomingMessage[]): Promise<void> {
   // gate checks are `await`s, and an admin pressing something during them
   // would otherwise be overwritten.
   await mutateJson<Round>(FILE, blank(), (r) => {
+    normalise(r);
     if (!r.open) return;
     const already = new Set(r.entries.map((e) => e.userId));
     for (const entry of admitted) {
-      if (!already.has(entry.userId)) r.entries.push(entry);
+      // Re-checked here: a removal pressed during the gate checks above must win.
+      if (!already.has(entry.userId) && !barred(r, entry.userId)) r.entries.push(entry);
     }
     const missed = new Set(r.misses.map((m) => m.username));
     for (const miss of refused) {
@@ -288,6 +335,8 @@ export async function openGiveaway(keyword: string, gates: Gates): Promise<void>
     r.misses = [];
     r.winner = null;
     r.drawnAt = null;
+    r.winners = [];
+    r.removed = [];
     r.open = true;
   });
 }
@@ -333,16 +382,60 @@ function unbiasedIndex(max: number): number {
  * less.
  */
 export async function roll(): Promise<Entry | null> {
-  const round = await readJson<Round>(FILE, blank());
-  if (round.entries.length === 0) return null;
+  let winner: Entry | null = null;
 
-  const winner = round.entries[unbiasedIndex(round.entries.length)];
+  /*
+   * Drawn inside the write, not before it. Reading the list, picking, and then
+   * writing would let a removal pressed in between go unnoticed — and the one
+   * outcome that must not happen is drawing somebody the admin has just taken
+   * out.
+   *
+   * The winner leaves the pool in the same write. That is the whole point of a
+   * second spin: it is between the people who have not won.
+   */
   await mutateJson<Round>(FILE, blank(), (r) => {
-    r.winner = winner;
+    normalise(r);
+    if (r.entries.length === 0) return;
+    const index = unbiasedIndex(r.entries.length);
+    const picked = r.entries[index];
+    r.entries.splice(index, 1);
+    r.winners.push(picked);
+    r.winner = picked;
     r.drawnAt = Date.now();
     r.open = false;
+    winner = picked;
   });
+
   return winner;
+}
+
+/** Takes one entrant out of the pool. They stay out if they type again. */
+export async function removeEntry(userId: string): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    normalise(r);
+    const index = r.entries.findIndex((e) => e.userId === userId);
+    if (index === -1) return;
+    const [entry] = r.entries.splice(index, 1);
+    r.removed.push(entry);
+  });
+}
+
+/**
+ * Puts a removed entrant back.
+ *
+ * Only from `removed`, never from `winners`: un-drawing someone is not a thing
+ * a panel should do in one click, because by then it has been said on stream.
+ */
+export async function restoreEntry(userId: string): Promise<void> {
+  await mutateJson<Round>(FILE, blank(), (r) => {
+    normalise(r);
+    const index = r.removed.findIndex((e) => e.userId === userId);
+    if (index === -1) return;
+    const [entry] = r.removed.splice(index, 1);
+    if (!r.entries.some((e) => e.userId === userId)) r.entries.push(entry);
+    // Whatever they were refused for while out no longer applies.
+    r.misses = r.misses.filter((m) => m.username !== entry.username);
+  });
 }
 
 export async function clearMisses(): Promise<void> {
@@ -357,6 +450,8 @@ export async function reset(): Promise<void> {
     r.misses = [];
     r.winner = null;
     r.drawnAt = null;
+    r.winners = [];
+    r.removed = [];
     r.open = false;
   });
 }
@@ -381,9 +476,11 @@ export async function enterFromSite(
   userId: string,
   roobetName: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
-  const round = await readJson<Round>(FILE, blank());
+  const round = normalise(await readJson<Round>(FILE, blank()));
   if (!round.open) return { ok: false, error: 'Entries are closed.' };
   if (round.entries.some((e) => e.userId === userId)) return { ok: true };
+  const bar = barred(round, userId);
+  if (bar) return { ok: false, error: `${bar}.` };
 
   let roobet = roobetName;
   if (round.gates.requireCode) {
@@ -395,8 +492,9 @@ export async function enterFromSite(
   }
 
   await mutateJson<Round>(FILE, blank(), (r) => {
+    normalise(r);
     if (!r.open) return;
-    if (r.entries.some((e) => e.userId === userId)) return;
+    if (r.entries.some((e) => e.userId === userId) || barred(r, userId)) return;
     r.entries.push({ username, userId, at: Date.now(), roobet });
   });
   return { ok: true };

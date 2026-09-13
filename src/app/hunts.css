@@ -1413,3 +1413,28 @@
     width: 100%;
   }
 }
+
+
+/* The remove control on an entry chip. Small and quiet until pointed at,
+   because a whole list of red crosses reads as a list of errors. */
+.give-chip-x {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.give-chip-x:hover:not(:disabled) {
+  color: #ff8a8a;
+  background: rgba(255, 106, 106, 0.14);
+}
+.give-chip-x:disabled { opacity: 0.35; cursor: default; }

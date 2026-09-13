@@ -54,6 +54,10 @@ export interface GiveawayView {
   slug: string;
   live: boolean;
   avatar: string | null;
+  /** Drawn this round, in order. Already out of `entries`. */
+  winners: Entry[];
+  /** Taken out by hand this round, and restorable. */
+  removed: Entry[];
 }
 
 /** The chat pill, in the three states the socket actually has. Reconnecting
@@ -151,6 +155,8 @@ export function AdminGiveaway({
   onRoll,
   onReset,
   onClearMisses,
+  onRemove,
+  onRestore,
 }: {
   initial: GiveawayView;
   onLookup: (form: FormData) => Promise<{ ok: boolean; error?: string }>;
@@ -161,6 +167,8 @@ export function AdminGiveaway({
   onRoll: () => Promise<Entry | null>;
   onReset: () => Promise<void>;
   onClearMisses: () => Promise<void>;
+  onRemove: (userId: string) => Promise<void>;
+  onRestore: (userId: string) => Promise<void>;
 }) {
   const [g, setG] = useState<GiveawayView>(initialState);
   const [spinning, setSpinning] = useState(false);
@@ -374,6 +382,19 @@ export function AdminGiveaway({
   };
 
   const [editingChannel, setEditingChannel] = useState(false);
+  /** The entrant whose remove or restore is in flight. */
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const toggleEntrant = async (userId: string, action: (id: string) => Promise<void>) => {
+    if (busyId) return;
+    setBusyId(userId);
+    try {
+      await action(userId);
+      await refresh();
+    } finally {
+      setBusyId(null);
+    }
+  };
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
 
@@ -662,13 +683,22 @@ export function AdminGiveaway({
           {g.entries.length ? (
             <div className="give-list">
               {g.entries.map((e) => (
-                <span
-                  className="give-chip"
-                  key={e.userId}
-                  data-win={shownWinner?.userId === e.userId}
-                >
+                <span className="give-chip" key={e.userId}>
                   {e.username}
                   {e.roobet && <em>{e.roobet}</em>}
+                  {/* Not while the reel is running: the draw has already been
+                      made on the server, and a pool changing under a moving
+                      reel reads as the result being tampered with. */}
+                  <button
+                    type="button"
+                    className="give-chip-x"
+                    aria-label={`Remove ${e.username}`}
+                    title="Remove from this round"
+                    disabled={spinning || busyId === e.userId}
+                    onClick={() => void toggleEntrant(e.userId, onRemove)}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -700,6 +730,59 @@ export function AdminGiveaway({
           )}
         </div>
       </div>
+
+      {/* ------------------------------------------------ drawn this round */}
+      {g.winners.length > 0 && (
+        <div className="admin-panel" style={{ marginTop: 16 }}>
+          <div className="admin-panel-head">
+            <h2 className="h-section">
+              Winners this round <span className="admin-count">{g.winners.length}</span>
+            </h2>
+          </div>
+          {/* Hidden mid-spin for the same reason as the banner: the newest name
+              on this list is the one the reel has not reached yet. */}
+          <div className="admin-list">
+            {(spinning ? g.winners.slice(0, -1) : g.winners).map((w, i) => (
+              <div className="admin-bonus" key={w.userId}>
+                <span className="admin-bonus-n">{i + 1}</span>
+                <span className="admin-bonus-game">{w.username}</span>
+                {w.roobet && <span className="admin-bonus-bet">{w.roobet}</span>}
+              </div>
+            ))}
+          </div>
+          <p className="admin-note" style={{ marginTop: 12 }}>
+            Each winner leaves the entries as they are drawn, so the next spin is between the people
+            who have not won. They cannot re-enter this round by typing the keyword again.
+          </p>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- removed by hand */}
+      {g.removed.length > 0 && (
+        <div className="admin-panel" style={{ marginTop: 16 }}>
+          <div className="admin-panel-head">
+            <h2 className="h-section">
+              Removed <span className="admin-count">{g.removed.length}</span>
+            </h2>
+          </div>
+          <div className="admin-list">
+            {g.removed.map((r) => (
+              <div className="admin-bonus" key={r.userId}>
+                <span className="admin-bonus-game">{r.username}</span>
+                <span className="admin-bonus-bet">Kept out if they type again</span>
+                <button
+                  type="button"
+                  className="btn btn-quiet btn-sm"
+                  disabled={busyId === r.userId}
+                  onClick={() => void toggleEntrant(r.userId, onRestore)}
+                >
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* --------------------------------------------------- not eligible */}
       {g.misses.length > 0 && (
