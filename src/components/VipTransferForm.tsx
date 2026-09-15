@@ -2,7 +2,12 @@
 
 import { useRef, useState } from 'react';
 
-import { LOSSBACK_OPTIONS, MAX_FILES } from '@/lib/vip-transfer.shared';
+import {
+  LOSSBACK_OPTIONS,
+  MAX_FILE_BYTES,
+  MAX_FILES,
+  MAX_TOTAL_BYTES,
+} from '@/lib/vip-transfer.shared';
 
 /**
  * The VIP transfer application.
@@ -46,6 +51,14 @@ export function VipTransferForm({ roobetName, discord }: Props) {
       set({ files: files.slice(0, MAX_FILES), error: `Only the first ${MAX_FILES} are used.` });
       return;
     }
+    /* Said the moment they pick, not after an upload. On a phone connection a
+       screenshot that is going to be refused anyway is a minute of waiting to
+       be told so. */
+    const tooBig = files.find((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig) {
+      set({ files, error: `${tooBig.name} is over ${mb(MAX_FILE_BYTES)}MB — crop or re-save it smaller.` });
+      return;
+    }
     set({ files, error: null });
   };
 
@@ -57,6 +70,17 @@ export function VipTransferForm({ roobetName, discord }: Props) {
       setError('Both sets of screenshots are needed — recent play and lifetime wagered.');
       return;
     }
+    if (recent.error || lifetime.error) {
+      setError('One of the screenshots needs sorting out first — see the note under it.');
+      return;
+    }
+    const total = [...recent.files, ...lifetime.files].reduce((sum, f) => sum + f.size, 0);
+    if (total > MAX_TOTAL_BYTES) {
+      setError(
+        `That is ${mb(total)}MB of screenshots. Keep it under ${mb(MAX_TOTAL_BYTES)}MB in total — fewer images, or smaller ones.`,
+      );
+      return;
+    }
 
     setSending(true);
     try {
@@ -64,7 +88,7 @@ export function VipTransferForm({ roobetName, discord }: Props) {
       const res = await fetch('/api/vip-transfer', { method: 'POST', body });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
-        setError(data?.error ?? 'That did not go through. Try again.');
+        setError(data?.error ?? explain(res.status));
         return;
       }
       setDone(true);
@@ -216,6 +240,26 @@ export function VipTransferForm({ roobetName, discord }: Props) {
       </p>
     </form>
   );
+}
+
+const mb = (bytes: number) => (bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0);
+
+/**
+ * What to say when the reply has no message of its own.
+ *
+ * Our route always answers in JSON, so a reply without one came from something
+ * in front of it — the proxy refusing the upload, or the server not answering.
+ * "That did not go through" was true and no help: the one people actually hit
+ * was the proxy's upload limit, which the applicant can fix by sending smaller
+ * screenshots if they are told that is the problem.
+ */
+function explain(status: number): string {
+  if (status === 413) {
+    return 'Those screenshots are too large to upload together. Try fewer, or smaller ones.';
+  }
+  if (status === 429) return 'Too many attempts just now. Wait a few minutes and try again.';
+  if (status >= 500) return 'The site could not take that just now. Try again in a minute.';
+  return `That did not go through (error ${status}). Try again.`;
 }
 
 function Upload({

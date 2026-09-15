@@ -13,3 +13,10 @@ export type Lossback = (typeof LOSSBACK_OPTIONS)[number];
 
 export const MAX_FILES = 5;
 export const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Everything in one submission, together. The proxy in front of the app must
+ * allow at least this much plus multipart overhead — nginx refuses anything
+ * over 1MB by default, which is smaller than a single phone screenshot.
+ */
+export const MAX_TOTAL_BYTES = 20 * 1024 * 1024;

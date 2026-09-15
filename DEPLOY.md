@@ -239,6 +239,11 @@ server {
     listen [::]:80;
     server_name fugroobets.com www.fugroobets.com;
 
+    # nginx refuses request bodies over 1MB by default — smaller than one phone
+    # screenshot — so the VIP transfer form's uploads never reach the app. The
+    # form caps the whole submission at 20MB; this leaves room for multipart.
+    client_max_body_size 25m;
+
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;

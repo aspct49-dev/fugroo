@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 
 import { mutateJson } from './store';
-import { MAX_FILE_BYTES } from './vip-transfer.shared';
+import { MAX_FILE_BYTES, MAX_TOTAL_BYTES } from './vip-transfer.shared';
 
 /**
  * VIP transfer applications.
@@ -30,7 +30,13 @@ import { MAX_FILE_BYTES } from './vip-transfer.shared';
 
    The size cap is under Discord's own rather than at it: an upload over its
    limit comes back as a 413 with nothing useful in it. */
-export { LOSSBACK_OPTIONS, MAX_FILES, MAX_FILE_BYTES, type Lossback } from './vip-transfer.shared';
+export {
+  LOSSBACK_OPTIONS,
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  MAX_TOTAL_BYTES,
+  type Lossback,
+} from './vip-transfer.shared';
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as const;
 
 /**
@@ -58,14 +64,9 @@ export function clean(input: string, max = 100): string {
     .slice(0, max);
 }
 
-/**
- * Everything in one submission, together.
- *
- * Ten files at the per-file limit is eighty megabytes, which nobody needs to
- * prove a VIP tier and which Discord would refuse anyway — better to say so
- * before reading the whole upload than after.
- */
-export const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
+/* The total cap lives in the shared file so the form can check it before
+   uploading. Ten files at the per-file limit would be eighty megabytes, which
+   nobody needs to prove a VIP tier. */
 
 export function checkTotalSize(files: File[]): string | null {
   const total = files.reduce((sum, f) => sum + f.size, 0);
