@@ -45,7 +45,8 @@ export const ROUTES = [
   { path: '/raffles', priority: 0.6, changeFrequency: 'weekly' as const },
   { path: '/guess-the-balance', priority: 0.6, changeFrequency: 'weekly' as const },
   { path: '/how-it-works', priority: 0.6, changeFrequency: 'monthly' as const },
-  { path: '/legal', priority: 0.3, changeFrequency: 'yearly' as const },
+  { path: '/terms', priority: 0.3, changeFrequency: 'yearly' as const },
+  { path: '/privacy', priority: 0.3, changeFrequency: 'yearly' as const },
 ];
 
 /**

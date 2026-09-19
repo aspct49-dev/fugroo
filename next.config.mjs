@@ -29,6 +29,9 @@ const nextConfig = {
       // the same question of the same round, so anything linking to the old
       // path — a Discord pin, a stream panel — lands somewhere sensible.
       { source: '/bonus-hunts', destination: '/guess-the-balance', permanent: true },
+      // One page of legal boilerplate became two written documents. The terms
+      // absorbed what was on it, so that is where the old path lands.
+      { source: '/legal', destination: '/terms', permanent: true },
     ];
   },
 };
