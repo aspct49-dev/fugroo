@@ -1,8 +1,12 @@
 import type { AffiliateReturn, Partner, PartnerId, VipTransfer } from './types';
 
 /** Payout per rank, index 0 = 1st. The pool is summed from this, never typed
- *  out separately, so the headline figure and the table cannot disagree. */
-const ROOBET_PRIZES = [450, 225, 100, 65, 50, 40, 30, 20, 10, 10];
+ *  out separately, so the headline figure and the table cannot disagree.
+ *
+ *  Weighted hard toward the top: first place is over half the pool, and the
+ *  rest steps down from there. Changing a figure here changes every page —
+ *  keep it descending, and keep the total at a round number people can say. */
+const ROOBET_PRIZES = [550, 180, 80, 50, 40, 30, 25, 20, 15, 10];
 
 /**
  * The partner registry. Prize pools, splits and codes live here and nowhere
