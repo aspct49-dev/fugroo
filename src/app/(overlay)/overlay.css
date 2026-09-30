@@ -285,14 +285,22 @@ html,
   opacity: 1;
 }
 
-/* The bracket view fills a scene, so its unit comes from the smaller of the
-   source's two proportions. The stage view is a narrow panel, so its unit
-   comes from the width alone. */
+/* The bracket view's header spans the scene, so its unit comes from the
+   smaller of the source's two proportions. The stage view is drawn at one
+   fixed size and scaled whole by `Fit`, so its unit is a plain length — the
+   panel was designed at 420px wide, where this is what 4.2vw came to. */
 .ovt[data-view='bracket'] {
   --u: min(1vw, 1.78vh);
 }
 .ovt[data-view='stage'] {
-  --u: 4.2vw;
+  --u: 17.6px;
+}
+
+.ovt-panel {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.6);
 }
 
 .ovt-head {
@@ -361,7 +369,15 @@ html,
   height: calc(var(--u) * 0.36);
   border-radius: 50%;
   background: var(--cyan);
-  animation: ovr-pulse 1.6s ease-out infinite;
+  animation: ovt-pulse 1.6s ease-out infinite;
+}
+
+/* Its own pulse rather than the raffle card's: that one is sized in `vw`,
+   which here is the whole scene's width — in a wide source the ring came out
+   as big as the heading beside it. */
+@keyframes ovt-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 211, 255, 0.6); }
+  100% { box-shadow: 0 0 0 calc(var(--u) * 0.45) rgba(34, 211, 255, 0); }
 }
 .ovt-stage[data-done] .ovt-stage-label {
   color: var(--rank-1);
@@ -432,6 +448,12 @@ html,
 .ovt-fit-inner {
   display: inline-block;
   transform-origin: top left;
+}
+
+/* The panel is always scaled to fit, so nothing of it overflows but the live
+   match's glow — which a clipped box would slice off at the panel's edges. */
+.ovt[data-view='stage'] .ovt-fit {
+  overflow: visible;
 }
 
 /* The site's bracket, restyled for a stream: opaque cards so it reads over

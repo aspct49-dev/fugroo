@@ -32,8 +32,8 @@ export function TournamentOverlay({ view, demo }: { view: TournamentView; demo: 
 
   if (!t) return <div className="ovt" data-show={false} />;
 
-  return (
-    <div className="ovt" data-show data-view={view}>
+  const head = (
+    <>
       <header className="ovt-head">
         <span className="ovt-title">
           <span className="ovt-eyebrow">
@@ -63,8 +63,14 @@ export function TournamentOverlay({ view, demo }: { view: TournamentView; demo: 
           </li>
         ))}
       </ol>
+    </>
+  );
 
-      {view === 'bracket' ? (
+  if (view === 'bracket') {
+    /* The header spans the source; only the bracket beneath it is scaled. */
+    return (
+      <div className="ovt" data-show data-view="bracket">
+        {head}
         <Fit>
           <Bracket
             matches={t.matches}
@@ -72,15 +78,30 @@ export function TournamentOverlay({ view, demo }: { view: TournamentView; demo: 
             currentRound={t.status === 'complete' ? null : t.currentRound}
           />
         </Fit>
-      ) : t.champion ? (
-        <Champion player={t.champion} prize={t.prize} />
-      ) : (
-        <ul className="ovt-matches">
-          {matchesInRound(t.matches, t.currentRound).map((m) => (
-            <StageMatch key={m.id} match={m} live={m.id === t.liveMatchId} />
-          ))}
-        </ul>
-      )}
+      </div>
+    );
+  }
+
+  /* The panel is drawn at one fixed size and scaled as a whole. It used to be
+     sized from the source's width alone, which was right at the 420px it was
+     designed for and wrong at any other: in a full-width source it came out
+     four times too big and ran off the bottom after a match and a half. */
+  return (
+    <div className="ovt" data-show data-view="stage">
+      <Fit cap={3} sticky>
+        <div className="ovt-panel">
+          {head}
+          {t.champion ? (
+            <Champion player={t.champion} prize={t.prize} />
+          ) : (
+            <ul className="ovt-matches">
+              {matchesInRound(t.matches, t.currentRound).map((m) => (
+                <StageMatch key={m.id} match={m} live={m.id === t.liveMatchId} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </Fit>
     </div>
   );
 }
@@ -149,14 +170,31 @@ function formatMult(n: number): string {
  * The bracket is drawn in fixed pixels — its wires are computed from the same
  * numbers as its cards — so it cannot reflow to fit. Scaling it as a whole
  * keeps that geometry intact and makes the browser source's size the only
- * setting that matters. Capped at 1.4× so a four-player draw in a large source
- * does not balloon into something that reads as a mistake.
+ * setting that matters. `cap` stops a small draw in a large source ballooning
+ * into something that reads as a mistake.
+ *
+ * `sticky` is for content whose height changes as the event goes on — the
+ * stage panel lists four quarter-finals, then two semis, then one final. Fitted
+ * afresh each time, it would grow on stream at every round, which looks like
+ * a glitch. Sticky, it shrinks when there is more to fit and only grows back
+ * when the source itself is resized.
  */
-function Fit({ children }: { children: React.ReactNode }) {
+function Fit({
+  children,
+  cap = 1.4,
+  sticky = false,
+}: {
+  children: React.ReactNode;
+  cap?: number;
+  sticky?: boolean;
+}) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  /* The source size at the last fit, so a content change can be told apart
+     from the streamer resizing the source. */
+  const lastBox = useRef<{ w: number; h: number } | null>(null);
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -164,16 +202,21 @@ function Fit({ children }: { children: React.ReactNode }) {
       const w = inner.current.scrollWidth;
       const h = inner.current.scrollHeight;
       const box = outer.current.getBoundingClientRect();
-      if (!w || !h) return;
+      if (!w || !h || !box.width || !box.height) return;
       setSize({ w, h });
-      setScale(Math.min(box.width / w, box.height / h, 1.4));
+
+      const fit = Math.min(box.width / w, box.height / h, cap);
+      const prev = lastBox.current;
+      const resized = !prev || prev.w !== box.width || prev.h !== box.height;
+      lastBox.current = { w: box.width, h: box.height };
+      setScale((s) => (sticky && !resized ? Math.min(s, fit) : fit));
     };
     measure();
     const ro = new ResizeObserver(measure);
     if (outer.current) ro.observe(outer.current);
     if (inner.current) ro.observe(inner.current);
     return () => ro.disconnect();
-  }, []);
+  }, [cap, sticky]);
 
   return (
     <div className="ovt-fit" ref={outer}>
