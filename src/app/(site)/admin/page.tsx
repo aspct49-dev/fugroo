@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { assertAdmin } from '@/lib/admin';
 import { formatMoney } from '@/lib/format';
 import { giveawayState } from '@/lib/giveaway';
 import { activeGame } from '@/lib/guesses';
@@ -20,6 +21,10 @@ import { activeTournament, listTournaments, tournamentProgress } from '@/lib/tou
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOverviewPage() {
+  // Before any read. See `admin/layout.tsx` — its redirect does not stop a
+  // page rendering, so every admin page gates itself.
+  await assertAdmin();
+
   const [game, tournament, tournaments, board, under, linked] = await Promise.all([
     activeGame(),
     activeTournament(),

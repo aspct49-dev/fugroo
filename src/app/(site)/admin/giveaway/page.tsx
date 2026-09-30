@@ -62,6 +62,10 @@ async function view(): Promise<GiveawayView> {
 }
 
 export default async function AdminGiveawayPage() {
+  // Before the round is read: it carries the Roobet names the code gate
+  // matched on. See `admin/layout.tsx` for why the layout alone is not enough.
+  await assertAdmin();
+
   const give = await view();
 
   /* Returns the outcome rather than swallowing it. A failed lookup used to be

@@ -21,6 +21,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminGuessPage() {
+  // Before any read. See `admin/layout.tsx`.
+  await assertAdmin();
+
   const [games, game] = await Promise.all([listGames(), activeGame()]);
 
   async function openGame(form: FormData) {

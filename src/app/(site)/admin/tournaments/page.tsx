@@ -39,6 +39,10 @@ export default async function AdminTournamentsPage({
 }: {
   searchParams: Promise<{ t?: string }>;
 }) {
+  // Before any read — the list includes drafts, which are admin-only. See
+  // `admin/layout.tsx`.
+  await assertAdmin();
+
   const { t: selectedId } = await searchParams;
   const tournaments = await listTournaments();
   const selected = selectedId

@@ -8,11 +8,18 @@ import { STORE_KIND, storeWritable } from '@/lib/store';
 /**
  * The shell every admin route sits in.
  *
- * The session check lives here so it cannot be forgotten when a tool is added
- * — a new page under `/admin` is gated the moment it exists. That is still the
- * second of the three layers, not the last one: the nav entry hiding is a
- * courtesy, this redirect is a convenience, and the check inside each server
- * action is the control. A form post does not render a layout.
+ * **This redirect does not protect the pages under it.** Next renders a layout
+ * and its page in parallel, so a page that reads data goes on streaming into
+ * the response even after this has decided to redirect — measured: a signed-out
+ * request to `/admin/giveaway` came back with the raffle entrants' Roobet names
+ * in its HTML, next to the redirect instruction. The browser followed the
+ * redirect; the data had already been sent.
+ *
+ * So every admin page calls `assertAdmin()` as its first line, before it reads
+ * anything, and every server action does the same. Adding a page here means
+ * adding that line. The redirect below only decides where a visitor who should
+ * not be here ends up; the per-page and per-action checks are what keep them
+ * from seeing anything on the way.
  */
 
 export const dynamic = 'force-dynamic';
