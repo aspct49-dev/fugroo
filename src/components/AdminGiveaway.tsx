@@ -5,6 +5,7 @@ import { SiKick } from 'react-icons/si';
 
 import type { Entry, Gates, IncomingMessage, Miss } from '@/lib/giveaway';
 import { readChat, type ChatMessage, type ChatReader, type ChatStatus } from '@/lib/kick-client';
+import { SPIN_MS } from '@/lib/overlay.shared';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 
 /**
@@ -84,7 +85,6 @@ const HISTORY_USERS = 400;
 
 /** Card width plus its gap. Must match `.give-reel-card` in the stylesheet. */
 const CARD_W = 160;
-const SPIN_MS = 5200;
 /** Cards that ride past before the winner lands, so it reads as a spin. */
 const RUNWAY = 38;
 /** Cards left over after the winner, so the reel does not end on a gap. */

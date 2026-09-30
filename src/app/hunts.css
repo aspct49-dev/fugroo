@@ -1438,3 +1438,46 @@
   background: rgba(255, 106, 106, 0.14);
 }
 .give-chip-x:disabled { opacity: 0.35; cursor: default; }
+
+/* ======================================================= stream overlays */
+
+.ovl { display: grid; gap: 18px; }
+
+.ovl-steps { margin: 14px 0 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+.ovl-steps li { margin-bottom: 6px; }
+.ovl-steps b { color: var(--text); font-weight: 600; }
+
+.ovl-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+.ovl-item { display: flex; flex-direction: column; gap: 12px; }
+.ovl-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ovl-size {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+.ovl-body { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; flex: 1; }
+
+/* The URL is an input so it stays selectable by hand, and scrolls rather than
+   wrapping mid-address. */
+.ovl-url { display: flex; gap: 8px; }
+.ovl-url input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  background: rgba(3, 5, 18, 0.5);
+  color: var(--text);
+  font: 500 13.5px var(--font-sans);
+}
+.ovl-url input:focus { outline: none; border-color: var(--cyan); }
+
+.ovl-demos { margin: 0; color: var(--dim); font-size: 13.5px; }
+.ovl-demos a { color: var(--cyan); }
+.ovl-demos a:hover { text-decoration: underline; }

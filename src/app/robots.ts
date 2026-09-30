@@ -12,8 +12,15 @@ export default function robots(): MetadataRoute.Robots {
      * The pages also carry `robots: noindex` themselves — this file keeps them
      * from being fetched, that keeps them from being listed if they are found
      * some other way. Neither alone is enough.
+     *
+     * `/overlay` is the stream's browser sources — a transparent card with no
+     * text around it, which would only ever be a thin page in an index.
      */
-    rules: { userAgent: '*', allow: '/', disallow: ['/admin', '/login', '/profile', '/api'] },
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/admin', '/login', '/profile', '/api', '/overlay'],
+    },
     sitemap: `${SITE.url}/sitemap.xml`,
   };
 }

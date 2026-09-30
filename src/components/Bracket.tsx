@@ -121,10 +121,13 @@ interface RowHandlers {
 function MatchCard({
   match,
   editable,
+  live = false,
   handlers,
 }: {
   match: Match;
   editable: boolean;
+  /** The match being played now. Only the stream overlay sets it. */
+  live?: boolean;
   handlers: RowHandlers;
 }) {
   const ready = matchReady(match);
@@ -211,7 +214,12 @@ function MatchCard({
   };
 
   return (
-    <div className="bkt-card" data-decided={match.winner !== null} style={{ width: COL_W }}>
+    <div
+      className="bkt-card"
+      data-decided={match.winner !== null}
+      data-live={live || undefined}
+      style={{ width: COL_W }}
+    >
       {row(match.player1, match.mult1, 1)}
       <span className="bkt-rule" aria-hidden />
       {row(match.player2, match.mult2, 2)}
@@ -261,11 +269,20 @@ export interface BracketProps {
   onMult?: (matchId: string, which: 1 | 2, value: number | null) => void;
   onDecide?: (matchId: string) => void;
   onReset?: (matchId: string) => void;
+  /**
+   * Marks the match being played and the round it is in. Used by the stream
+   * overlay, where "which one is on now" is the whole question; the public
+   * page leaves both unset and looks exactly as it did.
+   */
+  liveMatchId?: string | null;
+  currentRound?: number | null;
 }
 
 export function Bracket({
   matches,
   editable = false,
+  liveMatchId = null,
+  currentRound = null,
   onName,
   onSlot,
   onMult,
@@ -284,7 +301,11 @@ export function Bracket({
 
         {Array.from({ length: rounds }, (_, r) => (
           <div className="bkt-col" key={r} style={{ width: COL_W, marginRight: COL_GAP }}>
-            <p className="bkt-round" style={{ height: LABEL_H, lineHeight: `${LABEL_H}px` }}>
+            <p
+              className="bkt-round"
+              data-current={currentRound === r || undefined}
+              style={{ height: LABEL_H, lineHeight: `${LABEL_H}px` }}
+            >
               {roundLabel(r, rounds)}
             </p>
             <div className="bkt-stack" style={{ paddingTop: padTop(r), gap: `${gapBetween(r)}px` }}>
@@ -293,6 +314,7 @@ export function Bracket({
                   key={match.id}
                   match={match}
                   editable={editable}
+                  live={match.id === liveMatchId}
                   handlers={{
                     onName: (which, value) => onName?.(match.id, which, value),
                     onSlot: (which, slot) => onSlot?.(match.id, which, slot),

@@ -1,0 +1,675 @@
+/* ===========================================================================
+   Stream overlays — OBS browser sources.
+
+   The page is the source, so the viewport *is* the box the streamer drew in
+   OBS. Everything is sized from it: the raffle card in `vw`, so widening the
+   source enlarges the card crisply instead of stretching a bitmap; the
+   tournament through `--u`, a unit taken from whichever of width and height
+   runs out first.
+   =========================================================================== */
+
+/* The site paints a navy page with a fixed artwork layer behind it. Here the
+   stream has to show through everywhere the card is not. */
+html,
+.ov-body {
+  background: transparent;
+}
+.ov-body {
+  margin: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+.ov-body::before {
+  display: none;
+}
+
+/* ===================================================================== raffle
+
+   Designed at a 500px-wide source, where 1vw is 5px. Any width works; the
+   height only has to be enough for the card (about 42% of the width). */
+
+.ovr {
+  padding: 2.4vw;
+  opacity: 0;
+  transform: translateY(-3vw) scale(0.97);
+  transform-origin: top center;
+  transition:
+    opacity 0.45s var(--ease),
+    transform 0.55s var(--ease-out);
+}
+.ovr[data-show='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+.ovr-card {
+  position: relative;
+  padding: 3.6vw 4vw 3.4vw;
+  border-radius: 4vw;
+  border: 0.3vw solid color-mix(in srgb, var(--violet) 55%, var(--edge));
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--violet) 22%, transparent), transparent 60%),
+    linear-gradient(165deg, rgba(19, 26, 69, 0.96), rgba(8, 11, 36, 0.97));
+  box-shadow:
+    0 0 0 0.25vw rgba(123, 63, 255, 0.12),
+    0 2vw 6vw rgba(0, 0, 0, 0.5),
+    inset 0 0.25vw 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color 0.4s var(--ease),
+    box-shadow 0.4s var(--ease);
+}
+
+.ovr[data-phase='drawing'] .ovr-card {
+  animation: ovr-charge 0.9s var(--ease) infinite alternate;
+}
+.ovr[data-phase='winner'] .ovr-card {
+  border-color: color-mix(in srgb, var(--violet-hot) 70%, var(--edge));
+  animation: ovr-land 1.2s var(--ease-out) 1;
+}
+
+.ovr-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3.4vw;
+}
+
+.ovr-avatar {
+  width: 16vw;
+  height: 16vw;
+  border-radius: 50%;
+  padding: 0.6vw;
+  background: conic-gradient(from 200deg, var(--violet), var(--cyan), var(--violet-hot), var(--violet));
+  box-shadow: 0 0 3.5vw rgba(123, 63, 255, 0.45);
+}
+.ovr-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 0.6vw solid #0b1030;
+}
+
+.ovr-head {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+}
+
+.ovr-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2vw;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.7vw;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--violet-hot);
+}
+.ovr-label svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* One line tall and clipped, so the reel's names slide through a window
+   rather than pushing the card's height around. */
+.ovr-name-box {
+  display: block;
+  height: 1.18em;
+  overflow: hidden;
+  font-size: 7.6vw;
+  line-height: 1.18;
+}
+
+.ovr-name {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(95deg, var(--violet-hot), #c9a8ff 45%, var(--cyan-hot));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ovr-name-cta {
+  background: none;
+  color: var(--text);
+  font-size: 0.86em;
+}
+.ovr-name-cta em {
+  font-style: normal;
+  color: var(--cyan);
+}
+
+.ovr-name-reel {
+  animation: ovr-flip 0.11s ease-out;
+  background: none;
+  color: var(--text);
+}
+
+.ovr-name-win {
+  animation: ovr-pop 0.8s var(--ease-out);
+}
+
+/* The glow goes on the window, not the name. A filter on text drawn with
+   `background-clip: text` makes Chrome paint the whole gradient box — a
+   dark rectangle behind the name — before the clip is applied. */
+.ovr[data-phase='winner'] .ovr-name-box {
+  filter: drop-shadow(0 0 1.4vw rgba(166, 124, 255, 0.55));
+}
+
+.ovr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1vw;
+  padding: 1vw 2.2vw;
+  border-radius: 999px;
+  border: 0.25vw solid color-mix(in srgb, var(--violet) 40%, var(--edge));
+  background: rgba(5, 7, 26, 0.72);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.9vw;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+.ovr-badge svg {
+  width: 0.95em;
+  height: 0.95em;
+  color: var(--violet-hot);
+}
+.ovr-badge-top {
+  align-self: start;
+}
+.ovr-badge-live {
+  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--edge));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ovr-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3vw;
+  margin-top: 3.2vw;
+}
+
+.ovr-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vw;
+  padding-left: 2.6vw;
+  border-left: 0.8vw solid var(--violet);
+  border-radius: 0.3vw;
+}
+.ovr-field .ovr-label {
+  color: var(--muted);
+  font-size: 2.4vw;
+}
+.ovr-field strong {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 5.4vw;
+  line-height: 1.05;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ovr-count {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  animation: ovr-tick 0.4s var(--ease-out);
+}
+
+.ovr-dot {
+  width: 1.5vw;
+  height: 1.5vw;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 0 rgba(34, 211, 255, 0.6);
+  animation: ovr-pulse 1.6s ease-out infinite;
+}
+.ovr[data-phase='open'] .ovr-label:first-child {
+  color: var(--cyan);
+}
+
+@keyframes ovr-flip {
+  from { transform: translateY(-55%); opacity: 0.2; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes ovr-pop {
+  0% { transform: scale(1.35); opacity: 0; }
+  55% { transform: scale(0.97); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes ovr-tick {
+  from { transform: translateY(-25%); color: var(--cyan); }
+  to { transform: none; }
+}
+@keyframes ovr-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 211, 255, 0.6); }
+  100% { box-shadow: 0 0 0 2vw rgba(34, 211, 255, 0); }
+}
+@keyframes ovr-charge {
+  from { box-shadow: 0 0 0 0.25vw rgba(123, 63, 255, 0.15), 0 2vw 6vw rgba(0, 0, 0, 0.5); }
+  to { box-shadow: 0 0 0 0.6vw rgba(123, 63, 255, 0.4), 0 0 7vw rgba(123, 63, 255, 0.45); }
+}
+@keyframes ovr-land {
+  0% { box-shadow: 0 0 0 1vw rgba(166, 124, 255, 0.7), 0 0 12vw rgba(166, 124, 255, 0.7); }
+  100% { box-shadow: 0 0 0 0.25vw rgba(123, 63, 255, 0.12), 0 2vw 6vw rgba(0, 0, 0, 0.5); }
+}
+
+/* ================================================================ tournament */
+
+.ovt {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.8);
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+.ovt[data-show='true'] {
+  opacity: 1;
+}
+
+/* The bracket view fills a scene, so its unit comes from the smaller of the
+   source's two proportions. The stage view is a narrow panel, so its unit
+   comes from the width alone. */
+.ovt[data-view='bracket'] {
+  --u: min(1vw, 1.78vh);
+}
+.ovt[data-view='stage'] {
+  --u: 4.2vw;
+}
+
+.ovt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 0.7) calc(var(--u) * 1);
+  border-radius: calc(var(--u) * 0.9);
+  border: 1px solid color-mix(in srgb, var(--violet) 50%, var(--edge));
+  background:
+    radial-gradient(90% 140% at 0% 0%, color-mix(in srgb, var(--violet) 20%, transparent), transparent 60%),
+    linear-gradient(165deg, rgba(19, 26, 69, 0.96), rgba(8, 11, 36, 0.97));
+  box-shadow: 0 calc(var(--u) * 0.5) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.45);
+}
+
+.ovt-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.1);
+}
+.ovt-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.62);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--violet-hot);
+}
+.ovt-eyebrow b {
+  color: var(--rank-1);
+}
+.ovt-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.35);
+  line-height: 1.1;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ovt-stage {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(var(--u) * 0.08);
+}
+.ovt-stage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.3);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.55);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.ovt-stage-label::before {
+  content: '';
+  width: calc(var(--u) * 0.36);
+  height: calc(var(--u) * 0.36);
+  border-radius: 50%;
+  background: var(--cyan);
+  animation: ovr-pulse 1.6s ease-out infinite;
+}
+.ovt-stage[data-done] .ovt-stage-label {
+  color: var(--rank-1);
+}
+.ovt-stage[data-done] .ovt-stage-label::before {
+  background: var(--rank-1);
+  animation: none;
+}
+.ovt-stage strong {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.25);
+  line-height: 1.05;
+  text-transform: uppercase;
+  background: linear-gradient(95deg, var(--cyan-hot), var(--violet-hot));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ovr-pop 0.8s var(--ease-out);
+}
+
+/* The road through the stages — done, now, next — so "Semi-finals" is also
+   read as "two to go". */
+.ovt-rail {
+  display: flex;
+  gap: calc(var(--u) * 0.25);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ovt-rail li {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: calc(var(--u) * 0.28) calc(var(--u) * 0.3);
+  border-radius: calc(var(--u) * 0.4);
+  border: 1px solid var(--edge);
+  background: rgba(8, 11, 36, 0.88);
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.52);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ovt-rail li[data-state='done'] {
+  color: var(--muted);
+  border-color: color-mix(in srgb, var(--cyan) 25%, var(--edge));
+}
+.ovt-rail li[data-state='now'] {
+  color: #04121c;
+  border-color: var(--cyan);
+  background: linear-gradient(95deg, var(--cyan), var(--cyan-hot));
+  box-shadow: 0 0 calc(var(--u) * 0.8) rgba(34, 211, 255, 0.45);
+}
+
+/* -------------------------------------------------------------- bracket */
+
+.ovt-fit {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.ovt-fit-inner {
+  display: inline-block;
+  transform-origin: top left;
+}
+
+/* The site's bracket, restyled for a stream: opaque cards so it reads over
+   gameplay, the scroll box's page spacing removed, and the live match lit. */
+.ovt .bkt-scroll {
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+.ovt .bkt-wires {
+  stroke: color-mix(in srgb, var(--violet) 45%, var(--edge));
+  stroke-width: 2;
+}
+.ovt .bkt-card,
+.ovt .bkt-champ {
+  background: rgba(11, 16, 48, 0.97);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.ovt .bkt-round {
+  color: var(--muted);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.ovt .bkt-round[data-current] {
+  color: var(--cyan);
+}
+.ovt .bkt-card[data-live] {
+  border-color: var(--cyan);
+  animation: ovt-live 1.6s var(--ease) infinite alternate;
+}
+/* "Not played yet" is true of the live match and useless: it is being played.
+   The note's own text is hidden and replaced, rather than added to — both
+   together overflowed the footer. */
+.ovt .bkt-card[data-live] .bkt-foot-note {
+  font-size: 0;
+}
+.ovt .bkt-card[data-live] .bkt-foot-note::before {
+  content: '● Live now';
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+/* The bracket's own column headers already name every stage and light the
+   current one; a rail above them would say it all twice. */
+.ovt[data-view='bracket'] .ovt-rail {
+  display: none;
+}
+
+@keyframes ovt-live {
+  from { box-shadow: 0 0 0 1px rgba(34, 211, 255, 0.35), 0 0 14px rgba(34, 211, 255, 0.2); }
+  to { box-shadow: 0 0 0 3px rgba(34, 211, 255, 0.55), 0 0 30px rgba(34, 211, 255, 0.45); }
+}
+
+/* ----------------------------------------------------------- stage view */
+
+.ovt-matches {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.45);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ovt-match {
+  position: relative;
+  border-radius: calc(var(--u) * 0.7);
+  border: 1px solid var(--edge);
+  background: rgba(11, 16, 48, 0.95);
+  overflow: hidden;
+  box-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 1) rgba(0, 0, 0, 0.4);
+}
+.ovt-match[data-live] {
+  border-color: var(--cyan);
+  animation: ovt-live 1.6s var(--ease) infinite alternate;
+}
+.ovt-match[data-decided] {
+  border-color: color-mix(in srgb, var(--cyan) 30%, var(--edge));
+}
+
+.ovt-live {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--u) * 0.5);
+  transform: translateY(-50%);
+  z-index: 1;
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.4);
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04121c;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--u) * 0.48);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ovt-match[data-live] .ovt-mult {
+  visibility: hidden;
+}
+
+.ovt-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 0.45);
+  padding: calc(var(--u) * 0.32) calc(var(--u) * 0.55);
+}
+.ovt-row + .ovt-row {
+  border-top: 1px solid var(--edge);
+}
+.ovt-row[data-winner] {
+  background: var(--cyan-quiet);
+}
+.ovt-row[data-loser] {
+  opacity: 0.42;
+}
+
+.ovt-row .slotp-art,
+.ovt-seed {
+  width: calc(var(--u) * 1.5);
+  height: calc(var(--u) * 1.5);
+  border-radius: calc(var(--u) * 0.3);
+  object-fit: cover;
+}
+.ovt-seed {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  background: var(--hull-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.6);
+  color: var(--muted);
+}
+
+.ovt-who {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ovt-who b {
+  font-weight: 600;
+  font-size: calc(var(--u) * 0.72);
+  line-height: 1.2;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ovt-who span {
+  font-size: calc(var(--u) * 0.52);
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ovt-row[data-winner] .ovt-who b,
+.ovt-row[data-winner] .ovt-mult {
+  color: var(--cyan);
+}
+
+.ovt-mult {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.7);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.ovt-champ {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 1) calc(var(--u) * 0.8);
+  border-radius: calc(var(--u) * 0.9);
+  border: 1px solid color-mix(in srgb, var(--rank-1) 60%, var(--edge));
+  background:
+    radial-gradient(100% 80% at 50% 0%, color-mix(in srgb, var(--rank-1) 18%, transparent), transparent 70%),
+    rgba(11, 16, 48, 0.97);
+  text-align: center;
+  animation: ovr-pop 0.9s var(--ease-out);
+}
+.ovt-champ-label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.3);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.6);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rank-1);
+}
+.ovt-champ-body {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  min-width: 0;
+}
+.ovt-champ-body .slotp-art {
+  width: calc(var(--u) * 2.4);
+  height: calc(var(--u) * 2.4);
+  border-radius: calc(var(--u) * 0.4);
+  object-fit: cover;
+}
+.ovt-champ-body span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+.ovt-champ-body strong {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.4);
+  line-height: 1.1;
+  color: var(--text);
+}
+.ovt-champ-body em {
+  font-style: normal;
+  font-size: calc(var(--u) * 0.6);
+  color: var(--muted);
+}
+.ovt-champ-prize {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.1);
+  color: var(--rank-1);
+}
+
+/* OBS honours this if the streamer has turned animation off system-wide; the
+   site's global reduced-motion rule already shortens everything else. */
+@media (prefers-reduced-motion: reduce) {
+  .ovr,
+  .ovt {
+    transition: none;
+  }
+}

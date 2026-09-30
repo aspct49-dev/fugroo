@@ -1,36 +1,18 @@
 import type { Metadata } from 'next';
-import { Oxanium, Outfit } from 'next/font/google';
 
 import { LoginButton } from '@/components/LoginButton';
+import { FONT_VARIABLES } from '@/lib/fonts';
 import { requireAdmin } from '@/lib/admin';
 import { Shell } from '@/components/Shell';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TOTAL_PRIZE_POOL } from '@/lib/partners';
 import { SITE, SOCIAL_PROFILES } from '@/lib/site';
-import './globals.css';
-import './home.css';
-import './leaderboard.css';
-import './bonuses.css';
-import './hunts.css';
-import './tournaments.css';
-
-/* Two families, and each has a reason. Oxanium is angular and hexagonal, so
-   it carries the hex motif of the artwork into the type and sets every
-   figure on the site — its tabular numerals are why there is no third family
-   for numbers. Outfit is geometric and quiet and handles everything a person
-   actually reads. */
-const display = Oxanium({
-  weight: ['600', '700', '800'],
-  subsets: ['latin'],
-  variable: '--font-oxanium',
-  display: 'swap',
-});
-const sans = Outfit({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
-});
+import '../globals.css';
+import '../home.css';
+import '../leaderboard.css';
+import '../bonuses.css';
+import '../hunts.css';
+import '../tournaments.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -101,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { admin } = await requireAdmin();
 
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang="en" className={FONT_VARIABLES}>
       <body>
         <script
           type="application/ld+json"
