@@ -324,3 +324,69 @@
 
   .board-stats { grid-template-columns: 1fr; gap: 10px; }
 }
+
+/* ------------------------------------------------------- past months */
+
+/* Which month the standings below are, as tabs. Scrolls sideways rather than
+   wrapping once the months pile up, so it stays one line on a phone. */
+.lb-months {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lb-months::-webkit-scrollbar { display: none; }
+
+.lb-month {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--hull);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.lb-month:hover { color: var(--text); border-color: var(--edge-lit); }
+.lb-month[data-active] {
+  color: var(--cyan);
+  border-color: color-mix(in srgb, var(--cyan) 55%, var(--edge));
+  background: var(--cyan-quiet);
+}
+
+/* The live board's tab carries the same dot as the live-feed line. */
+.lb-month-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hue-teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue-teal) 22%, transparent);
+}
+
+/* Above a past board's headline: which month, and whether it is final. Amber
+   while provisional, because the figures can still move. */
+.lb-past-tag {
+  display: inline-block;
+  margin: 0 auto clamp(12px, 1.6vw, 18px);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--rank-1) 45%, var(--edge));
+  background: rgba(8, 11, 36, 0.6);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rank-1);
+}
+.lb-past-tag[data-final] {
+  border-color: color-mix(in srgb, var(--cyan) 45%, var(--edge));
+  color: var(--cyan);
+}

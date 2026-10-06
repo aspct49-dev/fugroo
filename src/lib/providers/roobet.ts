@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { getPartner } from '../partners';
+import { monthKey } from '../format';
+import { prizeTableFor } from '../partners';
 import { withoutExcluded } from '../staff';
 import { buildEntries } from './shared';
 import type { Leaderboard, LeaderboardProvider, Period } from '../types';
@@ -58,7 +59,9 @@ export const roobetProvider: LeaderboardProvider = {
   partnerId: 'roobet',
 
   async fetchLeaderboard(period: Period): Promise<Leaderboard> {
-    const partner = getPartner('roobet');
+    // The split in force for the month being asked for, not today's — a past
+    // board has to show what that month paid.
+    const prizeTable = prizeTableFor('roobet', monthKey(period.start));
     const { token, userId } = readCredentials();
 
     const url = new URL(ENDPOINT);
@@ -90,7 +93,7 @@ export const roobetProvider: LeaderboardProvider = {
 
     return {
       partnerId: 'roobet',
-      prizePool: partner.prizePool,
+      prizePool: prizeTable.reduce((sum, n) => sum + n, 0),
       entries: buildEntries(
         sorted.map((row) => ({
           username: row.username,
@@ -100,7 +103,7 @@ export const roobetProvider: LeaderboardProvider = {
           // Carried through but not rendered — see the note in `Podium`.
           tierBadgeUrl: row.rankLevelImage,
         })),
-        partner.prizeTable,
+        prizeTable,
       ),
       periodStart: period.start.toISOString(),
       periodEnd: period.end.toISOString(),

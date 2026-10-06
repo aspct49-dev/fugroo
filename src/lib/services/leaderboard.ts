@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { currentPeriod } from '../format';
-import { getPartner, PARTNER_ORDER } from '../partners';
+import { currentPeriod, monthKey } from '../format';
+import { PARTNER_ORDER, prizeTableFor } from '../partners';
 import { roobetProvider } from '../providers/roobet';
 import { buildEntries } from '../providers/shared';
 import type { Leaderboard, LeaderboardProvider, PartnerId, Period } from '../types';
@@ -26,11 +26,11 @@ const PROVIDERS: Record<PartnerId, LeaderboardProvider> = {
  * UI carries the "temporarily unavailable" notice above it.
  */
 function fallbackFor(partnerId: PartnerId, period: Period, error: string): Leaderboard {
-  const partner = getPartner(partnerId);
+  const table = prizeTableFor(partnerId, monthKey(period.start));
   return {
     partnerId,
-    prizePool: partner.prizePool,
-    entries: buildEntries([], partner.prizeTable),
+    prizePool: table.reduce((sum, n) => sum + n, 0),
+    entries: buildEntries([], table),
     periodStart: period.start.toISOString(),
     periodEnd: period.end.toISOString(),
     updatedAt: new Date().toISOString(),

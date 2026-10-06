@@ -4,8 +4,10 @@ import { Board, BoardStats } from '@/components/Board';
 import { BrandStrips } from '@/components/BrandStrips';
 import { Countdown } from '@/components/Countdown';
 import { CopyCode } from '@/components/CopyCode';
+import { MonthTabs } from '@/components/MonthTabs';
 import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
+import { pastMonths } from '@/lib/archive';
 import { formatMoney } from '@/lib/format';
 import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
@@ -68,6 +70,7 @@ export default async function LeaderboardPage() {
       <BrandStrips only="partner" />
 
       <section className="section wrap">
+        <MonthTabs months={pastMonths()} selected={null} />
         <Board board={board} />
         <BoardStats board={board} />
 

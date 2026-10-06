@@ -1,13 +1,36 @@
+import type { MonthKey } from './format';
 import type { AffiliateReturn, Partner, PartnerId, VipTransfer } from './types';
 
-/** Payout per rank, index 0 = 1st. The pool is summed from this, never typed
- *  out separately, so the headline figure and the table cannot disagree.
+/**
+ * Every prize split the board has used, newest first, each with the month it
+ * took effect. Payout per rank, index 0 = 1st.
  *
- *  Weighted hard toward the top: the first two places take just under three
- *  quarters of the pool between them, and it falls away sharply after that.
- *  Changing a figure here changes every page — keep it descending, and keep
- *  the total at a round number people can say. */
-const ROOBET_PRIZES = [500, 225, 100, 50, 40, 30, 20, 15, 10, 10];
+ * A history rather than one table because past boards are shown too, and a
+ * past board has to show what *that* month paid. Changing the split means
+ * adding an entry at the top dated from the month it starts — never editing
+ * an old one, which would rewrite what a finished month says it paid.
+ *
+ * The pool is always summed from the table, never typed out, so the headline
+ * figure and the places cannot disagree. Keep each table descending.
+ */
+const ROOBET_PRIZE_HISTORY: { from: MonthKey; table: number[] }[] = [
+  /* Weighted to the top two: just under three quarters of the pool between
+     them, falling away sharply after. */
+  { from: '2026-10', table: [500, 225, 100, 50, 40, 30, 20, 15, 10, 10] },
+  /* September was advertised on this split for all but its last few days,
+     and the terms say a running month's prizes are not cut part-way through. */
+  { from: '2026-09', table: [450, 225, 100, 65, 50, 40, 30, 20, 10, 10] },
+];
+
+/** The split in force for a given month. */
+export function prizeTableFor(_partner: PartnerId, month: MonthKey): number[] {
+  const hit = ROOBET_PRIZE_HISTORY.find((h) => h.from <= month);
+  // Before the first entry there was no board; the earliest split stands in.
+  return (hit ?? ROOBET_PRIZE_HISTORY[ROOBET_PRIZE_HISTORY.length - 1]).table;
+}
+
+/** The current split — what the registry and every live page advertise. */
+const ROOBET_PRIZES = ROOBET_PRIZE_HISTORY[0].table;
 
 /**
  * The partner registry. Prize pools, splits and codes live here and nowhere

@@ -11,7 +11,14 @@ import type { Leaderboard } from '@/lib/types';
  * is open. At this community size that is the honest picture and also the more
  * persuasive one.
  */
-export function Board({ board }: { board: Leaderboard }) {
+export function Board({
+  board,
+  feed,
+}: {
+  board: Leaderboard;
+  /** Replaces the live-feed line — a past month is not live, and says so. */
+  feed?: React.ReactNode;
+}) {
   return (
     <div className="board">
       {board.error && (
@@ -26,7 +33,7 @@ export function Board({ board }: { board: Leaderboard }) {
 
       {/* Above the head rather than beside the title: it qualifies the numbers
           in the rows, and an empty board is exactly when someone wants it. */}
-      <FeedState at={board.updatedAt} live={board.source === 'live' && !board.error} />
+      {feed ?? <FeedState at={board.updatedAt} live={board.source === 'live' && !board.error} />}
 
       <div className="board-head" role="presentation">
         <span>Rank</span>
@@ -73,7 +80,14 @@ export function Board({ board }: { board: Leaderboard }) {
   );
 }
 
-export function BoardStats({ board }: { board: Leaderboard }) {
+export function BoardStats({
+  board,
+  when = 'this month',
+}: {
+  board: Leaderboard;
+  /** "this month", or "in September" on a past board. */
+  when?: string;
+}) {
   return (
     <div className="board-stats">
       <div className="stat">
@@ -82,7 +96,9 @@ export function BoardStats({ board }: { board: Leaderboard }) {
       </div>
       <div className="stat">
         <div className="stat-v">{formatMoney(board.stats.totalWagered)}</div>
-        <span className="stat-k">{PRIMARY_PARTNER.metricLabel} this month</span>
+        <span className="stat-k">
+          {PRIMARY_PARTNER.metricLabel} {when}
+        </span>
       </div>
       <div className="stat">
         <div className="stat-v">{formatMoney(board.stats.topWager)}</div>

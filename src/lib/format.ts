@@ -45,6 +45,35 @@ export function currentPeriod(now: Date = new Date()) {
   return { start, end };
 }
 
+/**
+ * A leaderboard month as `YYYY-MM`, in UTC — the board's own calendar.
+ *
+ * The one key for a month everywhere it is stored or linked: the archive is
+ * keyed on it, the prize history is dated with it, and it is the URL segment
+ * of a past board. A string rather than a Date because two Dates for the same
+ * month are never `===`, and that has to be true for a lookup to work.
+ */
+export type MonthKey = `${number}-${number}`;
+
+export function monthKey(d: Date): MonthKey {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}` as MonthKey;
+}
+
+export function isMonthKey(s: string): s is MonthKey {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+}
+
+/** The board period for a month key — the same shape `currentPeriod` returns. */
+export function periodForMonth(key: MonthKey) {
+  const [y, m] = key.split('-').map(Number);
+  return currentPeriod(new Date(Date.UTC(y, m - 1, 15)));
+}
+
+/** "September 2026". */
+export function monthLabel(key: MonthKey): string {
+  return periodLabel(periodForMonth(key).start.toISOString());
+}
+
 export function periodLabel(start: string): string {
   return new Date(start).toLocaleString('en-US', {
     month: 'long',
