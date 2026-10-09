@@ -45,6 +45,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             clientId: discordId,
             clientSecret: discordSecret,
             authorization: { params: { scope: 'identify' } },
+            /*
+             * Discord now names itself in the redirect back from sign-in — an
+             * `iss` parameter (RFC 9207), advertised in its discovery document
+             * as `authorization_response_iss_parameter_supported`. Auth.js
+             * checks that against the provider's issuer, and its Discord
+             * provider does not set one, so the check ran against the
+             * placeholder "https://authjs.dev" and refused every sign-in with
+             * "unexpected iss response parameter value" — shown to the user as
+             * a server configuration error. This is the value Discord publishes
+             * at https://discord.com/.well-known/openid-configuration.
+             */
+            issuer: 'https://discord.com',
           }),
         ]
       : []),
