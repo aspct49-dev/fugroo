@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { signOutAction } from '@/lib/auth-actions';
+
 /**
  * Who is signed in, and the way out.
  *
@@ -62,7 +64,7 @@ export function AccountMenu({ name, image }: { name: string; image: string | nul
           <a className="account-menu-item" href="/profile" role="menuitem">
             My account
           </a>
-          <form action="/api/auth/signout" method="post">
+          <form action={signOutAction}>
             <button className="account-menu-item" type="submit" role="menuitem">
               Sign Out
             </button>
