@@ -58,6 +58,7 @@ async function view(): Promise<GiveawayView> {
     slug: g.slug,
     live: g.live,
     avatar: g.avatar,
+    chat: g.chat,
   };
 }
 

@@ -41,6 +41,7 @@ export async function GET() {
       chatroomId: g.chatroomId,
       live: g.live,
       avatar: g.avatar,
+      chat: g.chat,
       entries: g.entries,
       misses: g.misses,
       winner: g.winner,

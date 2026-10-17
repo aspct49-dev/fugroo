@@ -3,7 +3,7 @@
  *
  * Kick fronts its chat with Pusher and the feed is public: subscribing to
  * `chatrooms.<id>.v2` needs no token, only the chatroom id, which the channel
- * API hands over. None of the Kick OAuth credentials are involved — those are
+ * API hands over, and the Pusher app to connect to — see `ChatServer`. None of the Kick OAuth credentials are involved — those are
  * for *acting* as an account, and all this does is listen.
  *
  * **Why the browser and not the server.** This socket used to live in a Node
@@ -25,8 +25,33 @@
  * both stay server-side, where a browser cannot argue with them.
  */
 
-const PUSHER_KEY = '32cbd69e4b950bf97679';
-const PUSHER_URL = `wss://ws-us2.pusher.com/app/${PUSHER_KEY}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
+/**
+ * Which Pusher app Kick's chat is on.
+ *
+ * This used to be a constant, and Kick retired it in October 2026: the old key
+ * now answers every cluster with "App key … not in this cluster", which from
+ * the panel looked like a Connect button that never connected. Kick's own site
+ * no longer hardcodes it either — it asks `web.kick.com` for the realtime
+ * settings at runtime, so the key can be rotated without a deploy. The server
+ * now does the same as part of the channel lookup (`lib/kick.ts`) and the
+ * round carries the answer here.
+ */
+export interface ChatServer {
+  appKey: string;
+  cluster: string;
+}
+
+/**
+ * The key Kick was handing out when this was written. Used only when the
+ * lookup could not get a fresh one — or for a round saved before the lookup
+ * started fetching it — so a hiccup at Kick's settings endpoint does not take
+ * chat down with it.
+ */
+export const FALLBACK_CHAT_SERVER: ChatServer = { appKey: '34bf7a0ff419a2a775b9', cluster: 'us2' };
+
+const pusherUrl = ({ appKey, cluster }: ChatServer) =>
+  `wss://ws-${encodeURIComponent(cluster)}.pusher.com/app/${encodeURIComponent(appKey)}` +
+  '?protocol=7&client=js&version=8.4.0&flash=false';
 
 export interface ChatMessage {
   username: string;
@@ -53,6 +78,7 @@ export interface ChatReader {
  */
 export function readChat(
   chatroomId: number,
+  server: ChatServer,
   onMessage: (msg: ChatMessage) => void,
   onStatus: (status: ChatStatus) => void,
 ): ChatReader {
@@ -72,7 +98,7 @@ export function readChat(
     if (closed) return;
     onStatus('connecting');
 
-    const ws = new WebSocket(PUSHER_URL);
+    const ws = new WebSocket(pusherUrl(server));
     socket = ws;
 
     ws.onopen = () => {

@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { SiKick } from 'react-icons/si';
 
 import type { Entry, Gates, IncomingMessage, Miss } from '@/lib/giveaway';
-import { readChat, type ChatMessage, type ChatReader, type ChatStatus } from '@/lib/kick-client';
+import {
+  FALLBACK_CHAT_SERVER,
+  readChat,
+  type ChatMessage,
+  type ChatReader,
+  type ChatServer,
+  type ChatStatus,
+} from '@/lib/kick-client';
 import { SPIN_MS } from '@/lib/overlay.shared';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 
@@ -46,6 +53,8 @@ export interface GiveawayView {
   keyword: string;
   channel: string;
   chatroomId: number | null;
+  /** The Pusher app to read chat from; null means use the fallback key. */
+  chat: ChatServer | null;
   entries: Entry[];
   misses: Miss[];
   winner: Entry | null;
@@ -252,7 +261,13 @@ export function AdminGiveaway({
    *
    * Keyed on the chatroom as well as the wish, so changing channel tears the
    * old socket down and opens the new one without anyone pressing anything.
+   * Also keyed on the chat server, by its two strings rather than the object:
+   * the poll hands back a new object every second and a half, and depending
+   * on that would reconnect the socket every time.
    */
+  const appKey = g.chat?.appKey ?? FALLBACK_CHAT_SERVER.appKey;
+  const cluster = g.chat?.cluster ?? FALLBACK_CHAT_SERVER.cluster;
+
   useEffect(() => {
     if (!wanted || g.chatroomId === null) {
       readerRef.current?.close();
@@ -262,6 +277,7 @@ export function AdminGiveaway({
 
     const reader = readChat(
       g.chatroomId,
+      { appKey, cluster },
       (msg: ChatMessage) => {
         // Everyone's last few lines, kept here rather than sent up: the server
         // only needs entries, and posting all of chat to it would be a request
@@ -291,7 +307,7 @@ export function AdminGiveaway({
       reader.close();
       readerRef.current = null;
     };
-  }, [wanted, g.chatroomId]);
+  }, [wanted, g.chatroomId, appKey, cluster]);
 
   /* --------------------------------------------------------------- spin */
 

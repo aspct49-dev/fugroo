@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { channelInfo } from './kick';
+import type { ChatServer } from './kick-client';
 import { listProfiles } from './profiles';
 import { roster } from './roster';
 import { mutateJson, readJson, writeJson } from './store';
@@ -83,6 +84,12 @@ export interface Round {
   /** Whether the channel was streaming, as of the last channel lookup. */
   live: boolean;
   avatar: string | null;
+  /**
+   * The Pusher app the chat is on, from the last channel lookup. Null on a
+   * round saved before Kick started rotating it — the reader then uses its
+   * fallback key, so an old round still connects without a fresh lookup.
+   */
+  chat: ChatServer | null;
 }
 
 function blank(): Round {
@@ -101,6 +108,7 @@ function blank(): Round {
     removed: [],
     live: false,
     avatar: null,
+    chat: null,
   };
 }
 
@@ -112,6 +120,7 @@ function blank(): Round {
 function normalise(r: Round): Round {
   r.winners ??= [];
   r.removed ??= [];
+  r.chat ??= null;
   return r;
 }
 
@@ -303,6 +312,17 @@ export async function lookupChannel(channel?: string): Promise<{ ok: boolean; er
 
   const info = await channelInfo(candidate);
   if (!info?.chatroomId) {
+    /* A channel's chatroom never changes, so a lookup that fails for the
+       channel already on file can fall back to what was found last time.
+       Kick's firewall refuses bursts of requests with "blocked by security
+       policy" — meeting that mid-stream used to stop the picker connecting at
+       all, over an id it already had. Kept as it was: the chat server too,
+       which the reader replaces with its fallback key if it is missing. */
+    const same = candidate.toLowerCase() === current.channel.toLowerCase();
+    if (same && current.chatroomId) {
+      console.error(`[raffle] lookup for "${candidate}" failed; reusing chatroom ${current.chatroomId}`);
+      return { ok: true };
+    }
     return { ok: false, error: `Could not find a chatroom for "${candidate}"` };
   }
 
@@ -312,6 +332,7 @@ export async function lookupChannel(channel?: string): Promise<{ ok: boolean; er
     r.chatroomId = info.chatroomId;
     r.live = info.live;
     r.avatar = info.avatar;
+    r.chat = info.chat;
   });
   return { ok: true };
 }
