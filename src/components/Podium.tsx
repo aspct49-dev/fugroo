@@ -1,5 +1,6 @@
 import { formatMoney } from '@/lib/format';
 import type { Leaderboard, LeaderboardEntry } from '@/lib/types';
+import { shortOfMinimum } from './Board';
 import { TrophyIcon } from './icons';
 
 /**
@@ -30,6 +31,7 @@ export function Podium({ board }: { board: Leaderboard }) {
         <PodiumCard
           key={place}
           entry={board.entries[place - 1]}
+          minimum={board.claimMinimum}
           place={place}
           rank={rank}
           label={label}
@@ -41,11 +43,14 @@ export function Podium({ board }: { board: Leaderboard }) {
 
 function PodiumCard({
   entry,
+  minimum,
   place,
   rank,
   label,
 }: {
   entry: LeaderboardEntry | undefined;
+  /** The month's claim minimum; see `shortOfMinimum`. */
+  minimum: number;
   place: number;
   rank: string;
   label: string;
@@ -53,6 +58,7 @@ function PodiumCard({
   // A paying seat nobody has taken is the ordinary case at this community
   // size, so the card renders with the prize still on it and says so plainly.
   const open = !entry || entry.unclaimed;
+  const short = entry ? shortOfMinimum(entry, minimum) : 0;
 
   return (
     <article
@@ -91,7 +97,14 @@ function PodiumCard({
           <div className="pod-rule" />
 
           <p className="pod-metric">Prize</p>
-          <p className="pod-prize">{formatMoney(entry?.prize ?? 0)}</p>
+          <p className="pod-prize" data-short={short > 0 || undefined}>
+            {formatMoney(entry?.prize ?? 0)}
+          </p>
+          {short > 0 && (
+            <p className="pod-short">
+              {formatMoney(short)} short of the {formatMoney(minimum)} minimum
+            </p>
+          )}
         </div>
       </div>
     </article>

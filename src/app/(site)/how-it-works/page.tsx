@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 
 import { CopyCode } from '@/components/CopyCode';
 import { formatMoney } from '@/lib/format';
-import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS, VIP_TRANSFER } from '@/lib/partners';
+import {
+  CLAIM_MINIMUM,
+  PRIMARY_PARTNER,
+  WAGER_NOTE,
+  WAGER_WEIGHTS,
+  VIP_TRANSFER,
+} from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
 
 export const metadata: Metadata = pageMeta({
@@ -28,7 +34,7 @@ export default function HowItWorksPage() {
         <Step
           n="02"
           title="Play as you normally would"
-          body="Everything wagered in the calendar month counts. There is no minimum, no qualifying period and nothing to opt into."
+          body={`Everything wagered in the calendar month counts, with no qualifying period and nothing to opt into. To claim a prize you need at least ${formatMoney(CLAIM_MINIMUM)} wagered on the board that month.`}
         />
         <Step
           n="03"

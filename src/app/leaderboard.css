@@ -277,6 +277,33 @@
 .board-row[data-open='true'] .board-prize { color: var(--muted); }
 .board-row[data-open='true'] .board-prize .sym { color: var(--dim); }
 
+/* A place under the claim minimum: the rank and figures stand, the prize is
+   struck, and the gap to the minimum sits under it in amber — something the
+   player can still close, not an error. */
+.board-prize { display: flex; flex-direction: column; align-items: flex-end; }
+.board-row[data-short] .board-prize-amount {
+  color: var(--dim);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--rank-1) 70%, transparent);
+}
+.board-row[data-short] .board-prize .sym { color: var(--dim); }
+.board-short {
+  margin-top: 2px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--rank-1);
+  white-space: nowrap;
+}
+
+/* The rule, stated once under the rows it applies to. */
+.board-minimum {
+  margin: 12px 0 0;
+  padding: 0 20px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
 /* ----------------------------------------------------------------- rules */
 
 .rules { margin-top: 22px; }

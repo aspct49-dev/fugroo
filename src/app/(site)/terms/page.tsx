@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { LegalDoc } from '@/components/LegalDoc';
-import { PRIMARY_PARTNER } from '@/lib/partners';
+import { formatMoney } from '@/lib/format';
+import { CLAIM_MINIMUM, PRIMARY_PARTNER } from '@/lib/partners';
 import { SITE, pageMeta } from '@/lib/site';
 
 /**
@@ -27,7 +28,7 @@ export default function TermsPage() {
   return (
     <LegalDoc
       title="Terms of Service"
-      updated="20 September 2026"
+      updated="27 October 2026"
       intro={`The rules for taking part in anything run on this site. Using ${SITE.name} means you accept them.`}
     >
       <h2>What this site is</h2>
@@ -102,6 +103,12 @@ export default function TermsPage() {
         <li>
           Rank rewards, raffles, guess-the-balance rounds and tournaments are run the same way:
           ours to pay, ours to decide, and announced on the relevant page.
+        </li>
+        <li>
+          To claim a leaderboard prize you must have wagered at least{' '}
+          <strong>{formatMoney(CLAIM_MINIMUM)}</strong> that month, measured on the weighted figure
+          shown on the board. A place below that keeps its rank, but its prize is not paid and does
+          not pass to anyone else.
         </li>
         <li>
           To be paid you need to be reachable — a ticket in the Discord with the {P} username on the

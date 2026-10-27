@@ -59,6 +59,8 @@ export interface Leaderboard {
   updatedAt: string;
   source: DataSource;
   stats: BoardStats;
+  /** Least wagered to claim a prize this period; 0 means no minimum. */
+  claimMinimum: number;
   /** Set when the live provider failed and an empty board was served instead. */
   error?: string;
 }

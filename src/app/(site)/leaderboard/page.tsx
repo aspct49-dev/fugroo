@@ -9,7 +9,7 @@ import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
 import { pastMonths } from '@/lib/archive';
 import { formatMoney } from '@/lib/format';
-import { PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
+import { CLAIM_MINIMUM, PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
@@ -90,6 +90,12 @@ export default async function LeaderboardPage() {
                 <b>{w.weight} of wager counted</b>
               </div>
             ))}
+            {CLAIM_MINIMUM > 0 && (
+              <div className="kv">
+                <span>Minimum to claim a prize</span>
+                <b>{formatMoney(CLAIM_MINIMUM)} wagered</b>
+              </div>
+            )}
           </div>
 
           <p className="notice" style={{ marginTop: 18 }}>

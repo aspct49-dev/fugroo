@@ -33,6 +33,33 @@ export function prizeTableFor(_partner: PartnerId, month: MonthKey): number[] {
 const ROOBET_PRIZES = ROOBET_PRIZE_HISTORY[0].table;
 
 /**
+ * The least a player must have wagered in the month to claim a prize, by the
+ * month the rule took effect — dated like the prize history, so adding it did
+ * not quietly change what a finished month says it paid.
+ *
+ * Measured on the board's own figure, the weighted wager, because that is the
+ * number printed next to every name. A rule checked against a figure the
+ * player cannot see is one they cannot check themselves.
+ *
+ * A place below it keeps its rank; only its prize is not paid. The prize does
+ * not pass down to the next player — nothing here says it does, so the site
+ * does not imply it either.
+ */
+const ROOBET_CLAIM_MINIMUM_HISTORY: { from: MonthKey; minimum: number }[] = [
+  { from: '2026-10', minimum: 500 },
+  { from: '2026-09', minimum: 0 },
+];
+
+/** The minimum wager to claim a prize in a given month; 0 means none. */
+export function claimMinimumFor(_partner: PartnerId, month: MonthKey): number {
+  const hit = ROOBET_CLAIM_MINIMUM_HISTORY.find((h) => h.from <= month);
+  return hit?.minimum ?? 0;
+}
+
+/** The minimum in force now — what the rules copy states. */
+export const CLAIM_MINIMUM = ROOBET_CLAIM_MINIMUM_HISTORY[0].minimum;
+
+/**
  * The partner registry. Prize pools, splits and codes live here and nowhere
  * else — a changed prize table is an edit to this file.
  *

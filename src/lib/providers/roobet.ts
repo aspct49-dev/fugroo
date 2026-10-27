@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { monthKey } from '../format';
-import { prizeTableFor } from '../partners';
+import { claimMinimumFor, prizeTableFor } from '../partners';
 import { withoutExcluded } from '../staff';
 import { buildEntries } from './shared';
 import type { Leaderboard, LeaderboardProvider, Period } from '../types';
@@ -61,7 +61,8 @@ export const roobetProvider: LeaderboardProvider = {
   async fetchLeaderboard(period: Period): Promise<Leaderboard> {
     // The split in force for the month being asked for, not today's — a past
     // board has to show what that month paid.
-    const prizeTable = prizeTableFor('roobet', monthKey(period.start));
+    const month = monthKey(period.start);
+    const prizeTable = prizeTableFor('roobet', month);
     const { token, userId } = readCredentials();
 
     const url = new URL(ENDPOINT);
@@ -94,6 +95,7 @@ export const roobetProvider: LeaderboardProvider = {
     return {
       partnerId: 'roobet',
       prizePool: prizeTable.reduce((sum, n) => sum + n, 0),
+      claimMinimum: claimMinimumFor('roobet', month),
       entries: buildEntries(
         sorted.map((row) => ({
           username: row.username,

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { currentPeriod, monthKey, periodForMonth, type MonthKey } from './format';
-import { prizeTableFor } from './partners';
+import { claimMinimumFor, prizeTableFor } from './partners';
 import { getLeaderboard } from './services/leaderboard';
 import { mutateJson, readJson } from './store';
 import type { Leaderboard, PartnerId } from './types';
@@ -65,12 +65,14 @@ export interface PastBoard {
 
 const key = (partner: PartnerId, month: MonthKey) => `${partner}:${month}`;
 
-/** The month's prizes, laid over its standings by rank. See the note above. */
+/** The month's prizes and claim rule, laid over its standings by rank. Both
+ *  are ours rather than Roobet's, so neither is frozen — see the note above. */
 function withPrizes(board: Leaderboard, partner: PartnerId, month: MonthKey): Leaderboard {
   const table = prizeTableFor(partner, month);
   return {
     ...board,
     prizePool: table.reduce((sum, n) => sum + n, 0),
+    claimMinimum: claimMinimumFor(partner, month),
     entries: board.entries.map((e, i) => ({ ...e, prize: table[i] ?? 0 })),
   };
 }
