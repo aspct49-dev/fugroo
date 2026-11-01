@@ -7,6 +7,7 @@ import { Promo } from '@/components/Promo';
 import { ExternalIcon, TagIcon, TrophyIcon, UserPlusIcon } from '@/components/icons';
 import { JOIN_STEPS, OFFERS, PRIMARY_PARTNER } from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
+import { boardStatus } from '@/lib/board-status';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
 export const revalidate = 60;
@@ -20,7 +21,9 @@ export const metadata: Metadata = pageMeta({
 const STEP_ICON = [UserPlusIcon, TagIcon, TrophyIcon];
 
 export default async function BonusesPage() {
-  const board = await getLeaderboard('roobet');
+  // See the home page: a paused leaderboard has no prize to advertise.
+  const { paused } = await boardStatus();
+  const board = paused ? null : await getLeaderboard('roobet');
 
   return (
     <>
@@ -64,7 +67,7 @@ export default async function BonusesPage() {
         </div>
       </section>
 
-      <Promo board={board} />
+      {board && <Promo board={board} />}
 
       <section className="section wrap">
         <div className="join-head">

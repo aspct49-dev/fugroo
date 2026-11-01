@@ -5,6 +5,7 @@ import { Board, BoardStats } from '@/components/Board';
 import { MonthTabs } from '@/components/MonthTabs';
 import { Podium } from '@/components/Podium';
 import { pastLeaderboard, pastMonths } from '@/lib/archive';
+import { boardStatus } from '@/lib/board-status';
 import { currentPeriod, formatMoney, isMonthKey, monthKey, monthLabel, type MonthKey } from '@/lib/format';
 import { PRIMARY_PARTNER } from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
@@ -50,7 +51,7 @@ export default async function PastLeaderboardPage({ params }: Params) {
   if (m === 'current') redirect('/leaderboard');
   if (!m) notFound();
 
-  const past = await pastLeaderboard('roobet', m);
+  const [past, { paused }] = await Promise.all([pastLeaderboard('roobet', m), boardStatus()]);
   const { board } = past;
   const label = monthLabel(m);
   const shortMonth = label.split(' ')[0];
@@ -84,7 +85,7 @@ export default async function PastLeaderboardPage({ params }: Params) {
       </header>
 
       <section className="section wrap">
-        <MonthTabs months={pastMonths()} selected={m} />
+        <MonthTabs months={pastMonths()} selected={m} paused={paused} />
         <Board
           board={board}
           feed={

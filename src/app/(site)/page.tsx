@@ -3,13 +3,16 @@ import { Hero } from '@/components/Hero';
 import { Promo } from '@/components/Promo';
 import { Rack } from '@/components/Rack';
 import { FEATURE_CARDS, SECTION_CARDS } from '@/lib/sections';
+import { boardStatus } from '@/lib/board-status';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
 // Standings are the reason people come back; a minute of cache is plenty.
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const board = await getLeaderboard('roobet');
+  // No board, no advert for one: a paused leaderboard puts no prize on offer.
+  const { paused } = await boardStatus();
+  const board = paused ? null : await getLeaderboard('roobet');
 
   return (
     <>
@@ -31,7 +34,7 @@ export default async function HomePage() {
 
       {/* Last thing before the footer. Someone who has read the whole page is
           the person most likely to act on the pot. */}
-      <Promo board={board} />
+      {board && <Promo board={board} />}
     </>
   );
 }

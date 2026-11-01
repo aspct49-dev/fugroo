@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { LoginButton } from '@/components/LoginButton';
 import { FONT_VARIABLES } from '@/lib/fonts';
 import { requireAdmin } from '@/lib/admin';
+import { boardStatus } from '@/lib/board-status';
 import { Shell } from '@/components/Shell';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TOTAL_PRIZE_POOL } from '@/lib/partners';
@@ -80,7 +81,7 @@ function structuredData() {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { admin } = await requireAdmin();
+  const [{ admin }, { paused }] = await Promise.all([requireAdmin(), boardStatus()]);
 
   return (
     <html lang="en" className={FONT_VARIABLES}>
@@ -91,7 +92,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           // input to escape here.
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
         />
-        <Shell totalPot={TOTAL_PRIZE_POOL} account={<LoginButton />} isAdmin={admin}>
+        <Shell
+          totalPot={TOTAL_PRIZE_POOL}
+          paused={paused}
+          account={<LoginButton />}
+          isAdmin={admin}
+        >
           {children}
           <SiteFooter />
         </Shell>

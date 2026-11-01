@@ -8,8 +8,15 @@ import { MonthTabs } from '@/components/MonthTabs';
 import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
 import { pastMonths } from '@/lib/archive';
+import { boardStatus } from '@/lib/board-status';
 import { formatMoney } from '@/lib/format';
-import { CLAIM_MINIMUM, PRIMARY_PARTNER, WAGER_NOTE, WAGER_WEIGHTS } from '@/lib/partners';
+import {
+  CLAIM_MINIMUM,
+  PRIMARY_PARTNER,
+  SOCIALS,
+  WAGER_NOTE,
+  WAGER_WEIGHTS,
+} from '@/lib/partners';
 import { pageMeta } from '@/lib/site';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 
@@ -22,6 +29,9 @@ export const metadata: Metadata = pageMeta({
 });
 
 export default async function LeaderboardPage() {
+  const { paused } = await boardStatus();
+  if (paused) return <PausedBoard />;
+
   const board = await getLeaderboard('roobet');
 
   return (
@@ -106,6 +116,48 @@ export default async function LeaderboardPage() {
             prize being forfeit.
           </p>
         </div>
+      </section>
+    </>
+  );
+}
+
+/**
+ * The page while the leaderboard is switched off (`lib/board-status.ts`).
+ *
+ * Says plainly that nothing is running and nothing is on offer, rather than
+ * showing an empty board with prizes beside it — which would read as a board
+ * nobody has entered yet. The month tabs stay, so the finished boards are one
+ * tap away; a paused board is still somewhere people come to check last
+ * month's result.
+ */
+function PausedBoard() {
+  return (
+    <>
+      <header className="lb-head">
+        <div className="wrap">
+          {/* eslint-disable-next-line @next/next/no-img-element -- operator brand mark */}
+          <img className="lb-partner" src={PRIMARY_PARTNER.logo} alt={PRIMARY_PARTNER.name} />
+
+          <p className="lb-past-tag">Paused</p>
+
+          <h1 className="lb-headline">Leaderboard paused</h1>
+
+          <p className="lb-lede">
+            There is no leaderboard running right now, so no prizes are on offer. When it comes
+            back it will be announced in the Discord and on X. Past months are below.
+          </p>
+
+          <div className="lb-actions">
+            <a className="btn btn-primary" href={SOCIALS.discord} target="_blank" rel="noreferrer">
+              Join the Discord
+              <ExternalIcon />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <section className="section wrap">
+        <MonthTabs months={pastMonths()} selected={null} paused />
       </section>
     </>
   );

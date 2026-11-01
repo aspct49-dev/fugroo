@@ -258,6 +258,14 @@ h1, h2, h3, h4 {
   color: #03121c;
 }
 
+/* Switched off: an outline in amber, so it reads as a status, not a prize. */
+.nav-badge[data-paused] {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--rank-1) 55%, var(--edge));
+  color: var(--rank-1);
+  letter-spacing: 0.04em;
+}
+
 /* Quieter than the prize badge, because it marks something you cannot do yet
    rather than something on offer — an outline, not a fill. */
 .nav-soon {

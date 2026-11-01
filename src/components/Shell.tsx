@@ -66,11 +66,14 @@ const NAV: NavItem[] = [
  */
 export function Shell({
   totalPot,
+  paused = false,
   account,
   isAdmin = false,
   children,
 }: {
   totalPot: number;
+  /** The leaderboard is switched off: the badge says so instead of a prize. */
+  paused?: boolean;
   account: React.ReactNode;
   isAdmin?: boolean;
   children: React.ReactNode;
@@ -129,7 +132,11 @@ export function Shell({
                   aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
                 >
                   {item.label}
-                  {item.showPot && <span className="nav-badge">{formatMoney(totalPot)}</span>}
+                  {item.showPot && (
+                    <span className="nav-badge" data-paused={paused || undefined}>
+                      {paused ? 'Paused' : formatMoney(totalPot)}
+                    </span>
+                  )}
                   {item.soon && <span className="nav-soon">Soon</span>}
                 </Link>
               ),

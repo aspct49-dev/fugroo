@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 
+import { ConfirmSubmit } from '@/components/ConfirmSubmit';
 import { assertAdmin } from '@/lib/admin';
+import { boardStatus, setBoardPaused } from '@/lib/board-status';
 import { formatMoney } from '@/lib/format';
 import { giveawayState } from '@/lib/giveaway';
 import { activeGame } from '@/lib/guesses';
@@ -47,8 +50,27 @@ export default async function AdminOverviewPage() {
       }))
       .catch(() => null),
   ]);
-  const give = await giveawayState();
+  const [give, status] = await Promise.all([giveawayState(), boardStatus()]);
   const progress = tournament ? tournamentProgress(tournament) : null;
+
+  /**
+   * Pauses or resumes the leaderboard.
+   *
+   * Takes the state to set rather than flipping whatever is current: a
+   * double-click, or two admins pressing at once, would otherwise cancel each
+   * other out and leave the board in the state nobody asked for.
+   *
+   * Revalidates the whole layout because the change shows on every page — the
+   * nav badge is in the shell — and the leaderboard and home pages are cached
+   * for a minute, which would otherwise keep advertising a prize after the
+   * board was switched off.
+   */
+  async function setPause(form: FormData) {
+    'use server';
+    await assertAdmin();
+    await setBoardPaused(form.get('paused') === '1');
+    revalidatePath('/', 'layout');
+  }
 
   const cards = [
     {
@@ -56,12 +78,14 @@ export default async function AdminOverviewPage() {
       title: 'Roobet Leaderboard',
       // The feed's own state first, because that is the thing that can be
       // broken. The counts after it only mean something once it is live.
-      state: board.error
-        ? `Feed error: ${board.error}`
-        : `Live · ${board.stats.players} on the board · ${formatMoney(board.stats.totalWagered)} wagered${
-            under === null ? '' : ` · ${under} under the code all-time`
-          }`,
-      live: !board.error,
+      state: status.paused
+        ? 'Paused · switched off, no prizes on offer'
+        : board.error
+          ? `Feed error: ${board.error}`
+          : `Live · ${board.stats.players} on the board · ${formatMoney(board.stats.totalWagered)} wagered${
+              under === null ? '' : ` · ${under} under the code all-time`
+            }`,
+      live: !status.paused && !board.error,
     },
     {
       href: '/admin/giveaway',
@@ -105,14 +129,48 @@ export default async function AdminOverviewPage() {
     },
   ];
 
+  const since = status.since
+    ? new Date(status.since).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      }) + ' UTC'
+    : null;
+
   return (
-    <div className="admin-cards">
-      {cards.map((card) => (
-        <Link className="admin-card" key={card.href} href={card.href} data-live={card.live}>
-          <h2>{card.title}</h2>
-          <p>{card.state}</p>
-        </Link>
-      ))}
-    </div>
+    <>
+      <form className="admin-switch" action={setPause} data-paused={status.paused || undefined}>
+        <input type="hidden" name="paused" value={status.paused ? '0' : '1'} />
+        <div className="admin-switch-text">
+          <b>Leaderboard {status.paused ? 'paused' : 'running'}</b>
+          <span>
+            {status.paused
+              ? `Switched off${since ? ` since ${since}` : ''}. No prizes are on offer and the site says so.`
+              : 'Live on the site, with the prize pool on offer.'}
+          </span>
+        </div>
+        <ConfirmSubmit
+          className={`btn btn-sm ${status.paused ? 'btn-primary' : 'btn-secondary'}`}
+          message={
+            status.paused
+              ? 'Resume the leaderboard? It goes live on the site straight away, counting this whole month.'
+              : 'Pause the leaderboard? The site will say it is paused and stop showing the prize pool, straight away.'
+          }
+        >
+          {status.paused ? 'Resume Leaderboard' : 'Pause Leaderboard'}
+        </ConfirmSubmit>
+      </form>
+
+      <div className="admin-cards">
+        {cards.map((card) => (
+          <Link className="admin-card" key={card.href} href={card.href} data-live={card.live}>
+            <h2>{card.title}</h2>
+            <p>{card.state}</p>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

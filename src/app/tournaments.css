@@ -514,6 +514,30 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
+/* The leaderboard's on/off switch, above the cards: the one control on the
+   overview that changes what the public sees, so it gets a bar of its own
+   rather than hiding inside a card. Amber while paused. */
+.admin-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--hue-teal) 40%, var(--edge));
+  border-radius: var(--r);
+  background: var(--hull);
+}
+.admin-switch[data-paused] {
+  border-color: color-mix(in srgb, var(--rank-1) 55%, var(--edge));
+  background: color-mix(in srgb, var(--rank-1) 6%, var(--hull));
+}
+.admin-switch-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.admin-switch-text b { font-family: var(--font-display); font-size: 16px; color: var(--hue-teal); }
+.admin-switch[data-paused] .admin-switch-text b { color: var(--rank-1); }
+.admin-switch-text span { font-size: 13.5px; color: var(--muted); }
+
 .admin-card {
   display: block;
   padding: 18px;
