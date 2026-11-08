@@ -38,11 +38,39 @@ export function formatMultiplier(n: number): string {
   return (n >= 100 ? Math.round(n) : Number(n.toFixed(2))).toLocaleString('en-US') + '×';
 }
 
-/** The current calendar month, which is the leaderboard period. */
+/**
+ * The day of the month a board starts on, by the month it took effect —
+ * dated like the prize history, so changing it never moves a finished board.
+ *
+ * Boards ran on calendar months until October 2026. The board was then paused
+ * at the start of November and restarted on Friday 6 November, counting from
+ * that day, and from then on every board runs from the 6th to the 5th. The
+ * days in between (1–5 November) belong to no board.
+ */
+const START_DAY_HISTORY: { from: MonthKey; day: number }[] = [
+  { from: '2026-11', day: 6 },
+  { from: '2026-09', day: 1 },
+];
+
+function startDayFor(key: MonthKey): number {
+  const hit = START_DAY_HISTORY.find((h) => h.from <= key);
+  return (hit ?? START_DAY_HISTORY[START_DAY_HISTORY.length - 1]).day;
+}
+
+/**
+ * The board running at a given moment.
+ *
+ * A board is named for the month it *starts* in, so on 3 December the board
+ * running is November's (6 Nov – 5 Dec). In a gap between boards — the days
+ * the board was paused — this returns the next one to start.
+ */
 export function currentPeriod(now: Date = new Date()) {
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0) - 1000);
-  return { start, end };
+  const here = periodForMonth(monthKey(now));
+  if (now >= here.start) return here;
+
+  const prevMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const prev = periodForMonth(monthKey(prevMonth));
+  return now <= prev.end ? prev : here;
 }
 
 /**
@@ -63,10 +91,27 @@ export function isMonthKey(s: string): s is MonthKey {
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
 }
 
-/** The board period for a month key — the same shape `currentPeriod` returns. */
+/**
+ * The board named for a month: from its start day, to the second before the
+ * same day of the next month, in UTC.
+ *
+ * The end is measured with the board's *own* start day, not the next board's —
+ * so October (a calendar month) ends on 31 October rather than stretching to
+ * where November's board begins.
+ */
 export function periodForMonth(key: MonthKey) {
   const [y, m] = key.split('-').map(Number);
-  return currentPeriod(new Date(Date.UTC(y, m - 1, 15)));
+  const day = startDayFor(key);
+  const start = new Date(Date.UTC(y, m - 1, day, 0, 0, 0));
+  const end = new Date(Date.UTC(y, m, day, 0, 0, 0) - 1000);
+  return { start, end };
+}
+
+/** "6 November – 5 December", for saying when a board runs. */
+export function periodRange(start: string, end: string): string {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 /** "September 2026". */

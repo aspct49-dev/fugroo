@@ -28,7 +28,7 @@ export default function TermsPage() {
   return (
     <LegalDoc
       title="Terms of Service"
-      updated="27 October 2026"
+      updated="8 November 2026"
       intro={`The rules for taking part in anything run on this site. Using ${SITE.name} means you accept them.`}
     >
       <h2>What this site is</h2>
@@ -97,8 +97,8 @@ export default function TermsPage() {
       <h2>Prizes and rewards</h2>
       <ul>
         <li>
-          Leaderboard prizes are paid out of our own pocket after the month closes and the figures
-          settle. They do not come from your {P} balance and are not a {P} promotion.
+          Leaderboard prizes are paid out of our own pocket after the board closes and the figures
+          settle. Each board runs from the 6th of one month to the 5th of the next, in UTC. They do not come from your {P} balance and are not a {P} promotion.
         </li>
         <li>
           Rank rewards, raffles, guess-the-balance rounds and tournaments are run the same way:

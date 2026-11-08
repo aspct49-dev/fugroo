@@ -9,7 +9,7 @@ import { Podium } from '@/components/Podium';
 import { ExternalIcon } from '@/components/icons';
 import { pastMonths } from '@/lib/archive';
 import { boardStatus } from '@/lib/board-status';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, periodRange } from '@/lib/format';
 import {
   CLAIM_MINIMUM,
   PRIMARY_PARTNER,
@@ -24,7 +24,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = pageMeta({
   title: 'Leaderboard',
-  description: `The ${formatMoney(PRIMARY_PARTNER.prizePool)} monthly ${PRIMARY_PARTNER.name} wager leaderboard. Ten paying places, settled at the end of every month.`,
+  description: `The ${formatMoney(PRIMARY_PARTNER.prizePool)} monthly ${PRIMARY_PARTNER.name} wager leaderboard. Ten paying places, running from the 6th of each month to the 5th of the next.`,
   path: '/leaderboard',
 });
 
@@ -51,8 +51,9 @@ export default async function LeaderboardPage() {
           </h1>
 
           <p className="lb-lede">
-            Compete against everyone else playing under code <b>{PRIMARY_PARTNER.code}</b>. Ten
-            places pay, and the board settles at the end of the month.
+            Compete against everyone else playing under code <b>{PRIMARY_PARTNER.code}</b>. This
+            board runs <b>{periodRange(board.periodStart, board.periodEnd)}</b>, ten places pay,
+            and it settles when it ends.
           </p>
 
           <div className="lb-actions">

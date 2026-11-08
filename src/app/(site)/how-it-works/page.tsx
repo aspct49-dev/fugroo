@@ -34,12 +34,12 @@ export default function HowItWorksPage() {
         <Step
           n="02"
           title="Play as you normally would"
-          body={`Everything wagered in the calendar month counts, with no qualifying period and nothing to opt into. To claim a prize you need at least ${formatMoney(CLAIM_MINIMUM)} wagered on the board that month.`}
+          body={`Each board runs from the 6th of the month to the 5th of the next, and everything wagered in that time counts — no qualifying period and nothing to opt into. To claim a prize you need at least ${formatMoney(CLAIM_MINIMUM)} wagered on that board.`}
         />
         <Step
           n="03"
-          title="Prizes at month end"
-          body={`The board settles when the month does, and the ${PRIMARY_PARTNER.prizeTable.length} paying places are paid out of the ${formatMoney(PRIMARY_PARTNER.prizePool)} pool.`}
+          title="Prizes when the board ends"
+          body={`The board settles on the 5th, and the ${PRIMARY_PARTNER.prizeTable.length} paying places are paid out of the ${formatMoney(PRIMARY_PARTNER.prizePool)} pool.`}
         />
       </div>
 
